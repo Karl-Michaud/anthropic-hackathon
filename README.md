@@ -36,11 +36,11 @@ Step 4: Open localhost on browser (Visit http://localhost:<port-number>)
 
 Step 1: pull to main latest changes \
 Step 2: Create branch + navigate to branch (`git checkout -b <branch-name>` or alternatively `git branch <branch-name>` + `git checkout <branch-name>`) \
-Step 3: Make changes. 
-Step 4: use `git status` + `git add <file1> <file2> ...` + `git commit -m "message"` + `git push origin <branch-name>`
-Step 5: Repeat step 3/4, untill feature is ready to merge
-Step 6: Create GitHub Pull Request to get code reviewed
-Step 7: Fix any issues that were raised from PR review
+Step 3: Make changes. \
+Step 4: use `git status` + `git add <file1> <file2> ...` + `git commit -m "message"` + `git push origin <branch-name>` \
+Step 5: Repeat step 3/4, untill feature is ready to merge \
+Step 6: Create GitHub Pull Request to get code reviewed \
+Step 7: Fix any issues that were raised from PR review \
 
 
 Note: if branch is not up to date, run:
