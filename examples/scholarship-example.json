@@ -1,0 +1,26 @@
+{
+  "scholarshipName": "Community Leaders Award",
+  "monetaryValue": "$10,000",
+  "applicationDeadline": "June 30, 2025",
+  "description": "The Community Leaders Award recognizes outstanding students who have demonstrated exceptional commitment to community service and volunteer work. We are looking for individuals who have made a measurable impact in their communities through sustained service efforts.",
+  "focus": "This scholarship values compassion, empathy, and social responsibility. We want to hear about your personal connection to your cause, the leadership you've shown in mobilizing others, and the lasting impact your service has created.",
+  "requirements": [
+    "Must have completed at least 100 hours of community service",
+    "Must be enrolled as a full-time undergraduate student",
+    "Minimum GPA of 3.0",
+    "Demonstrated leadership in service initiatives",
+    "Must submit two letters of recommendation from community organization leaders"
+  ],
+  "applicationMaterials": [
+    "Personal essay (750 words) describing your community service journey",
+    "Documentation of service hours",
+    "Letters of recommendation",
+    "Academic transcript"
+  ],
+  "selectionCriteria": {
+    "communityImpact": "50%",
+    "leadershipInService": "25%",
+    "sustainedCommitment": "15%",
+    "personalGrowth": "10%"
+  }
+}
