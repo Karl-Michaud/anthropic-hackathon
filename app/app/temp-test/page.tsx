@@ -165,34 +165,6 @@ export default function TempTestPage() {
                       <pre className="bg-gray-900 dark:bg-black text-green-400 p-3 rounded text-xs overflow-x-auto">
                         {JSON.stringify(item.extractedData, null, 2)}
                       </pre>
-
-                      {/* Formatted Display */}
-                      <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
-                        <div className="bg-white dark:bg-gray-800 p-2 rounded border border-gray-200 dark:border-gray-600">
-                          <span className="font-semibold text-gray-700 dark:text-gray-300">Title:</span>
-                          <p className="text-gray-600 dark:text-gray-400">{item.extractedData.title}</p>
-                        </div>
-                        <div className="bg-white dark:bg-gray-800 p-2 rounded border border-gray-200 dark:border-gray-600">
-                          <span className="font-semibold text-gray-700 dark:text-gray-300">Criteria:</span>
-                          <p className="text-gray-600 dark:text-gray-400">{item.extractedData.criteria}</p>
-                        </div>
-                        <div className="bg-white dark:bg-gray-800 p-2 rounded border border-gray-200 dark:border-gray-600">
-                          <span className="font-semibold text-gray-700 dark:text-gray-300">Amount:</span>
-                          <p className="text-gray-600 dark:text-gray-400">{item.extractedData.amount}</p>
-                        </div>
-                        <div className="bg-white dark:bg-gray-800 p-2 rounded border border-gray-200 dark:border-gray-600">
-                          <span className="font-semibold text-gray-700 dark:text-gray-300">Deadline:</span>
-                          <p className="text-gray-600 dark:text-gray-400">{item.extractedData.deadline}</p>
-                        </div>
-                        <div className="col-span-2 bg-white dark:bg-gray-800 p-2 rounded border border-gray-200 dark:border-gray-600">
-                          <span className="font-semibold text-gray-700 dark:text-gray-300">Eligibility:</span>
-                          <p className="text-gray-600 dark:text-gray-400">
-                            {Array.isArray(item.extractedData.eligibility)
-                              ? item.extractedData.eligibility.join(", ")
-                              : item.extractedData.eligibility}
-                          </p>
-                        </div>
-                      </div>
                     </div>
                   )}
                 </div>
