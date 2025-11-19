@@ -1,13 +1,17 @@
-"use client";
+'use client'
 
 interface ZoomComponentProps {
-  zoom: number;
-  onZoomIn: () => void;
-  onZoomOut: () => void;
+  zoom: number
+  onZoomIn: () => void
+  onZoomOut: () => void
 }
 
-export default function ZoomComponent({ zoom, onZoomIn, onZoomOut }: ZoomComponentProps) {
-  const percentage = Math.round(zoom * 100);
+export default function ZoomComponent({
+  zoom,
+  onZoomIn,
+  onZoomOut,
+}: ZoomComponentProps) {
+  const percentage = Math.round(zoom * 100)
 
   return (
     <div className="flex items-center gap-2 bg-white/90 backdrop-blur-sm px-3 py-2 rounded-lg shadow-md border border-gray-200">
@@ -34,5 +38,5 @@ export default function ZoomComponent({ zoom, onZoomIn, onZoomOut }: ZoomCompone
         <span className="text-lg font-medium text-gray-700">+</span>
       </button>
     </div>
-  );
+  )
 }

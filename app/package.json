@@ -6,22 +6,32 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "format": "prettier -w app",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.32.1",
+    "@anthropic-ai/sdk": "^0.70.0",
+    "lucide-react": "^0.554.0",
     "next": "16.0.3",
     "pdf-parse": "^1.1.1",
     "react": "19.2.0",
     "react-dom": "19.2.0"
   },
   "devDependencies": {
+    "@storybook/addon-styling-webpack": "^3.0.0",
+    "@storybook/nextjs": "^10.0.8",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "autoprefixer": "^10.4.22",
     "eslint": "^9",
     "eslint-config-next": "16.0.3",
+    "eslint-plugin-storybook": "^10.0.8",
+    "prettier": "^3.6.2",
+    "storybook": "^10.0.8",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
