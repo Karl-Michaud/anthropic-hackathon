@@ -17,11 +17,9 @@ export type ScholarshipCriteria =
  * Extracted scholarship information
  */
 export interface ScholarshipExtraction {
-  title: string;              // Name of the scholarship
-  criteria: ScholarshipCriteria;  // Best matching formula type
-  amount: string;             // Monetary amount with $ (e.g., "$5000")
-  deadline: string;           // Format: DD-MM-YYYY
-  eligibility: string[];      // Array of applicant requirements
+  ScholarshipName: string;        // Name of the scholarship
+  ScholarshipDescription: string; // Info about amount, eligibility, due date, expected qualities
+  EssayPrompt: string;            // The essay prompt being answered
 }
 
 /**

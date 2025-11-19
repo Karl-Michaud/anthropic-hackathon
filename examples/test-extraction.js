@@ -40,15 +40,9 @@ async function testExtraction() {
     if (result.success) {
       console.log('\n✅ Extraction successful!');
       console.log('\nExtracted Data:');
-      console.log('- Title:', result.data.title);
-      console.log('- Criteria:', result.data.criteria);
-      console.log('- Amount:', result.data.amount);
-      console.log('- Deadline:', result.data.deadline);
-      console.log('- Eligibility:', result.data.eligibility.length, 'requirements');
-
-      result.data.eligibility.forEach((req, index) => {
-        console.log(`  ${index + 1}. ${req}`);
-      });
+      console.log('- Scholarship Name:', result.data.ScholarshipName);
+      console.log('- Scholarship Description:', result.data.ScholarshipDescription);
+      console.log('- Essay Prompt:', result.data.EssayPrompt);
     } else {
       console.log('\n❌ Extraction failed:', result.error);
     }

@@ -4,10 +4,7 @@
  */
 
 import Anthropic from "@anthropic-ai/sdk";
-import {
-  ScholarshipExtraction,
-  SCHOLARSHIP_KEYWORDS,
-} from "../types/scholarship-extraction";
+import { ScholarshipExtraction } from "../types/scholarship-extraction";
 
 /**
  * Initialize Anthropic client
@@ -56,43 +53,37 @@ export async function extractScholarshipInfo(
  * Build the LLM prompt for extraction
  */
 function buildExtractionPrompt(content: string): string {
-  return `You are a scholarship information extraction system. Extract the following fields from the scholarship description and return ONLY valid JSON.
+  return `You are a scholarship information extraction system. Extract the following fields from the user's input and return ONLY valid JSON.
 
-SCHOLARSHIP DESCRIPTION:
+USER INPUT:
 ${content}
 
 EXTRACTION TASK:
-Extract the following fields. If a field cannot be found, use "Missing" as the value.
+The user will provide information about a scholarship they are applying to and an essay prompt they are answering. Extract the following three fields:
 
-1. **title** (string): The name of the scholarship
-2. **criteria** (string): Match to ONE of these scholarship types based on keywords:
-   - "innovation_tech" - Keywords: ${SCHOLARSHIP_KEYWORDS.innovation_tech.join(", ")}
-   - "merit_academic" - Keywords: ${SCHOLARSHIP_KEYWORDS.merit_academic.join(", ")}
-   - "community_service" - Keywords: ${SCHOLARSHIP_KEYWORDS.community_service.join(", ")}
-   - "leadership_entrepreneurial" - Keywords: ${SCHOLARSHIP_KEYWORDS.leadership_entrepreneurial.join(", ")}
+1. **ScholarshipName** (string): The name of the scholarship. If not found, use "Missing".
 
-   Choose the type that BEST matches the scholarship's focus. If none match well, use "Missing".
+2. **ScholarshipDescription** (string): Comprehensive information about the scholarship including:
+   - Monetary amount of the scholarship
+   - Eligibility criteria
+   - Due date/deadline
+   - Expected qualities and achievements of the applicant
+   - Any other relevant details about the scholarship
+   If not found, use "Missing".
 
-3. **amount** (string): The monetary value with $ sign (e.g., "$5000", "$10,000"). If not found, use "Missing".
-
-4. **deadline** (string): The application deadline in DD-MM-YYYY format (e.g., "15-03-2025"). If not found, use "Missing".
-
-5. **eligibility** (string array): List of applicant requirements as an array. If not found, use ["Missing"].
+3. **EssayPrompt** (string): The essay prompt/question that the applicant needs to answer. If not found, use "Missing".
 
 IMPORTANT RULES:
 - Return ONLY valid JSON, no other text
-- For dates, convert any format to DD-MM-YYYY
-- For amounts, always include $ sign
-- For eligibility, return an array of strings
 - Use "Missing" for any field that cannot be determined
+- Keep all information in the ScholarshipDescription as a single comprehensive string
+- Extract the essay prompt exactly as provided
 
 RESPONSE FORMAT (JSON only):
 {
-  "title": "scholarship name here",
-  "criteria": "innovation_tech",
-  "amount": "$5000",
-  "deadline": "15-03-2025",
-  "eligibility": ["Must be enrolled in STEM program", "GPA 3.5 or higher"]
+  "ScholarshipName": "Name of the Scholarship",
+  "ScholarshipDescription": "This scholarship offers $5000 to students enrolled in STEM programs with a GPA of 3.5 or higher. Deadline is March 15, 2025. Applicants should demonstrate innovation and technical achievement.",
+  "EssayPrompt": "Describe a time when you demonstrated innovation in solving a technical problem."
 }`;
 }
 
@@ -111,13 +102,9 @@ function parseExtractionResponse(response: string): ScholarshipExtraction {
 
     // Validate and normalize the response
     const extraction: ScholarshipExtraction = {
-      title: parsed.title || "Missing",
-      criteria: validateCriteria(parsed.criteria),
-      amount: parsed.amount || "Missing",
-      deadline: parsed.deadline || "Missing",
-      eligibility: Array.isArray(parsed.eligibility)
-        ? parsed.eligibility
-        : ["Missing"],
+      ScholarshipName: parsed.ScholarshipName || "Missing",
+      ScholarshipDescription: parsed.ScholarshipDescription || "Missing",
+      EssayPrompt: parsed.EssayPrompt || "Missing",
     };
 
     return extraction;
@@ -127,23 +114,3 @@ function parseExtractionResponse(response: string): ScholarshipExtraction {
   }
 }
 
-/**
- * Validate criteria field
- */
-function validateCriteria(
-  criteria: string
-): ScholarshipExtraction["criteria"] {
-  const validTypes = [
-    "innovation_tech",
-    "merit_academic",
-    "community_service",
-    "leadership_entrepreneurial",
-    "Missing",
-  ];
-
-  if (validTypes.includes(criteria)) {
-    return criteria as ScholarshipExtraction["criteria"];
-  }
-
-  return "Missing";
-}
