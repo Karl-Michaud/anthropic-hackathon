@@ -1,5 +1,5 @@
-import Whiteboard from "./Whiteboard";
+import Whiteboard from '@/app/components/Whiteboard'
 
 export default function BoardPage() {
-  return <Whiteboard />;
+  return <Whiteboard />
 }
