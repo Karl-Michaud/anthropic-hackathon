@@ -1,4 +1,4 @@
-export interface ScholarshipHiddenCriteriaAnalysis {
+export interface IScholarshipHiddenCriteria {
   scholarship_id?: string
   title?: string
   implicit_criteria: Array<{

@@ -1,4 +1,4 @@
-export interface ScholarshipPrioritiesAnalysis {
+export interface IScholarshipPriorities {
   scholarship_id?: string
   title?: string
   primary_focus:
