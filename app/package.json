@@ -9,7 +9,8 @@
     "lint": "eslint",
     "format": "prettier -w app",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "sbd": "/Users/daviddimalanta/.nvm/versions/node/v22.21.1/bin/node ./node_modules/.bin/storybook dev -p 6006"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.70.0",
