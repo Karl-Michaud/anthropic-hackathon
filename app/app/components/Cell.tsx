@@ -1,6 +1,7 @@
 'use client'
 
 import { MouseEvent, useState, useRef, useEffect } from 'react'
+import { useEditing } from '../context/EditingContext'
 
 export interface CellData {
   id: string
@@ -29,35 +30,40 @@ export default function Cell({
   onMouseDown,
   onTextChange,
 }: CellProps) {
-  const [isEditing, setIsEditing] = useState(false)
+  const [isEditingLocal, setIsEditingLocal] = useState(false)
   const [editText, setEditText] = useState(cell.text)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const { setEditing } = useEditing()
 
   useEffect(() => {
-    if (isEditing && textareaRef.current) {
+    if (isEditingLocal && textareaRef.current) {
       textareaRef.current.focus()
       textareaRef.current.select()
     }
-  }, [isEditing])
+  }, [isEditingLocal])
 
   const handleDoubleClick = (e: MouseEvent<HTMLDivElement>) => {
     e.stopPropagation()
-    setIsEditing(true)
+    setIsEditingLocal(true)
+    setEditing(true)
     setEditText(cell.text)
   }
 
   const handleBlur = () => {
-    setIsEditing(false)
+    setIsEditingLocal(false)
+    setEditing(false)
     onTextChange(cell.id, editText)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Escape') {
-      setIsEditing(false)
+      setIsEditingLocal(false)
+      setEditing(false)
       setEditText(cell.text)
     } else if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
-      setIsEditing(false)
+      setIsEditingLocal(false)
+      setEditing(false)
       onTextChange(cell.id, editText)
     }
   }
@@ -76,17 +82,17 @@ export default function Cell({
 
   return (
     <div
-      className={`absolute w-48 h-48 shadow-lg rounded-sm p-4 border hover:rotate-0 transition-transform ${isEditing ? '' : 'select-none'} ${getColorClasses(cell.color)}`}
+      className={`absolute w-48 h-48 shadow-lg rounded-sm p-4 border hover:rotate-0 transition-transform ${isEditingLocal ? '' : 'select-none'} ${getColorClasses(cell.color)}`}
       style={{
         top: `${cell.y}px`,
         left: `${cell.x}px`,
         transform: `rotate(${cell.rotation}deg)`,
-        cursor: isDragging ? 'grabbing' : isEditing ? 'text' : 'grab',
+        cursor: isDragging ? 'grabbing' : isEditingLocal ? 'text' : 'grab',
       }}
-      onMouseDown={(e) => !isEditing && onMouseDown(e, cell.id, cell.x, cell.y)}
+      onMouseDown={(e) => !isEditingLocal && onMouseDown(e, cell.id, cell.x, cell.y)}
       onDoubleClick={handleDoubleClick}
     >
-      {isEditing ? (
+      {isEditingLocal ? (
         <textarea
           ref={textareaRef}
           value={editText}

@@ -4,10 +4,22 @@ import { useRef, useState, useCallback, useEffect, MouseEvent } from 'react'
 import Cell, { CellData } from './Cell'
 import ZoomComponent from './ZoomComponent'
 import DraggableToolbar from './DraggableToolbar'
+import DraggableBlock from './DraggableBlock'
+import ScholarshipWithActions from './scholarship/ScholarshipWithActions'
+import EssayBlock from './essay/EssayBlock'
+import JsonOutputBlock from './scholarship/JsonOutputBlock'
+import { useWhiteboard } from '../context/WhiteboardContext'
+import { useEditing } from '../context/EditingContext'
 
 const ZOOM_MIN = 0.3
 const ZOOM_MAX = 1.0
 const ZOOM_STEP = 0.1
+
+interface BlockPosition {
+  id: string
+  x: number
+  y: number
+}
 
 export default function Whiteboard() {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -20,6 +32,130 @@ export default function Whiteboard() {
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
 
   const [cells, setCells] = useState<CellData[]>([])
+
+  // Block positions (scholarships and essays)
+  const [blockPositions, setBlockPositions] = useState<BlockPosition[]>([])
+  const [generatingEssayFor, setGeneratingEssayFor] = useState<string | null>(null)
+
+  const { scholarships, essays, jsonOutputs, updateScholarship, deleteScholarship, addEssay, updateEssay, deleteEssay } = useWhiteboard()
+  const { isEditing } = useEditing()
+
+  // Initialize positions for new scholarships
+  useEffect(() => {
+    scholarships.forEach((scholarship) => {
+      if (!blockPositions.find((p) => p.id === scholarship.id)) {
+        const viewportCenterX = window.innerWidth / 2
+        const viewportCenterY = window.innerHeight / 2
+        const canvasX = (viewportCenterX - position.x) / zoom - 275
+        const canvasY = (viewportCenterY - position.y) / zoom - 200
+
+        setBlockPositions((prev) => [
+          ...prev,
+          { id: scholarship.id, x: canvasX, y: canvasY },
+        ])
+      }
+    })
+  }, [scholarships, blockPositions, position, zoom])
+
+  // Initialize positions for new essays
+  useEffect(() => {
+    essays.forEach((essay) => {
+      if (!blockPositions.find((p) => p.id === essay.id)) {
+        const viewportCenterX = window.innerWidth / 2
+        const viewportCenterY = window.innerHeight / 2
+        const canvasX = (viewportCenterX - position.x) / zoom - 250 + Math.random() * 100
+        const canvasY = (viewportCenterY - position.y) / zoom - 150 + Math.random() * 100
+
+        setBlockPositions((prev) => [
+          ...prev,
+          { id: essay.id, x: canvasX, y: canvasY },
+        ])
+      }
+    })
+  }, [essays, blockPositions, position, zoom])
+
+  // Initialize positions for new JSON outputs (placed to the right of scholarship)
+  useEffect(() => {
+    jsonOutputs.forEach((jsonOutput) => {
+      if (!blockPositions.find((p) => p.id === jsonOutput.id)) {
+        const scholarshipPos = blockPositions.find((p) => p.id === jsonOutput.scholarshipId)
+        const canvasX = scholarshipPos ? scholarshipPos.x + 580 : 700
+        const canvasY = scholarshipPos ? scholarshipPos.y : 100
+
+        setBlockPositions((prev) => [
+          ...prev,
+          { id: jsonOutput.id, x: canvasX, y: canvasY },
+        ])
+      }
+    })
+  }, [jsonOutputs, blockPositions])
+
+  const getBlockPosition = useCallback(
+    (id: string) => blockPositions.find((p) => p.id === id) || { id, x: 100, y: 100 },
+    [blockPositions]
+  )
+
+  const handleBlockMouseDown = useCallback(
+    (e: MouseEvent<HTMLDivElement>, blockId: string, blockX: number, blockY: number) => {
+      e.stopPropagation()
+      setDraggingCellId(blockId)
+      setDragOffset({
+        x: e.clientX - position.x - blockX * zoom,
+        y: e.clientY - position.y - blockY * zoom,
+      })
+    },
+    [position, zoom]
+  )
+
+  const handleCreateDraft = useCallback(
+    (scholarshipId: string) => {
+      const scholarship = scholarships.find((s) => s.id === scholarshipId)
+      if (!scholarship) return
+
+      addEssay({
+        scholarshipId,
+        content: '',
+        maxWordCount: undefined,
+      })
+    },
+    [scholarships, addEssay]
+  )
+
+  const handleGenerateEssay = useCallback(
+    async (scholarshipId: string) => {
+      const scholarship = scholarships.find((s) => s.id === scholarshipId)
+      if (!scholarship) return
+
+      setGeneratingEssayFor(scholarshipId)
+
+      try {
+        const response = await fetch('/api/generate-essay', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            scholarshipTitle: scholarship.title,
+            scholarshipDescription: scholarship.description,
+            essayPrompt: scholarship.prompt,
+          }),
+        })
+
+        const result = await response.json()
+
+        if (result.success && result.data) {
+          addEssay({
+            scholarshipId,
+            content: result.data.content,
+            maxWordCount: undefined,
+          })
+        }
+      } catch (error) {
+        console.error('Failed to generate essay:', error)
+      } finally {
+        setGeneratingEssayFor(null)
+      }
+    },
+    [scholarships, addEssay]
+  )
 
   const addNewCell = useCallback(() => {
     const colors = ['yellow', 'blue', 'pink', 'green', 'purple', 'orange']
@@ -53,6 +189,9 @@ export default function Whiteboard() {
 
   const handleCanvasMouseDown = useCallback(
     (e: MouseEvent<HTMLDivElement>) => {
+      // Don't pan if editing text
+      if (isEditing) return
+
       // Left-click to pan (only if not clicking on a cell)
       if (e.button === 0 && !draggingCellId) {
         setIsPanning(true)
@@ -62,7 +201,7 @@ export default function Whiteboard() {
         })
       }
     },
-    [position, draggingCellId],
+    [position, draggingCellId, isEditing],
   )
 
   const handleMouseMove = useCallback(
@@ -78,11 +217,21 @@ export default function Whiteboard() {
         const newX = (e.clientX - dragOffset.x - position.x) / zoom
         const newY = (e.clientY - dragOffset.y - position.y) / zoom
 
-        setCells((prev) =>
-          prev.map((cell) =>
-            cell.id === draggingCellId ? { ...cell, x: newX, y: newY } : cell,
-          ),
-        )
+        // Check if it's a cell
+        if (draggingCellId.startsWith('cell-')) {
+          setCells((prev) =>
+            prev.map((cell) =>
+              cell.id === draggingCellId ? { ...cell, x: newX, y: newY } : cell,
+            ),
+          )
+        } else {
+          // It's a scholarship or essay block
+          setBlockPositions((prev) =>
+            prev.map((p) =>
+              p.id === draggingCellId ? { ...p, x: newX, y: newY } : p,
+            ),
+          )
+        }
       }
     },
     [isPanning, draggingCellId, startPos, dragOffset, position, zoom],
@@ -205,6 +354,69 @@ export default function Whiteboard() {
             onTextChange={handleTextChange}
           />
         ))}
+
+        {/* Render scholarship blocks */}
+        {scholarships.map((scholarship) => {
+          const pos = getBlockPosition(scholarship.id)
+          return (
+            <DraggableBlock
+              key={scholarship.id}
+              id={scholarship.id}
+              x={pos.x}
+              y={pos.y}
+              isDragging={draggingCellId === scholarship.id}
+              onMouseDown={handleBlockMouseDown}
+            >
+              <ScholarshipWithActions
+                data={scholarship}
+                onUpdate={updateScholarship}
+                onDelete={deleteScholarship}
+                onCreateDraft={handleCreateDraft}
+              />
+            </DraggableBlock>
+          )
+        })}
+
+        {/* Render essay blocks */}
+        {essays.map((essay) => {
+          const pos = getBlockPosition(essay.id)
+          const scholarship = scholarships.find((s) => s.id === essay.scholarshipId)
+          return (
+            <DraggableBlock
+              key={essay.id}
+              id={essay.id}
+              x={pos.x}
+              y={pos.y}
+              isDragging={draggingCellId === essay.id}
+              onMouseDown={handleBlockMouseDown}
+            >
+              <EssayBlock
+                data={essay}
+                scholarshipTitle={scholarship?.title}
+                onUpdate={updateEssay}
+                onDelete={deleteEssay}
+                isGenerating={generatingEssayFor === essay.scholarshipId}
+              />
+            </DraggableBlock>
+          )
+        })}
+
+        {/* Render JSON output blocks */}
+        {jsonOutputs.map((jsonOutput) => {
+          const pos = getBlockPosition(jsonOutput.id)
+          return (
+            <DraggableBlock
+              key={jsonOutput.id}
+              id={jsonOutput.id}
+              x={pos.x}
+              y={pos.y}
+              isDragging={draggingCellId === jsonOutput.id}
+              onMouseDown={handleBlockMouseDown}
+            >
+              <JsonOutputBlock data={jsonOutput.data} />
+            </DraggableBlock>
+          )
+        })}
       </div>
 
     </div>

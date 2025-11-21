@@ -5,19 +5,33 @@ import { useState } from 'react'
 import FileUploadArea from './FileUploadArea'
 import ManualEntryForm from './ManualEntryForm'
 
+export interface ScholarshipUploadResult {
+  title: string
+  description: string
+  prompt: string
+  hiddenRequirements: string[]
+}
+
 interface ScholarshipUploadPopupProps {
   isOpen: boolean
   onClose: () => void
+  onScholarshipCreated: (data: ScholarshipUploadResult) => void
 }
 
-export default function ScholarshipUploadPopup({ isOpen, onClose }: ScholarshipUploadPopupProps) {
+export default function ScholarshipUploadPopup({
+  isOpen,
+  onClose,
+  onScholarshipCreated,
+}: ScholarshipUploadPopupProps) {
   const [uploadMode, setUploadMode] = useState<'file' | 'manual'>('file')
   const [isProcessing, setIsProcessing] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   if (!isOpen) return null
 
   const handleFileUpload = async (file: File) => {
     setIsProcessing(true)
+    setError(null)
 
     try {
       const content = await readFileContent(file)
@@ -36,28 +50,38 @@ export default function ScholarshipUploadPopup({ isOpen, onClose }: ScholarshipU
 
       const result = await response.json()
 
-      if (result.success) {
-        console.log('Scholarship extracted:', result.data)
-        alert('Scholarship uploaded successfully!')
+      if (result.success && result.data) {
+        // Use extracted data, but provide sensible defaults if "Missing"
+        const getValue = (extracted: string, fallback: string) =>
+          extracted && extracted !== 'Missing' ? extracted : fallback
+
+        onScholarshipCreated({
+          title: getValue(result.data.ScholarshipName, 'Untitled Scholarship'),
+          description: getValue(result.data.ScholarshipDescription, ''),
+          prompt: getValue(result.data.EssayPrompt, ''),
+          hiddenRequirements: result.data.HiddenRequirements || [],
+        })
         onClose()
       } else {
-        alert(`Upload failed: ${result.error}`)
+        setError(result.error || 'Upload failed')
       }
-    } catch (error) {
-      console.error('Upload error:', error)
-      alert('An error occurred while uploading the scholarship')
+    } catch (err) {
+      console.error('Upload error:', err)
+      setError('An error occurred while uploading the scholarship')
     } finally {
       setIsProcessing(false)
     }
   }
 
-  const handleManualSubmit = async (title: string, description: string) => {
+  const handleManualSubmit = async (title: string, description: string, prompt: string) => {
     setIsProcessing(true)
+    setError(null)
 
     try {
       const content = JSON.stringify({
         title,
         description,
+        prompt,
       })
 
       const response = await fetch('/api/extract-scholarship', {
@@ -73,16 +97,38 @@ export default function ScholarshipUploadPopup({ isOpen, onClose }: ScholarshipU
 
       const result = await response.json()
 
-      if (result.success) {
-        console.log('Scholarship extracted:', result.data)
-        alert('Scholarship created successfully!')
+      if (result.success && result.data) {
+        // Use extracted data, but fall back to manual input if "Missing" or empty
+        const getName = (extracted: string, fallback: string) =>
+          extracted && extracted !== 'Missing' ? extracted : fallback
+
+        onScholarshipCreated({
+          title: getName(result.data.ScholarshipName, title),
+          description: getName(result.data.ScholarshipDescription, description),
+          prompt: getName(result.data.EssayPrompt, prompt),
+          hiddenRequirements: result.data.HiddenRequirements || [],
+        })
         onClose()
       } else {
-        alert(`Creation failed: ${result.error}`)
+        // If API fails, still create with manual data
+        onScholarshipCreated({
+          title,
+          description,
+          prompt,
+          hiddenRequirements: [],
+        })
+        onClose()
       }
-    } catch (error) {
-      console.error('Creation error:', error)
-      alert('An error occurred while creating the scholarship')
+    } catch (err) {
+      console.error('Creation error:', err)
+      // If API fails, still create with manual data
+      onScholarshipCreated({
+        title,
+        description,
+        prompt,
+        hiddenRequirements: [],
+      })
+      onClose()
     } finally {
       setIsProcessing(false)
     }
@@ -163,6 +209,13 @@ export default function ScholarshipUploadPopup({ isOpen, onClose }: ScholarshipU
           Manual Entry
         </button>
       </div>
+
+      {/* Error Message */}
+      {error && (
+        <div className="mx-4 mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-sm text-red-600">{error}</p>
+        </div>
+      )}
 
       {/* Content */}
       <div className="p-4 max-h-[600px] overflow-y-auto">

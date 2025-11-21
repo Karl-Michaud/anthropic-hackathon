@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
 import Navigation from './components/sidebar/Navigation'
+import { WhiteboardProvider } from './context/WhiteboardContext'
+import { EditingProvider } from './context/EditingContext'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -28,11 +30,15 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <div className="relative flex">
-          <Navigation />
+        <EditingProvider>
+          <WhiteboardProvider>
+            <div className="relative flex">
+              <Navigation />
 
-          <main className="flex-1 ml-24 p-6">{children}</main>
-        </div>
+              <main className="flex-1 ml-24 p-6">{children}</main>
+            </div>
+          </WhiteboardProvider>
+        </EditingProvider>
       </body>
     </html>
   )

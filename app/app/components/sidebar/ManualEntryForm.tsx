@@ -3,20 +3,21 @@
 import { useState } from 'react'
 
 interface ManualEntryFormProps {
-  onSubmit: (title: string, description: string) => void
+  onSubmit: (title: string, description: string, prompt: string) => void
   isSubmitting: boolean
 }
 
 export default function ManualEntryForm({ onSubmit, isSubmitting }: ManualEntryFormProps) {
   const [scholarshipTitle, setScholarshipTitle] = useState('')
   const [scholarshipDescription, setScholarshipDescription] = useState('')
+  const [scholarshipPrompt, setScholarshipPrompt] = useState('')
 
   const handleSubmit = () => {
     if (!scholarshipTitle.trim() || !scholarshipDescription.trim()) {
-      alert('Please fill in both title and description')
+      alert('Please fill in title and description')
       return
     }
-    onSubmit(scholarshipTitle, scholarshipDescription)
+    onSubmit(scholarshipTitle, scholarshipDescription, scholarshipPrompt)
   }
 
   return (
@@ -42,7 +43,20 @@ export default function ManualEntryForm({ onSubmit, isSubmitting }: ManualEntryF
           value={scholarshipDescription}
           onChange={(e) => setScholarshipDescription(e.target.value)}
           placeholder="Enter scholarship description"
-          rows={8}
+          rows={4}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent resize-none text-gray-900 placeholder:text-gray-400"
+          disabled={isSubmitting}
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Essay Prompt
+        </label>
+        <textarea
+          value={scholarshipPrompt}
+          onChange={(e) => setScholarshipPrompt(e.target.value)}
+          placeholder="Enter essay prompt (optional)"
+          rows={3}
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent resize-none text-gray-900 placeholder:text-gray-400"
           disabled={isSubmitting}
         />

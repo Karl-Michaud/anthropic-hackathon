@@ -5,7 +5,8 @@ import { useState } from 'react'
 import NavigationItem from './NavigationItem'
 import ScholarshipUploadButton from './ScholarshipUploadButton'
 import AccountButton from './AccountButton'
-import ScholarshipUploadPopup from './ScholarshipUploadPopup'
+import ScholarshipUploadPopup, { ScholarshipUploadResult } from './ScholarshipUploadPopup'
+import { useWhiteboard } from '../../context/WhiteboardContext'
 
 const navItems = [
   { href: '/', icon: Home, label: 'Home' },
@@ -13,10 +14,28 @@ const navItems = [
 
 export default function Navigation() {
   const [isPopupOpen, setIsPopupOpen] = useState(false)
+  const { addScholarship, addJsonOutput } = useWhiteboard()
+
+  const handleScholarshipCreated = (data: ScholarshipUploadResult) => {
+    const scholarshipId = addScholarship({
+      title: data.title,
+      description: data.description,
+      prompt: data.prompt,
+      hiddenRequirements: data.hiddenRequirements,
+    })
+
+    // Also add the JSON output block
+    addJsonOutput(scholarshipId, {
+      ScholarshipName: data.title,
+      ScholarshipDescription: data.description,
+      EssayPrompt: data.prompt,
+      HiddenRequirements: data.hiddenRequirements,
+    })
+  }
 
   return (
     <>
-      <div className="fixed left-4 top-4 bottom-4 z-50 rounded-2xl backdrop-blur-md bg-white/80 shadow-lg border border-white/80 p-3 flex flex-col items-center">
+      <div className="fixed left-6 top-6 bottom-6 z-50 rounded-2xl backdrop-blur-md bg-white/80 shadow-lg border border-white/80 p-2 flex flex-col items-center">
         {/* Top navigation items */}
         <nav className="flex flex-col gap-4 items-center py-4">
           {navItems.map(({ href, icon, label }) => (
@@ -40,7 +59,11 @@ export default function Navigation() {
       </div>
 
       {/* Popup rendered outside sidebar - will be centered on screen */}
-      <ScholarshipUploadPopup isOpen={isPopupOpen} onClose={() => setIsPopupOpen(false)} />
+      <ScholarshipUploadPopup
+        isOpen={isPopupOpen}
+        onClose={() => setIsPopupOpen(false)}
+        onScholarshipCreated={handleScholarshipCreated}
+      />
     </>
   )
 }
