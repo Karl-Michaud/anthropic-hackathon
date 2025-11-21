@@ -3,6 +3,7 @@
 import { useRef, useState, useCallback, useEffect, MouseEvent } from 'react'
 import Cell, { CellData } from './Cell'
 import ZoomComponent from './ZoomComponent'
+import DraggableToolbar from './DraggableToolbar'
 
 const ZOOM_MIN = 0.3
 const ZOOM_MAX = 1.0
@@ -73,8 +74,9 @@ export default function Whiteboard() {
       }
 
       if (draggingCellId) {
-        const newX = e.clientX - dragOffset.x - position.x
-        const newY = e.clientY - dragOffset.y - position.y
+        // Divide by zoom to account for the scaled canvas
+        const newX = (e.clientX - dragOffset.x - position.x) / zoom
+        const newY = (e.clientY - dragOffset.y - position.y) / zoom
 
         setCells((prev) =>
           prev.map((cell) =>
@@ -83,7 +85,7 @@ export default function Whiteboard() {
         )
       }
     },
-    [isPanning, draggingCellId, startPos, dragOffset, position],
+    [isPanning, draggingCellId, startPos, dragOffset, position, zoom],
   )
 
   const handleMouseUp = useCallback(() => {
@@ -100,12 +102,13 @@ export default function Whiteboard() {
     ) => {
       e.stopPropagation()
       setDraggingCellId(cellId)
+      // Account for zoom: cellX/Y are in canvas coordinates, need to scale to screen
       setDragOffset({
-        x: e.clientX - position.x - cellX,
-        y: e.clientY - position.y - cellY,
+        x: e.clientX - position.x - cellX * zoom,
+        y: e.clientY - position.y - cellY * zoom,
       })
     },
-    [position],
+    [position, zoom],
   )
 
   const handleTextChange = useCallback((cellId: string, newText: string) => {
@@ -171,13 +174,8 @@ export default function Whiteboard() {
         cursor: isPanning ? 'grabbing' : 'default',
       }}
     >
-      {/* Add Cell Button */}
-      <button
-        onClick={addNewCell}
-        className="absolute top-4 left-4 z-50 px-4 py-2 bg-white hover:bg-gray-50 border-2 border-gray-300 rounded-lg shadow-md transition-all hover:shadow-lg active:scale-95"
-      >
-        <span className="text-sm font-medium text-gray-700">+ Add Cell</span>
-      </button>
+      {/* Draggable Toolbar */}
+      <DraggableToolbar onAddCell={addNewCell} />
 
       {/* Zoom Controls */}
       <div className="absolute top-4 right-4 z-50">
@@ -209,14 +207,6 @@ export default function Whiteboard() {
         ))}
       </div>
 
-      {/* Instructions overlay */}
-      <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg shadow-md border border-gray-200 pointer-events-none z-50">
-        <p className="text-xs text-gray-600">
-          <span className="font-semibold">Click + Drag</span> background to pan
-          • <span className="font-semibold">Click + Drag</span> cells to move
-          them
-        </p>
-      </div>
     </div>
   )
 }
