@@ -2,15 +2,9 @@
 
 import { MouseEvent, useState, useRef, useEffect } from 'react'
 import { useEditing } from '../context/EditingContext'
+import { CellData } from '../context/WhiteboardContext'
 
-export interface CellData {
-  id: string
-  x: number
-  y: number
-  color: string
-  text: string
-  rotation: number
-}
+export type { CellData }
 
 interface CellProps {
   cell: CellData

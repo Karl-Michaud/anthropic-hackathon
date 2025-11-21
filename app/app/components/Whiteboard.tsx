@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState, useCallback, useEffect, MouseEvent } from 'react'
-import Cell, { CellData } from './Cell'
+import Cell from './Cell'
 import ZoomComponent from './ZoomComponent'
 import DraggableToolbar from './DraggableToolbar'
 import DraggableBlock from './DraggableBlock'
@@ -15,12 +15,6 @@ const ZOOM_MIN = 0.3
 const ZOOM_MAX = 1.0
 const ZOOM_STEP = 0.1
 
-interface BlockPosition {
-  id: string
-  x: number
-  y: number
-}
-
 export default function Whiteboard() {
   const containerRef = useRef<HTMLDivElement>(null)
   const [isPanning, setIsPanning] = useState(false)
@@ -31,69 +25,66 @@ export default function Whiteboard() {
   const [draggingCellId, setDraggingCellId] = useState<string | null>(null)
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
 
-  const [cells, setCells] = useState<CellData[]>([])
-
-  // Block positions (scholarships and essays)
-  const [blockPositions, setBlockPositions] = useState<BlockPosition[]>([])
   const [generatingEssayFor, setGeneratingEssayFor] = useState<string | null>(null)
 
-  const { scholarships, essays, jsonOutputs, updateScholarship, deleteScholarship, addEssay, updateEssay, deleteEssay } = useWhiteboard()
+  const {
+    cells,
+    scholarships,
+    essays,
+    jsonOutputs,
+    blockPositions,
+    addCell,
+    updateCell,
+    updateScholarship,
+    deleteScholarship,
+    addEssay,
+    updateEssay,
+    deleteEssay,
+    updateBlockPosition,
+    getBlockPosition,
+  } = useWhiteboard()
   const { isEditing } = useEditing()
 
   // Initialize positions for new scholarships
   useEffect(() => {
     scholarships.forEach((scholarship) => {
-      if (!blockPositions.find((p) => p.id === scholarship.id)) {
+      const existing = blockPositions.find((p) => p.id === scholarship.id)
+      if (!existing) {
         const viewportCenterX = window.innerWidth / 2
         const viewportCenterY = window.innerHeight / 2
         const canvasX = (viewportCenterX - position.x) / zoom - 275
         const canvasY = (viewportCenterY - position.y) / zoom - 200
-
-        setBlockPositions((prev) => [
-          ...prev,
-          { id: scholarship.id, x: canvasX, y: canvasY },
-        ])
+        updateBlockPosition(scholarship.id, canvasX, canvasY)
       }
     })
-  }, [scholarships, blockPositions, position, zoom])
+  }, [scholarships, blockPositions, position, zoom, updateBlockPosition])
 
   // Initialize positions for new essays
   useEffect(() => {
     essays.forEach((essay) => {
-      if (!blockPositions.find((p) => p.id === essay.id)) {
+      const existing = blockPositions.find((p) => p.id === essay.id)
+      if (!existing) {
         const viewportCenterX = window.innerWidth / 2
         const viewportCenterY = window.innerHeight / 2
         const canvasX = (viewportCenterX - position.x) / zoom - 250 + Math.random() * 100
         const canvasY = (viewportCenterY - position.y) / zoom - 150 + Math.random() * 100
-
-        setBlockPositions((prev) => [
-          ...prev,
-          { id: essay.id, x: canvasX, y: canvasY },
-        ])
+        updateBlockPosition(essay.id, canvasX, canvasY)
       }
     })
-  }, [essays, blockPositions, position, zoom])
+  }, [essays, blockPositions, position, zoom, updateBlockPosition])
 
   // Initialize positions for new JSON outputs (placed to the right of scholarship)
   useEffect(() => {
     jsonOutputs.forEach((jsonOutput) => {
-      if (!blockPositions.find((p) => p.id === jsonOutput.id)) {
+      const existing = blockPositions.find((p) => p.id === jsonOutput.id)
+      if (!existing) {
         const scholarshipPos = blockPositions.find((p) => p.id === jsonOutput.scholarshipId)
         const canvasX = scholarshipPos ? scholarshipPos.x + 580 : 700
         const canvasY = scholarshipPos ? scholarshipPos.y : 100
-
-        setBlockPositions((prev) => [
-          ...prev,
-          { id: jsonOutput.id, x: canvasX, y: canvasY },
-        ])
+        updateBlockPosition(jsonOutput.id, canvasX, canvasY)
       }
     })
-  }, [jsonOutputs, blockPositions])
-
-  const getBlockPosition = useCallback(
-    (id: string) => blockPositions.find((p) => p.id === id) || { id, x: 100, y: 100 },
-    [blockPositions]
-  )
+  }, [jsonOutputs, blockPositions, updateBlockPosition])
 
   const handleBlockMouseDown = useCallback(
     (e: MouseEvent<HTMLDivElement>, blockId: string, blockX: number, blockY: number) => {
@@ -160,39 +151,30 @@ export default function Whiteboard() {
   const addNewCell = useCallback(() => {
     const colors = ['yellow', 'blue', 'pink', 'green', 'purple', 'orange']
     const randomColor = colors[Math.floor(Math.random() * colors.length)]
-    const randomRotation = Math.floor(Math.random() * 7) - 3 // -3 to 3 degrees
+    const randomRotation = Math.floor(Math.random() * 7) - 3
 
-    // Calculate center of the viewport in canvas coordinates
     const viewportCenterX = window.innerWidth / 2
     const viewportCenterY = window.innerHeight / 2
 
-    // Convert viewport center to canvas coordinates (accounting for both pan offset AND zoom)
-    // Cell is 192px (w-48), so offset by half to center it
     const cellWidth = 192
     const cellHeight = 192
 
-    // Account for zoom: divide by zoom to get the correct canvas position
     const canvasCenterX = (viewportCenterX - position.x) / zoom - cellWidth / 2
     const canvasCenterY = (viewportCenterY - position.y) / zoom - cellHeight / 2
 
-    const newCell: CellData = {
-      id: `cell-${Date.now()}`,
+    addCell({
       x: canvasCenterX,
       y: canvasCenterY,
       color: randomColor,
       text: 'Double click to edit...',
       rotation: randomRotation,
-    }
-
-    setCells((prev) => [...prev, newCell])
-  }, [position, zoom])
+    })
+  }, [position, zoom, addCell])
 
   const handleCanvasMouseDown = useCallback(
     (e: MouseEvent<HTMLDivElement>) => {
-      // Don't pan if editing text
       if (isEditing) return
 
-      // Left-click to pan (only if not clicking on a cell)
       if (e.button === 0 && !draggingCellId) {
         setIsPanning(true)
         setStartPos({
@@ -213,28 +195,20 @@ export default function Whiteboard() {
       }
 
       if (draggingCellId) {
-        // Divide by zoom to account for the scaled canvas
         const newX = (e.clientX - dragOffset.x - position.x) / zoom
         const newY = (e.clientY - dragOffset.y - position.y) / zoom
 
-        // Check if it's a cell
         if (draggingCellId.startsWith('cell-')) {
-          setCells((prev) =>
-            prev.map((cell) =>
-              cell.id === draggingCellId ? { ...cell, x: newX, y: newY } : cell,
-            ),
-          )
+          const cell = cells.find((c) => c.id === draggingCellId)
+          if (cell) {
+            updateCell({ ...cell, x: newX, y: newY })
+          }
         } else {
-          // It's a scholarship or essay block
-          setBlockPositions((prev) =>
-            prev.map((p) =>
-              p.id === draggingCellId ? { ...p, x: newX, y: newY } : p,
-            ),
-          )
+          updateBlockPosition(draggingCellId, newX, newY)
         }
       }
     },
-    [isPanning, draggingCellId, startPos, dragOffset, position, zoom],
+    [isPanning, draggingCellId, startPos, dragOffset, position, zoom, cells, updateCell, updateBlockPosition],
   )
 
   const handleMouseUp = useCallback(() => {
@@ -251,7 +225,6 @@ export default function Whiteboard() {
     ) => {
       e.stopPropagation()
       setDraggingCellId(cellId)
-      // Account for zoom: cellX/Y are in canvas coordinates, need to scale to screen
       setDragOffset({
         x: e.clientX - position.x - cellX * zoom,
         y: e.clientY - position.y - cellY * zoom,
@@ -261,12 +234,11 @@ export default function Whiteboard() {
   )
 
   const handleTextChange = useCallback((cellId: string, newText: string) => {
-    setCells((prev) =>
-      prev.map((cell) =>
-        cell.id === cellId ? { ...cell, text: newText } : cell,
-      ),
-    )
-  }, [])
+    const cell = cells.find((c) => c.id === cellId)
+    if (cell) {
+      updateCell({ ...cell, text: newText })
+    }
+  }, [cells, updateCell])
 
   const handleZoomIn = useCallback(() => {
     setZoom((prevZoom) => Math.min(prevZoom + ZOOM_STEP, ZOOM_MAX))
@@ -277,23 +249,18 @@ export default function Whiteboard() {
   }, [])
 
   const handleWheel = useCallback((e: WheelEvent) => {
-    // Check for cmd (Mac) or ctrl (Windows/Linux)
     if (e.metaKey || e.ctrlKey) {
       e.preventDefault()
 
-      // Determine zoom direction based on scroll direction
       const delta = e.deltaY
       if (delta < 0) {
-        // Scrolling up = zoom in
         setZoom((prevZoom) => Math.min(prevZoom + ZOOM_STEP, ZOOM_MAX))
       } else if (delta > 0) {
-        // Scrolling down = zoom out
         setZoom((prevZoom) => Math.max(prevZoom - ZOOM_STEP, ZOOM_MIN))
       }
     }
   }, [])
 
-  // Add wheel event listener for zoom control
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
@@ -305,8 +272,7 @@ export default function Whiteboard() {
     }
   }, [handleWheel])
 
-  // Calculate dot opacity based on zoom (fade out as we zoom out)
-  const dotOpacity = zoom // At 1.0 = full opacity, at 0.3 = 30% opacity
+  const dotOpacity = zoom
   const dotColor = `rgba(208, 201, 184, ${dotOpacity})`
 
   return (
@@ -418,7 +384,6 @@ export default function Whiteboard() {
           )
         })}
       </div>
-
     </div>
   )
 }
