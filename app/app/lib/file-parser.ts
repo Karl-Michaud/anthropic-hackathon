@@ -60,15 +60,26 @@ function parseJsonContent(content: string): string {
 /**
  * Parse PDF content
  * Note: Requires 'pdf-parse' package to be installed
- * @param base64Content - PDF file content in base64 format
+ * @param base64Content - PDF file content in base64 format (can be data URL or raw base64)
  */
 async function parsePdfContent(base64Content: string): Promise<string> {
   try {
     // Dynamically import pdf-parse (only when needed)
     const pdfParse = await import("pdf-parse/lib/pdf-parse");
 
+    // Extract base64 data if it's a data URL
+    let base64Data = base64Content;
+    if (base64Content.startsWith("data:")) {
+      const base64Match = base64Content.match(/base64,(.+)/);
+      if (base64Match) {
+        base64Data = base64Match[1];
+      } else {
+        throw new Error("Invalid PDF data URL format");
+      }
+    }
+
     // Convert base64 to buffer
-    const buffer = Buffer.from(base64Content, "base64");
+    const buffer = Buffer.from(base64Data, "base64");
 
     // Parse PDF
     const data = await pdfParse.default(buffer);

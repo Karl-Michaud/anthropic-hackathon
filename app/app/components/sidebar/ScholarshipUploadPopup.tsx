@@ -4,6 +4,7 @@ import { X } from 'lucide-react'
 import { useState } from 'react'
 import FileUploadArea from './FileUploadArea'
 import ManualEntryForm from './ManualEntryForm'
+import UploadModeToggle from './UploadModeToggle'
 
 export interface ScholarshipUploadResult {
   title: string
@@ -23,7 +24,7 @@ export default function ScholarshipUploadPopup({
   onClose,
   onScholarshipCreated,
 }: ScholarshipUploadPopupProps) {
-  const [uploadMode, setUploadMode] = useState<'file' | 'manual'>('file')
+  const [uploadMode, setUploadMode] = useState<'file' | 'text'>('file')
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -51,7 +52,6 @@ export default function ScholarshipUploadPopup({
       const result = await response.json()
 
       if (result.success && result.data) {
-        // Use extracted data, but provide sensible defaults if "Missing"
         const getValue = (extracted: string, fallback: string) =>
           extracted && extracted !== 'Missing' ? extracted : fallback
 
@@ -98,7 +98,6 @@ export default function ScholarshipUploadPopup({
       const result = await response.json()
 
       if (result.success && result.data) {
-        // Use extracted data, but fall back to manual input if "Missing" or empty
         const getName = (extracted: string, fallback: string) =>
           extracted && extracted !== 'Missing' ? extracted : fallback
 
@@ -110,7 +109,6 @@ export default function ScholarshipUploadPopup({
         })
         onClose()
       } else {
-        // If API fails, still create with manual data
         onScholarshipCreated({
           title,
           description,
@@ -121,7 +119,6 @@ export default function ScholarshipUploadPopup({
       }
     } catch (err) {
       console.error('Creation error:', err)
-      // If API fails, still create with manual data
       onScholarshipCreated({
         title,
         description,
@@ -170,61 +167,42 @@ export default function ScholarshipUploadPopup({
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" />
 
-      {/* Popup */}
-      <div
-        className="relative w-[400px] bg-white rounded-2xl shadow-2xl border border-gray-200"
-        onClick={(e) => e.stopPropagation()}
-      >
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900">Upload Scholarship</h3>
-        <button
-          onClick={onClose}
-          className="p-1 rounded-lg hover:bg-gray-100 transition-colors"
-        >
-          <X size={18} className="text-gray-500" />
-        </button>
-      </div>
-
-      {/* Mode Toggle */}
-      <div className="flex gap-2 p-4 border-b border-gray-200">
-        <button
-          onClick={() => setUploadMode('file')}
-          className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-            uploadMode === 'file'
-              ? 'bg-gray-900 text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-          }`}
-        >
-          Upload File
-        </button>
-        <button
-          onClick={() => setUploadMode('manual')}
-          className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-            uploadMode === 'manual'
-              ? 'bg-gray-900 text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-          }`}
-        >
-          Manual Entry
-        </button>
-      </div>
-
-      {/* Error Message */}
-      {error && (
-        <div className="mx-4 mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-sm text-red-600">{error}</p>
+      {/* Popup with floating toggle above */}
+      <div className="relative flex flex-col items-start" onClick={(e) => e.stopPropagation()}>
+        {/* Floating Mode Toggle - above popup */}
+        <div className="mb-3">
+          <UploadModeToggle mode={uploadMode} onModeChange={setUploadMode} />
         </div>
-      )}
 
-      {/* Content */}
-      <div className="p-4 max-h-[600px] overflow-y-auto">
-        {uploadMode === 'file' ? (
-          <FileUploadArea onFileUpload={handleFileUpload} isUploading={isProcessing} />
-        ) : (
-          <ManualEntryForm onSubmit={handleManualSubmit} isSubmitting={isProcessing} />
-        )}
-      </div>
+        {/* Main Popup */}
+        <div className="w-[400px] bg-white rounded-2xl shadow-2xl border border-gray-200">
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 border-b border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900">Upload Scholarship</h3>
+            <button
+              onClick={onClose}
+              className="p-1 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <X size={18} className="text-gray-500" />
+            </button>
+          </div>
+
+          {/* Error Message */}
+          {error && (
+            <div className="mx-4 mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
+
+          {/* Content */}
+          <div className="p-4 max-h-[600px] overflow-y-auto">
+            {uploadMode === 'file' ? (
+              <FileUploadArea onFileUpload={handleFileUpload} isUploading={isProcessing} />
+            ) : (
+              <ManualEntryForm onSubmit={handleManualSubmit} isSubmitting={isProcessing} />
+            )}
+          </div>
+        </div>
       </div>
     </div>
   )
