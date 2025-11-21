@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Copy, Check } from 'lucide-react'
+import DeleteButton from '../common/DeleteButton'
 
 interface JsonOutputBlockProps {
   data: {
@@ -10,10 +11,12 @@ interface JsonOutputBlockProps {
     EssayPrompt: string
     HiddenRequirements?: string[]
   }
+  onDelete: () => void
 }
 
-export default function JsonOutputBlock({ data }: JsonOutputBlockProps) {
+export default function JsonOutputBlock({ data, onDelete }: JsonOutputBlockProps) {
   const [copied, setCopied] = useState(false)
+  const [isHovered, setIsHovered] = useState(false)
 
   const jsonString = JSON.stringify(data, null, 2)
 
@@ -24,7 +27,18 @@ export default function JsonOutputBlock({ data }: JsonOutputBlockProps) {
   }
 
   return (
-    <div className="w-[450px] bg-gray-900 rounded-xl shadow-lg border border-gray-700 overflow-hidden">
+    <div
+      className="w-[450px] bg-gray-900 rounded-xl shadow-lg border border-gray-700 overflow-hidden relative"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {/* Delete button */}
+      {isHovered && (
+        <div className="absolute -top-2 -right-2 z-10">
+          <DeleteButton onClick={onDelete} />
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2 bg-gray-800 border-b border-gray-700">
         <span className="text-xs font-medium text-gray-400">AI Pipeline Output</span>

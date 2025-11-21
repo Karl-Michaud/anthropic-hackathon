@@ -1,8 +1,6 @@
 'use client'
 
 import { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from 'react'
-import { ScholarshipData } from '../components/scholarship/ScholarshipBlock'
-import { EssayData } from '../components/essay/EssayBlock'
 
 const STORAGE_KEY = 'whiteboard-data'
 const DEBOUNCE_MS = 500
@@ -14,6 +12,21 @@ export interface CellData {
   color: string
   text: string
   rotation: number
+}
+
+export interface ScholarshipData {
+  id: string
+  title: string
+  description: string
+  prompt: string
+  hiddenRequirements: string[]
+}
+
+export interface EssayData {
+  id: string
+  scholarshipId: string
+  content: string
+  maxWordCount?: number
 }
 
 export interface BlockPosition {
@@ -66,6 +79,7 @@ interface WhiteboardContextType {
 
   // JSON output actions
   addJsonOutput: (scholarshipId: string, data: JsonOutputData['data']) => string
+  deleteJsonOutput: (jsonOutputId: string) => void
 
   // Position actions
   updateBlockPosition: (id: string, x: number, y: number) => void
@@ -220,6 +234,11 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
     return id
   }, [])
 
+  const deleteJsonOutput = useCallback((jsonOutputId: string) => {
+    setJsonOutputs((prev) => prev.filter((o) => o.id !== jsonOutputId))
+    setBlockPositions((prev) => prev.filter((p) => p.id !== jsonOutputId))
+  }, [])
+
   // Position actions
   const updateBlockPosition = useCallback((id: string, x: number, y: number) => {
     setBlockPositions((prev) => {
@@ -265,6 +284,7 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
         updateEssay,
         deleteEssay,
         addJsonOutput,
+        deleteJsonOutput,
         updateBlockPosition,
         getBlockPosition,
         clearAll,

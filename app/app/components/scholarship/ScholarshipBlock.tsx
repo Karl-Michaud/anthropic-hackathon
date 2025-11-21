@@ -7,14 +7,9 @@ import ScholarshipEditButtons from './ScholarshipEditButtons'
 import ScholarshipMenu from './ScholarshipMenu'
 import ScholarshipDeleteConfirm from './ScholarshipDeleteConfirm'
 import { useEditing } from '../../context/EditingContext'
+import { ScholarshipData } from '../../context/WhiteboardContext'
 
-export interface ScholarshipData {
-  id: string
-  title: string
-  description: string
-  prompt: string
-  hiddenRequirements: string[]
-}
+export type { ScholarshipData }
 
 interface ScholarshipBlockProps {
   data: ScholarshipData

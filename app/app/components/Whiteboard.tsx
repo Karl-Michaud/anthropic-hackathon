@@ -35,11 +35,13 @@ export default function Whiteboard() {
     blockPositions,
     addCell,
     updateCell,
+    deleteCell,
     updateScholarship,
     deleteScholarship,
     addEssay,
     updateEssay,
     deleteEssay,
+    deleteJsonOutput,
     updateBlockPosition,
     getBlockPosition,
   } = useWhiteboard()
@@ -318,6 +320,7 @@ export default function Whiteboard() {
             isDragging={draggingCellId === cell.id}
             onMouseDown={handleCellMouseDown}
             onTextChange={handleTextChange}
+            onDelete={deleteCell}
           />
         ))}
 
@@ -379,7 +382,10 @@ export default function Whiteboard() {
               isDragging={draggingCellId === jsonOutput.id}
               onMouseDown={handleBlockMouseDown}
             >
-              <JsonOutputBlock data={jsonOutput.data} />
+              <JsonOutputBlock
+                data={jsonOutput.data}
+                onDelete={() => deleteJsonOutput(jsonOutput.id)}
+              />
             </DraggableBlock>
           )
         })}

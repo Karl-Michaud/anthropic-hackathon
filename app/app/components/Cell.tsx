@@ -3,6 +3,7 @@
 import { MouseEvent, useState, useRef, useEffect } from 'react'
 import { useEditing } from '../context/EditingContext'
 import { CellData } from '../context/WhiteboardContext'
+import DeleteButton from './common/DeleteButton'
 
 export type { CellData }
 
@@ -16,6 +17,7 @@ interface CellProps {
     y: number,
   ) => void
   onTextChange: (cellId: string, newText: string) => void
+  onDelete: (cellId: string) => void
 }
 
 export default function Cell({
@@ -23,9 +25,11 @@ export default function Cell({
   isDragging,
   onMouseDown,
   onTextChange,
+  onDelete,
 }: CellProps) {
   const [isEditingLocal, setIsEditingLocal] = useState(false)
   const [editText, setEditText] = useState(cell.text)
+  const [isHovered, setIsHovered] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const { setEditing } = useEditing()
 
@@ -85,7 +89,16 @@ export default function Cell({
       }}
       onMouseDown={(e) => !isEditingLocal && onMouseDown(e, cell.id, cell.x, cell.y)}
       onDoubleClick={handleDoubleClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
+      {/* Delete button */}
+      {isHovered && !isEditingLocal && (
+        <div className="absolute -top-2 -right-2 z-10">
+          <DeleteButton onClick={() => onDelete(cell.id)} />
+        </div>
+      )}
+
       {isEditingLocal ? (
         <textarea
           ref={textareaRef}

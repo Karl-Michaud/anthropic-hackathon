@@ -1,7 +1,8 @@
 'use client'
 
-import ScholarshipBlock, { ScholarshipData } from './ScholarshipBlock'
+import ScholarshipBlock from './ScholarshipBlock'
 import ScholarshipActions from './ScholarshipActions'
+import { ScholarshipData } from '../../context/WhiteboardContext'
 
 interface ScholarshipWithActionsProps {
   data: ScholarshipData
