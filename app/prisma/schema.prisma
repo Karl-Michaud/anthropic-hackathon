@@ -1,0 +1,116 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Scholarship {
+  id          String   @unique @default(uuid())
+  title       String // the title of the scholarship 
+  description String // the description of the scholarship
+  prompts     Prompt[]
+
+  @@map("scholarships")
+}
+
+model Prompt {
+  id                   String                @id @default(cuid())
+  text                 String // The essay question or prompt text
+  promptHiddenCriteria PromptHiddenCriteria?
+  promptPersonality    PromptPersonality?
+  promptPriorities     PromptPriorities?
+  promptValues         PromptValues?
+  generateDraft        GenerateDraft?
+
+  scholarshipId String      @map("scholarship_id")
+  scholarship   Scholarship @relation(fields: [scholarshipId], references: [id])
+
+  @@map("prompts")
+}
+
+model PromptHiddenCriteria {
+  id                          String          @id @default(cuid())
+  scholarshipHiddenCriteriaId String?         @map("scholarship_hidden_criteria_id")
+  trait                       String
+  rationale                   String
+  evidencePhrases             String[]        @map("evidence_phrases")
+  importance                  ImportanceLevel
+
+  promptId String @unique @map("prompt_id")
+  prompt   Prompt @relation(fields: [promptId], references: [id])
+
+  @@map("prompt_hidden_criteria")
+}
+
+enum ImportanceLevel {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+model PromptPersonality {
+  id                    String   @id @default(cuid())
+  spirit                String // what is the purpose of the scholarship? Why was it established? How can the essay be tailored to match the spirit of the scholarship?
+  toneStyle             String   @map("tone_style") // be humourous, serious, and/or dramatic?
+  valuesEmphasized      String[] @map("values_emphasized") // academic, service, etc
+  recommendedEssayFocus String   @map("recommended_essay_focus") // what the essay should talk about (with regards to what the user has entered)
+
+  promptId String @unique @map("prompt_id")
+  prompt   Prompt @relation(fields: [promptId], references: [id])
+
+  @@map("prompt_personalities")
+}
+
+model PromptPriorities {
+  id              String       @id @default(cuid())
+  primaryFocus    PrimaryFocus @map("primary_focus") // a list of possible focuses for the scholarship
+  priorityWeights Json         @map("priority_weights") // Record<string, number>; matches each focus with a weight (percentage)
+
+  promptId String @unique @map("prompt_id")
+  prompt   Prompt @relation(fields: [promptId], references: [id])
+
+  @@map("prompt_priorities")
+}
+
+enum PrimaryFocus {
+  MERIT
+  COMMUNITY
+  INNOVATION
+  LEADERSHIP
+  ACADEMIC_EXCELLENCE
+  EQUITY
+  OTHER
+}
+
+model PromptValues {
+  id               String   @id @default(cuid())
+  valuesEmphasized String[] @map("values_emphasized") // the values that are especially emphasized in this prompt and/or scholarship
+  valueDefinitions Json     @map("value_definitions") // Record<string, string>; match each value with an elaboration of what that value means, particularly with regards to the specifics of the scholarship
+  evidencePhrases  String[] @map("evidence_phrases") // provide important phrases in the prompt and/or scholarship description that is relevant to the values of the scholarship
+
+  promptId String @unique @map("prompt_id")
+  prompt   Prompt @relation(fields: [promptId], references: [id])
+
+  @@map("prompt_values")
+}
+
+model GenerateDraft {
+  id    String @id @default(cuid())
+  essay String
+
+  promptId String @unique @map("prompt_id")
+  prompt   Prompt @relation(fields: [promptId], references: [id])
+
+  @@map("drafts")
+}
