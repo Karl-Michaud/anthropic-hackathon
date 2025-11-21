@@ -6,7 +6,7 @@ type ScholarshipInformationBlockProps = {
 }
 
 function HiddenCriterion(text: string) {
-  return <div className="rounded-full p-2 bg-blue-500">{text}</div>
+  return <div className="rounded-full px-4 py-2 bg-gray-800 text-white text-sm">{text}</div>
 }
 
 export default function ScholarshipInformationBlock({
@@ -16,18 +16,20 @@ export default function ScholarshipInformationBlock({
   hiddenCriterion,
 }: ScholarshipInformationBlockProps) {
   return (
-    <div className="">
-      <div>{hiddenCriterion.map((item) => HiddenCriterion(item))}</div>
-      <div>
-        <h1 className="">{scholarshipTitle}</h1>
+    <div className="w-[600px] space-y-6 bg-white p-8 rounded-lg drop-shadow-lg">
+      <div className="flex flex-wrap gap-2">
+        {hiddenCriterion.map((item) => HiddenCriterion(item))}
       </div>
       <div>
-        <h2 className="">Description</h2>
-        <p>{scholarshipDescription}</p>
+        <h1 className="text-5xl font-bold text-black">{scholarshipTitle}</h1>
       </div>
-      <div>
-        <h2 className="">Prompt</h2>
-        <p>{scholarshipPrompt}</p>
+      <div className="">
+        <h2 className="text-lg font-medium text-black">Description</h2>
+        <p className="text-black">{scholarshipDescription}</p>
+      </div>
+      <div className="">
+        <h2 className="text-lg font-medium text-black">Prompt</h2>
+        <p className="text-black">{scholarshipPrompt}</p>
       </div>
     </div>
   )

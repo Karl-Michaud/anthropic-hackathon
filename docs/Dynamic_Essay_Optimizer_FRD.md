@@ -823,7 +823,7 @@ interface SessionStateData {
 {
   scholarship_description: string;
   essay_prompt: string;
-  available_formulas: ScholarshipFormula[];  // All formulas from library
+  available_formulas: ScholarshipFormula[];  // All formulas from library //checked with claude that its a valid dt
 }
 ```
 
@@ -897,7 +897,7 @@ Respond with JSON only:
 **LLM Input:**
 ```typescript
 {
-  field: RequiredField;
+  field: RequiredField; // checked with claude, well structure dt
   user_answer: string;
   scholarship_context: {
     formula_name: string;
