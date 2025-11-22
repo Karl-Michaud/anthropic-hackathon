@@ -1,6 +1,13 @@
 'use client'
 
 import { useRef, useEffect } from 'react'
+import {
+  colors,
+  borderRadius,
+  spacing,
+  transitions,
+  typography,
+} from '../../styles/design-system'
 
 interface EditableFieldProps {
   value: string
@@ -24,8 +31,20 @@ export default function EditableField({
   useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus()
+      if (
+        inputRef.current instanceof HTMLTextAreaElement ||
+        inputRef.current instanceof HTMLInputElement
+      ) {
+        inputRef.current.select()
+      }
     }
   }, [isEditing])
+
+  const baseStyles = {
+    fontFamily: typography.fonts.sans,
+    color: colors.neutral[900],
+    transition: transitions.common.all,
+  }
 
   if (isEditing) {
     if (isTitle) {
@@ -36,7 +55,16 @@ export default function EditableField({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className={`w-full bg-white/50 border-b-2 border-blue-500 outline-none text-gray-900 ${className}`}
+          style={{
+            ...baseStyles,
+            width: '100%',
+            background: colors.primary[50],
+            borderBottom: `3px solid ${colors.primary[500]}`,
+            outline: 'none',
+            paddingBottom: spacing[2],
+            fontSize: 'inherit',
+          }}
+          className={className}
         />
       )
     }
@@ -46,15 +74,34 @@ export default function EditableField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className={`w-full bg-white/50 border border-blue-500 rounded-lg p-2 outline-none resize-none text-gray-900 ${className}`}
+        style={{
+          ...baseStyles,
+          width: '100%',
+          background: colors.primary[50],
+          border: `2px solid ${colors.primary[500]}`,
+          borderRadius: borderRadius.md,
+          padding: spacing[3],
+          outline: 'none',
+          resize: 'none',
+          fontSize: 'inherit',
+          lineHeight: typography.lineHeights.relaxed,
+        }}
         rows={4}
+        className={className}
       />
     )
   }
 
   return (
-    <div className={`${className}`}>
-      {value || <span className="text-gray-400 italic">{placeholder}</span>}
+    <div
+      className={`transition-colors ${className}`}
+      style={{
+        ...baseStyles,
+        color: value ? colors.neutral[800] : colors.neutral[400],
+        fontStyle: value ? 'normal' : 'italic',
+      }}
+    >
+      {value || placeholder}
     </div>
   )
 }

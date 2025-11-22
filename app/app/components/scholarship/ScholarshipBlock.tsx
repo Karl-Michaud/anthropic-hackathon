@@ -8,6 +8,7 @@ import ScholarshipMenu from './ScholarshipMenu'
 import ScholarshipDeleteConfirm from './ScholarshipDeleteConfirm'
 import { useEditing } from '../../context/EditingContext'
 import { ScholarshipData } from '../../context/WhiteboardContext'
+import { extractScholarshipInfo } from '../../lib/claudeApi'
 
 export type { ScholarshipData }
 
@@ -42,26 +43,19 @@ export default function ScholarshipBlock({
     setIsLoading(true)
 
     try {
-      const response = await fetch('/api/extract-scholarship', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          content: JSON.stringify({
-            title: editedData.title,
-            description: editedData.description,
-            prompt: editedData.prompt,
-          }),
-          fileType: 'json',
-        }),
+      const content = JSON.stringify({
+        title: editedData.title,
+        description: editedData.description,
+        prompt: editedData.prompt,
       })
 
-      const result = await response.json()
-      if (result.success && result.data) {
+      const result = await extractScholarshipInfo(content)
+      if (result && result.ScholarshipName) {
         onUpdate({
           ...editedData,
-          title: result.data.ScholarshipName || editedData.title,
-          description: result.data.ScholarshipDescription || editedData.description,
-          prompt: result.data.EssayPrompt || editedData.prompt,
+          title: result.ScholarshipName || editedData.title,
+          description: result.ScholarshipDescription || editedData.description,
+          prompt: result.EssayPrompt || editedData.prompt,
         })
       } else {
         onUpdate(editedData)
@@ -95,7 +89,11 @@ export default function ScholarshipBlock({
 
   return (
     <div
-      className={`w-[550px] bg-white rounded-xl shadow-lg border ${isEditing ? 'border-blue-500' : 'border-gray-200'} p-6 relative`}
+      className={`w-[550px] bg-white rounded-xl p-6 relative transition-all ${
+        isEditing
+          ? 'shadow-lg border-primary-500'
+          : 'shadow-md border-neutral-200'
+      } border`}
     >
       {/* Menu - top right */}
       {!isEditing && (
@@ -126,31 +124,33 @@ export default function ScholarshipBlock({
         value={currentData.title}
         onChange={(value) => handleFieldChange('title', value)}
         isEditing={isEditing}
-        className="text-3xl font-bold text-gray-900 mb-4 pr-8"
+        className="pr-8"
         isTitle
         placeholder="Scholarship Title"
       />
 
       {/* Description */}
       <div className="mb-4">
-        <h3 className="text-sm font-semibold text-gray-700 mb-1">Description</h3>
+        <h3 className="text-sm font-semibold text-neutral-700 mb-1">
+          Description
+        </h3>
         <EditableField
           value={currentData.description}
           onChange={(value) => handleFieldChange('description', value)}
           isEditing={isEditing}
-          className="text-gray-600 text-sm leading-relaxed"
+          className="text-sm leading-relaxed"
           placeholder="Enter scholarship description..."
         />
       </div>
 
       {/* Prompt */}
-      <div>
-        <h3 className="text-sm font-semibold text-gray-700 mb-1">Prompt</h3>
+      <div className="mb-4">
+        <h3 className="text-sm font-semibold text-neutral-700 mb-1">Prompt</h3>
         <EditableField
           value={currentData.prompt}
           onChange={(value) => handleFieldChange('prompt', value)}
           isEditing={isEditing}
-          className="text-gray-600 text-sm leading-relaxed"
+          className="text-sm leading-relaxed"
           placeholder="Enter essay prompt..."
         />
       </div>

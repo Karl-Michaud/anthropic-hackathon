@@ -1,51 +1,51 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import { AdaptiveWeightingOutput } from "../types/adaptive-weighting";
+import { useState } from 'react'
+import { AdaptiveWeightingOutput } from '../types/adaptive-weighting'
 
 export default function TestWeightingPage() {
-  const [scholarshipName, setScholarshipName] = useState("");
-  const [scholarshipDescription, setScholarshipDescription] = useState("");
-  const [essayPrompt, setEssayPrompt] = useState("");
-  const [result, setResult] = useState<AdaptiveWeightingOutput | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [scholarshipName, setScholarshipName] = useState('')
+  const [scholarshipDescription, setScholarshipDescription] = useState('')
+  const [essayPrompt, setEssayPrompt] = useState('')
+  const [result, setResult] = useState<AdaptiveWeightingOutput | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    setResult(null);
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+    setResult(null)
 
     try {
-      const response = await fetch("/api/adaptive-weighting", {
-        method: "POST",
+      const response = await fetch('/api/adaptive-weighting', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           ScholarshipName: scholarshipName,
           ScholarshipDescription: scholarshipDescription,
           EssayPrompt: essayPrompt,
         }),
-      });
+      })
 
-      const data = await response.json();
+      const data = await response.json()
 
       if (data.success) {
-        setResult(data.data);
+        setResult(data.data)
       } else {
-        setError(data.error || "Unknown error occurred");
+        setError(data.error || 'Unknown error occurred')
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch");
+      setError(err instanceof Error ? err.message : 'Failed to fetch')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const loadExample = () => {
-    setScholarshipName("Loran Scholars Foundation Award");
+    setScholarshipName('Loran Scholars Foundation Award')
     setScholarshipDescription(`The Loran Award is a prestigious four-year undergraduate scholarship valued at $100,000.
 
 We are looking for students who demonstrate:
@@ -60,11 +60,11 @@ Eligibility:
 
 Application deadline: October 15, 2025
 
-The selection process includes school nomination, regional interviews, and national finals. We value sustained commitment over resume padding, and look for authentic alignment with our values. Candidates should demonstrate how they've overcome challenges while maintaining their commitment to service.`);
+The selection process includes school nomination, regional interviews, and national finals. We value sustained commitment over resume padding, and look for authentic alignment with our values. Candidates should demonstrate how they've overcome challenges while maintaining their commitment to service.`)
     setEssayPrompt(
-      "Describe a time when you faced significant adversity and how you responded while maintaining your commitment to serving others. What did this experience teach you about leadership and your own values?"
-    );
-  };
+      'Describe a time when you faced significant adversity and how you responded while maintaining your commitment to serving others. What did this experience teach you about leadership and your own values?',
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
@@ -138,7 +138,7 @@ The selection process includes school nomination, regional interviews, and natio
               disabled={loading}
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? "Analyzing..." : "Analyze Weights"}
+              {loading ? 'Analyzing...' : 'Analyze Weights'}
             </button>
             <button
               type="button"
@@ -225,7 +225,7 @@ The selection process includes school nomination, regional interviews, and natio
                                   {((weight as number) * 100).toFixed(1)}%
                                 </span>
                               </div>
-                            )
+                            ),
                           )}
                         </div>
                       </div>
@@ -247,5 +247,5 @@ The selection process includes school nomination, regional interviews, and natio
         )}
       </div>
     </div>
-  );
+  )
 }

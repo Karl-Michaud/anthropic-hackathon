@@ -6,12 +6,14 @@ interface ScholarshipActionsProps {
   onDraft: () => void
 }
 
-export default function ScholarshipActions({ onDraft }: ScholarshipActionsProps) {
+export default function ScholarshipActions({
+  onDraft,
+}: ScholarshipActionsProps) {
   return (
     <div className="flex gap-2 mt-4">
       <button
         onClick={onDraft}
-        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+        className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-md font-medium border-none cursor-pointer transition-all hover:-translate-y-0.5"
       >
         <Plus size={18} />
         Draft

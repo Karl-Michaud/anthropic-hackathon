@@ -38,7 +38,7 @@ export default function EssayMenu({
     <div className="relative" ref={menuRef}>
       <button
         onClick={() => setShowMenu(!showMenu)}
-        className="p-1 hover:bg-gray-200 rounded transition-colors"
+        className="p-1 hover:bg-gray-200 rounded transition-colors cursor-pointer"
         title="Settings"
       >
         <MoreVertical size={16} className="text-gray-400" />
@@ -60,7 +60,7 @@ export default function EssayMenu({
           </div>
           <button
             onClick={handleDelete}
-            className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+            className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 cursor-pointer"
           >
             <Trash2 size={14} />
             Delete Draft

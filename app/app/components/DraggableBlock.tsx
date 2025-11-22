@@ -8,7 +8,12 @@ interface DraggableBlockProps {
   y: number
   isDragging: boolean
   isSelected?: boolean
-  onMouseDown: (e: MouseEvent<HTMLDivElement>, id: string, x: number, y: number) => void
+  onMouseDown: (
+    e: MouseEvent<HTMLDivElement>,
+    id: string,
+    x: number,
+    y: number,
+  ) => void
   onContextMenu?: (e: MouseEvent<HTMLDivElement>, id: string) => void
   children: ReactNode
 }
@@ -18,7 +23,6 @@ export default function DraggableBlock({
   x,
   y,
   isDragging,
-  isSelected = false,
   onMouseDown,
   onContextMenu,
   children,
@@ -51,10 +55,10 @@ export default function DraggableBlock({
       style={{
         left: x,
         top: y,
-        transition: isDragging ? 'none' : 'box-shadow 0.2s, outline 0.2s',
-        boxShadow: isDragging ? '0 25px 50px -12px rgba(0, 0, 0, 0.25)' : undefined,
-        outline: isSelected ? '2px solid #3b82f6' : 'none',
-        outlineOffset: '2px',
+        transition: isDragging ? 'none' : 'box-shadow 0.2s',
+        boxShadow: isDragging
+          ? '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+          : undefined,
       }}
       onMouseDown={handleMouseDown}
       onContextMenu={handleContextMenu}

@@ -4,18 +4,18 @@
  * weighted criteria for essay optimization
  */
 
-import Anthropic from "@anthropic-ai/sdk";
+import Anthropic from '@anthropic-ai/sdk'
 import {
   AdaptiveWeightingInput,
   AdaptiveWeightingOutput,
-} from "../types/adaptive-weighting";
+} from '../types/adaptive-weighting'
 
 /**
  * Initialize Anthropic client
  */
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
-});
+})
 
 /**
  * Analyze scholarship and generate adaptive weights
@@ -23,35 +23,35 @@ const anthropic = new Anthropic({
  * @returns Weighted criteria structure
  */
 export async function generateAdaptiveWeights(
-  input: AdaptiveWeightingInput
+  input: AdaptiveWeightingInput,
 ): Promise<AdaptiveWeightingOutput> {
-  const prompt = buildWeightingPrompt(input);
+  const prompt = buildWeightingPrompt(input)
 
   try {
     const message = await anthropic.messages.create({
-      model: "claude-sonnet-4-5-20250929",
+      model: 'claude-sonnet-4-5-20250929',
       max_tokens: 4096,
       messages: [
         {
-          role: "user",
+          role: 'user',
           content: prompt,
         },
       ],
-    });
+    })
 
     // Extract JSON from response
     const responseText =
-      message.content[0].type === "text" ? message.content[0].text : "";
+      message.content[0].type === 'text' ? message.content[0].text : ''
 
     // Parse JSON response
-    const weights = parseWeightingResponse(responseText);
+    const weights = parseWeightingResponse(responseText)
 
-    return weights;
+    return weights
   } catch (error) {
-    console.error("Adaptive weighting failed:", error);
+    console.error('Adaptive weighting failed:', error)
     throw new Error(
-      `Failed to generate adaptive weights: ${(error as Error).message}`
-    );
+      `Failed to generate adaptive weights: ${(error as Error).message}`,
+    )
   }
 }
 
@@ -214,7 +214,7 @@ Return ONLY valid JSON in this exact structure:
   }
 }
 
-Analyze the scholarship and return ONLY the JSON with your calculated weights.`;
+Analyze the scholarship and return ONLY the JSON with your calculated weights.`
 }
 
 /**
@@ -223,41 +223,41 @@ Analyze the scholarship and return ONLY the JSON with your calculated weights.`;
 function parseWeightingResponse(response: string): AdaptiveWeightingOutput {
   try {
     // Extract JSON from response (in case LLM adds extra text)
-    const jsonMatch = response.match(/\{[\s\S]*\}/);
+    const jsonMatch = response.match(/\{[\s\S]*\}/)
     if (!jsonMatch) {
-      throw new Error("No JSON found in response");
+      throw new Error('No JSON found in response')
     }
 
-    const parsed = JSON.parse(jsonMatch[0]);
+    const parsed = JSON.parse(jsonMatch[0])
 
     // Validate primary weights sum to 1.0
     const primaryWeights = [
-      parsed["Sustained Depth Over Resume Padding"]?.weight || 0,
-      parsed["Values-Driven Decision Making"]?.weight || 0,
-      parsed["Problem-Solving Orientation"]?.weight || 0,
-      parsed["Entrepreneurial vs. Theoretical Mindset"]?.weight || 0,
-      parsed["Future Investment Potential"]?.weight || 0,
-      parsed["Adversity Plus Agency"]?.weight || 0,
-      parsed["Interview Performance"]?.weight || 0,
-      parsed["Language Mirroring & Framing"]?.weight || 0,
-      parsed["Regional & Nomination Strategy"]?.weight || 0,
-      parsed["Academic Threshold Sufficiency"]?.weight || 0,
-    ];
+      parsed['Sustained Depth Over Resume Padding']?.weight || 0,
+      parsed['Values-Driven Decision Making']?.weight || 0,
+      parsed['Problem-Solving Orientation']?.weight || 0,
+      parsed['Entrepreneurial vs. Theoretical Mindset']?.weight || 0,
+      parsed['Future Investment Potential']?.weight || 0,
+      parsed['Adversity Plus Agency']?.weight || 0,
+      parsed['Interview Performance']?.weight || 0,
+      parsed['Language Mirroring & Framing']?.weight || 0,
+      parsed['Regional & Nomination Strategy']?.weight || 0,
+      parsed['Academic Threshold Sufficiency']?.weight || 0,
+    ]
 
-    const primarySum = primaryWeights.reduce((a, b) => a + b, 0);
+    const primarySum = primaryWeights.reduce((a, b) => a + b, 0)
     if (Math.abs(primarySum - 1.0) > 0.01) {
       console.warn(
-        `Primary weights sum to ${primarySum}, expected 1.0. Normalizing...`
-      );
+        `Primary weights sum to ${primarySum}, expected 1.0. Normalizing...`,
+      )
       // Normalize if needed
-      const normalizedParsed = normalizeWeights(parsed, primarySum);
-      return normalizedParsed as AdaptiveWeightingOutput;
+      const normalizedParsed = normalizeWeights(parsed, primarySum)
+      return normalizedParsed as unknown as AdaptiveWeightingOutput
     }
 
-    return parsed as AdaptiveWeightingOutput;
-  } catch (error) {
-    console.error("Failed to parse LLM response:", response);
-    throw new Error("Invalid response format from LLM");
+    return parsed as unknown as AdaptiveWeightingOutput
+  } catch {
+    console.error('Failed to parse LLM response:', response)
+    throw new Error('Invalid response format from LLM')
   }
 }
 
@@ -265,19 +265,22 @@ function parseWeightingResponse(response: string): AdaptiveWeightingOutput {
  * Normalize weights if they don't sum to 1.0
  */
 function normalizeWeights(
-  weights: Record<string, { weight: number; subweights: Record<string, number> }>,
-  currentSum: number
+  weights: Record<
+    string,
+    { weight: number; subweights: Record<string, number> }
+  >,
+  currentSum: number,
 ): Record<string, { weight: number; subweights: Record<string, number> }> {
-  const normalized = { ...weights };
-  const factor = 1.0 / currentSum;
+  const normalized = { ...weights }
+  const factor = 1.0 / currentSum
 
   for (const category of Object.keys(normalized)) {
     if (normalized[category]?.weight) {
       normalized[category].weight = Number(
-        (normalized[category].weight * factor).toFixed(4)
-      );
+        (normalized[category].weight * factor).toFixed(4),
+      )
     }
   }
 
-  return normalized;
+  return normalized
 }

@@ -10,10 +10,14 @@
     "format": "prettier -w app",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "sbd": "/Users/daviddimalanta/.nvm/versions/node/v22.21.1/bin/node ./node_modules/.bin/storybook dev -p 6006"
+    "sbd": "/Users/daviddimalanta/.nvm/versions/node/v22.21.1/bin/node ./node_modules/.bin/storybook dev -p 6006",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.70.0",
+    "@prisma/client": "^6.19.0",
+    "@supabase/ssr": "^0.7.0",
+    "@supabase/supabase-js": "^2.84.0",
     "dotenv": "^17.2.3",
     "lucide-react": "^0.554.0",
     "next": "16.0.3",

@@ -1,5 +1,7 @@
 'use client'
 
+import { transitions } from '../styles/design-system'
+
 interface ZoomComponentProps {
   zoom: number
   onZoomIn: () => void
@@ -14,28 +16,34 @@ export default function ZoomComponent({
   const percentage = Math.round(zoom * 100)
 
   return (
-    <div className="flex items-center gap-2 bg-white/90 backdrop-blur-sm px-3 py-2 rounded-lg shadow-md border border-gray-200 select-none">
+    <div
+      className="flex items-center gap-1 backdrop-blur-lg active:scale-95 rounded-lg shadow-lg border border-neutral-200 p-2"
+      style={{
+        background: `rgba(255, 255, 255, 0.95)`,
+        transition: transitions.common.all,
+      }}
+    >
       {/* Zoom Out Button */}
       <button
         onClick={onZoomOut}
-        className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded transition-colors active:scale-95"
+        className="flex items-center justify-center transition-all active:scale-95 hover:scale-105 hover:cursor-pointer w-8 h-8 rounded-md bg-neutral-100 hover:bg-primary-100 text-neutral-700 hover:text-primary-700 text-lg font-bold"
         aria-label="Zoom out"
       >
-        <span className="text-lg font-medium text-gray-700">−</span>
+        −
       </button>
 
       {/* Zoom Percentage */}
-      <div className="min-w-[60px] text-center">
-        <span className="text-sm font-medium text-gray-700">{percentage}%</span>
+      <div className="min-w-16 text-center text-sm font-semibold text-neutral-700 tracking-wide">
+        {percentage}%
       </div>
 
       {/* Zoom In Button */}
       <button
         onClick={onZoomIn}
-        className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded transition-colors active:scale-95"
+        className="flex items-center justify-center transition-all active:scale-95 hover:scale-105 hover:cursor-pointer w-8 h-8 rounded-md bg-neutral-100 hover:bg-primary-100 text-neutral-700 hover:text-primary-700 text-lg font-bold"
         aria-label="Zoom in"
       >
-        <span className="text-lg font-medium text-gray-700">+</span>
+        +
       </button>
     </div>
   )

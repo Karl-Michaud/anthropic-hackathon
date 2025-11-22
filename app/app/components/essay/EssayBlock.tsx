@@ -26,7 +26,9 @@ export default function EssayBlock({
   isGenerating = false,
 }: EssayBlockProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const [maxWords, setMaxWords] = useState<string>(data.maxWordCount?.toString() || '')
+  const [maxWords, setMaxWords] = useState<string>(
+    data.maxWordCount?.toString() || '',
+  )
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const { setEditing } = useEditing()
 
@@ -66,11 +68,11 @@ export default function EssayBlock({
   }
 
   return (
-    <div className="w-[500px] bg-white rounded-xl shadow-lg border border-gray-200 overflow-visible relative">
+    <div className="w-[500px] bg-white rounded-xl shadow-lg border border-neutral-200 relative">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-200 rounded-t-xl">
+      <div className="flex items-center justify-between py-3 px-4 bg-neutral-50 border-b border-neutral-200 rounded-t-xl">
         <div className="flex-1">
-          <h3 className="text-sm font-semibold text-gray-700">
+          <h3 className="text-sm font-semibold text-neutral-700 m-0">
             {scholarshipTitle ? `Draft for ${scholarshipTitle}` : 'Essay Draft'}
           </h3>
         </div>
@@ -95,9 +97,9 @@ export default function EssayBlock({
       {/* Content */}
       <div className="p-4 relative">
         {isGenerating ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 size={32} className="animate-spin text-blue-500" />
-            <span className="ml-3 text-gray-600">Generating essay...</span>
+          <div className="flex items-center justify-center p-12 py-0">
+            <Loader2 size={32} className="animate-spin text-primary-500" />
+            <span className="ml-3 text-neutral-600">Generating essay...</span>
           </div>
         ) : (
           <textarea
@@ -107,7 +109,7 @@ export default function EssayBlock({
             onFocus={() => setEditing(true)}
             onBlur={() => setEditing(false)}
             placeholder="Start writing your essay here..."
-            className="w-full min-h-[200px] resize-none outline-none text-gray-800 text-sm leading-relaxed placeholder:text-gray-400 overflow-hidden"
+            className="w-full min-h-[200px] resize-none outline-none text-neutral-800 text-sm leading-relaxed overflow-hidden border-0 p-0"
           />
         )}
       </div>

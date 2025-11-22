@@ -10,7 +10,6 @@ export type { CellData }
 interface CellProps {
   cell: CellData
   isDragging: boolean
-  isSelected?: boolean
   onMouseDown: (
     e: MouseEvent<HTMLDivElement>,
     cellId: string,
@@ -25,7 +24,6 @@ interface CellProps {
 export default function Cell({
   cell,
   isDragging,
-  isSelected = false,
   onMouseDown,
   onContextMenu,
   onTextChange,
@@ -70,32 +68,37 @@ export default function Cell({
     }
   }
 
-  const getColorClasses = (color: string) => {
-    const colors: Record<string, string> = {
-      yellow: 'bg-yellow-100 border-yellow-200',
-      blue: 'bg-blue-100 border-blue-200',
-      pink: 'bg-pink-100 border-pink-200',
-      green: 'bg-green-100 border-green-200',
-      purple: 'bg-purple-100 border-purple-200',
-      orange: 'bg-orange-100 border-orange-200',
+  const getColorStyles = (color: string) => {
+    const colorMap: Record<string, { bg: string; border: string }> = {
+      yellow: { bg: '#fef3c7', border: '#fcd34d' },
+      blue: { bg: '#dbeafe', border: '#93c5fd' },
+      pink: { bg: '#fbf1f5', border: '#f472b6' },
+      green: { bg: '#f0fdf4', border: '#86efac' },
+      purple: { bg: '#f3e8ff', border: '#d8b4fe' },
+      orange: { bg: '#fef3c7', border: '#fdba74' },
     }
-    return colors[color] || 'bg-gray-100 border-gray-200'
+    return colorMap[color] || { bg: '#f3f4f6', border: '#e5e7eb' }
   }
+
+  const colorStyles = getColorStyles(cell.color)
 
   return (
     <div
-      className={`absolute w-48 h-48 shadow-lg rounded-sm p-4 border hover:rotate-0 transition-transform ${isEditingLocal ? '' : 'select-none'} ${getColorClasses(cell.color)}`}
+      className={`absolute w-48 h-48 shadow-lg rounded-sm p-4 ${!isDragging ? 'transition-all' : ''}`}
       style={{
+        border: `2px solid ${colorStyles.border}`,
+        backgroundColor: colorStyles.bg,
         top: `${cell.y}px`,
         left: `${cell.x}px`,
         transform: `rotate(${cell.rotation}deg)`,
         cursor: isDragging ? 'grabbing' : isEditingLocal ? 'text' : 'grab',
-        outline: isSelected ? '2px solid #3b82f6' : 'none',
-        outlineOffset: '2px',
+        userSelect: isEditingLocal ? 'auto' : 'none',
       }}
-      onMouseDown={(e) => !isEditingLocal && onMouseDown(e, cell.id, cell.x, cell.y)}
-      onContextMenu={(e) => onContextMenu && onContextMenu(e, cell.id)}
+      onMouseDown={(e) =>
+        !isEditingLocal && onMouseDown(e, cell.id, cell.x, cell.y)
+      }
       onDoubleClick={handleDoubleClick}
+      onContextMenu={(e) => onContextMenu?.(e, cell.id)}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -113,12 +116,12 @@ export default function Cell({
           onChange={(e) => setEditText(e.target.value)}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
-          className="w-full h-full text-sm text-gray-700 bg-transparent border-none outline-none resize-none"
+          className="w-full h-full text-sm text-neutral-700 bg-transparent border-0 outline-none resize-none"
           onClick={(e) => e.stopPropagation()}
           onMouseDown={(e) => e.stopPropagation()}
         />
       ) : (
-        <p className="text-sm text-gray-700 whitespace-pre-wrap break-words">
+        <p className="text-sm text-neutral-700 whitespace-pre-wrap break-words m-0">
           {cell.text}
         </p>
       )}
