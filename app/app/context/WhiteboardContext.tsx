@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 'use client'
 
 import { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from 'react'
@@ -146,7 +147,7 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
 
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Load from localStorage on mount
+  // Load from localStorage after hydration (client-side only)
   useEffect(() => {
     const stored = loadFromStorage()
     setCells(stored.cells)
@@ -168,16 +169,90 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
     setIsLoaded(true)
   }, [])
 
-  // Debounced save to localStorage
-  useEffect(() => {
-    if (!isLoaded) return
+  // Convenience getters
+  const { cells, scholarships, essays, jsonOutputs, blockPositions } = state
 
+  // Helper setters to maintain the same API
+  const setCells = useCallback(
+    (updater: CellData[] | ((prev: CellData[]) => CellData[])) => {
+      setState((prev) => ({
+        ...prev,
+        cells: typeof updater === 'function' ? updater(prev.cells) : updater,
+      }))
+    },
+    [],
+  )
+
+  const setScholarships = useCallback(
+    (
+      updater:
+        | ScholarshipData[]
+        | ((prev: ScholarshipData[]) => ScholarshipData[]),
+    ) => {
+      setState((prev) => ({
+        ...prev,
+        scholarships:
+          typeof updater === 'function' ? updater(prev.scholarships) : updater,
+      }))
+    },
+    [],
+  )
+
+  const setEssays = useCallback(
+    (updater: EssayData[] | ((prev: EssayData[]) => EssayData[])) => {
+      setState((prev) => ({
+        ...prev,
+        essays: typeof updater === 'function' ? updater(prev.essays) : updater,
+      }))
+    },
+    [],
+  )
+
+  const setJsonOutputs = useCallback(
+    (
+      updater:
+        | JsonOutputData[]
+        | ((prev: JsonOutputData[]) => JsonOutputData[]),
+    ) => {
+      setState((prev) => ({
+        ...prev,
+        jsonOutputs:
+          typeof updater === 'function' ? updater(prev.jsonOutputs) : updater,
+      }))
+    },
+    [],
+  )
+
+  const setBlockPositions = useCallback(
+    (
+      updater: BlockPosition[] | ((prev: BlockPosition[]) => BlockPosition[]),
+    ) => {
+      setState((prev) => ({
+        ...prev,
+        blockPositions:
+          typeof updater === 'function'
+            ? updater(prev.blockPositions)
+            : updater,
+      }))
+    },
+    [],
+  )
+
+  // Debounced save to localStorage (only after hydration)
+  useEffect(() => {
+    if (!isHydrated) return
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current)
     }
 
     saveTimeoutRef.current = setTimeout(() => {
-      saveToStorage({ cells, scholarships, essays, jsonOutputs, blockPositions })
+      saveToStorage({
+        cells,
+        scholarships,
+        essays,
+        jsonOutputs,
+        blockPositions,
+      })
     }, DEBOUNCE_MS)
 
     return () => {
@@ -185,7 +260,7 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
         clearTimeout(saveTimeoutRef.current)
       }
     }
-  }, [cells, scholarships, essays, jsonOutputs, blockPositions, isLoaded])
+  }, [cells, scholarships, essays, jsonOutputs, blockPositions, isHydrated])
 
   // Cell actions
   const addCell = useCallback((cell: Omit<CellData, 'id'>) => {
@@ -203,15 +278,18 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
   }, [])
 
   // Scholarship actions
-  const addScholarship = useCallback((scholarship: Omit<ScholarshipData, 'id'>) => {
-    const id = `scholarship-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-    setScholarships((prev) => [...prev, { ...scholarship, id }])
-    return id
-  }, [])
+  const addScholarship = useCallback(
+    (scholarship: Omit<ScholarshipData, 'id'>) => {
+      const id = `scholarship-${Date.now()}`
+      setScholarships((prev) => [...prev, { ...scholarship, id }])
+      return id
+    },
+    [],
+  )
 
   const updateScholarship = useCallback((scholarship: ScholarshipData) => {
     setScholarships((prev) =>
-      prev.map((s) => (s.id === scholarship.id ? scholarship : s))
+      prev.map((s) => (s.id === scholarship.id ? scholarship : s)),
     )
     setJsonOutputs((prev) =>
       prev.map((output) =>
@@ -226,15 +304,17 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
                 AdaptiveWeights: scholarship.adaptiveWeights,
               },
             }
-          : output
-      )
+          : output,
+      ),
     )
   }, [])
 
   const deleteScholarship = useCallback((scholarshipId: string) => {
     setScholarships((prev) => prev.filter((s) => s.id !== scholarshipId))
     setEssays((prev) => prev.filter((e) => e.scholarshipId !== scholarshipId))
-    setJsonOutputs((prev) => prev.filter((o) => o.scholarshipId !== scholarshipId))
+    setJsonOutputs((prev) =>
+      prev.filter((o) => o.scholarshipId !== scholarshipId),
+    )
     setBlockPositions((prev) => prev.filter((p) => p.id !== scholarshipId))
   }, [])
 
@@ -255,11 +335,14 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
   }, [])
 
   // JSON output actions
-  const addJsonOutput = useCallback((scholarshipId: string, data: JsonOutputData['data']) => {
-    const id = `json-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-    setJsonOutputs((prev) => [...prev, { id, scholarshipId, data }])
-    return id
-  }, [])
+  const addJsonOutput = useCallback(
+    (scholarshipId: string, data: JsonOutputData['data']) => {
+      const id = `json-${Date.now()}`
+      setJsonOutputs((prev) => [...prev, { id, scholarshipId, data }])
+      return id
+    },
+    [],
+  )
 
   const deleteJsonOutput = useCallback((jsonOutputId: string) => {
     setJsonOutputs((prev) => prev.filter((o) => o.id !== jsonOutputId))
@@ -267,21 +350,24 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
   }, [])
 
   // Position actions
-  const updateBlockPosition = useCallback((id: string, x: number, y: number) => {
-    setBlockPositions((prev) => {
-      const existing = prev.find((p) => p.id === id)
-      if (existing) {
-        return prev.map((p) => (p.id === id ? { ...p, x, y } : p))
-      }
-      return [...prev, { id, x, y }]
-    })
-  }, [])
+  const updateBlockPosition = useCallback(
+    (id: string, x: number, y: number) => {
+      setBlockPositions((prev) => {
+        const existing = prev.find((p) => p.id === id)
+        if (existing) {
+          return prev.map((p) => (p.id === id ? { ...p, x, y } : p))
+        }
+        return [...prev, { id, x, y }]
+      })
+    },
+    [],
+  )
 
   const getBlockPosition = useCallback(
     (id: string): BlockPosition => {
       return blockPositions.find((p) => p.id === id) || { id, x: 100, y: 100 }
     },
-    [blockPositions]
+    [blockPositions],
   )
 
   // Feedback panel actions

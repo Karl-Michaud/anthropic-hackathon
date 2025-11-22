@@ -5,25 +5,28 @@ interface UploadModeToggleProps {
   onModeChange: (mode: 'file' | 'text') => void
 }
 
-export default function UploadModeToggle({ mode, onModeChange }: UploadModeToggleProps) {
+export default function UploadModeToggle({
+  mode,
+  onModeChange,
+}: UploadModeToggleProps) {
   return (
-    <div className="flex rounded-lg overflow-hidden shadow-lg">
+    <div className="flex gap-1 rounded-md overflow-hidden shadow-sm bg-neutral-100 p-1">
       <button
         onClick={() => onModeChange('file')}
-        className={`px-4 py-2 text-sm font-medium transition-colors ${
+        className={`px-4 py-2 text-sm font-medium transition-all cursor-pointer ${
           mode === 'file'
-            ? 'bg-blue-600 text-white'
-            : 'bg-gray-100/10 text-gray-900 hover:bg-gray-400/30'
+            ? 'bg-primary-600 text-white'
+            : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
         }`}
       >
         File
       </button>
       <button
         onClick={() => onModeChange('text')}
-        className={`px-4 py-2 text-sm font-medium transition-colors ${
+        className={`px-4 py-2 text-sm font-medium transition-all cursor-pointer ${
           mode === 'text'
-            ? 'bg-blue-600 text-white'
-            : 'bg-gray-100/10 text-gray-900 hover:bg-gray-400/30'
+            ? 'bg-primary-600 text-white'
+            : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
         }`}
       >
         Text

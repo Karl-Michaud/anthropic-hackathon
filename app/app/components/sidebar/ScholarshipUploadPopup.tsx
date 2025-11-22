@@ -10,7 +10,7 @@ import { fetchAdaptiveWeights } from '../../lib/fetch-adaptive-weights'
 export interface ScholarshipUploadResult {
   title: string
   description: string
-  prompt: string
+  prompts: string[]
   hiddenRequirements: string[]
   adaptiveWeights?: any // Adaptive weighting output from /api/adaptive-weighting
 }
@@ -38,22 +38,10 @@ export default function ScholarshipUploadPopup({
 
     try {
       const content = await readFileContent(file)
-      const fileType = getFileType(file.type)
 
-      const response = await fetch('/api/extract-scholarship', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          content,
-          fileType,
-        }),
-      })
+      const result = await extractScholarshipInfo(content)
 
-      const result = await response.json()
-
-      if (result.success && result.data) {
+      if (result && result.ScholarshipName) {
         const getValue = (extracted: string, fallback: string) =>
           extracted && extracted !== 'Missing' ? extracted : fallback
 
@@ -73,43 +61,26 @@ export default function ScholarshipUploadPopup({
         })
         onClose()
       } else {
-        setError(result.error || 'Upload failed')
+        setError('Failed to extract scholarship information')
       }
     } catch (err) {
       console.error('Upload error:', err)
-      setError('An error occurred while uploading the scholarship')
+      setError(`An error occurred: ${(err as Error).message}`)
     } finally {
       setIsProcessing(false)
     }
   }
 
-  const handleManualSubmit = async (title: string, description: string, prompt: string) => {
+  const handleManualSubmit = async (
+    title: string,
+    description: string,
+    prompts: string[],
+  ) => {
     setIsProcessing(true)
     setError(null)
 
     try {
-      const content = JSON.stringify({
-        title,
-        description,
-        prompt,
-      })
-
-      const response = await fetch('/api/extract-scholarship', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          content,
-          fileType: 'json',
-        }),
-      })
-
-      const result = await response.json()
-
-      if (result.success && result.data) {
-        const getName = (extracted: string, fallback: string) =>
-          extracted && extracted !== 'Missing' ? extracted : fallback
+      await saveScholarshipToDB(title, description, prompts)
 
         const finalTitle = getName(result.data.ScholarshipName, title)
         const finalDescription = getName(result.data.ScholarshipDescription, description)
@@ -144,13 +115,16 @@ export default function ScholarshipUploadPopup({
       // Still try to fetch adaptive weights on error
       const adaptiveWeights = await fetchAdaptiveWeights(title, description, prompt)
       onScholarshipCreated({
-        title,
-        description,
-        prompt,
+        title: title,
+        description: description,
+        prompts: prompts,
         hiddenRequirements: [],
         adaptiveWeights,
       })
+
       onClose()
+    } catch (err) {
+      setError(`Failed to save scholarship: ${(err as Error).message}`)
     } finally {
       setIsProcessing(false)
     }
@@ -177,54 +151,58 @@ export default function ScholarshipUploadPopup({
     })
   }
 
-  const getFileType = (mimeType: string): string => {
-    if (mimeType === 'text/plain') return 'txt'
-    if (mimeType === 'application/json') return 'json'
-    if (mimeType === 'application/pdf') return 'pdf'
-    return 'txt'
-  }
-
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center"
+      className="fixed inset-0 z-100 flex items-center justify-center"
       onClick={onClose}
     >
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" />
 
       {/* Popup with floating toggle above */}
-      <div className="relative flex flex-col items-start" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="relative flex flex-col items-start"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Floating Mode Toggle - above popup */}
         <div className="mb-3">
           <UploadModeToggle mode={uploadMode} onModeChange={setUploadMode} />
         </div>
 
         {/* Main Popup */}
-        <div className="w-[400px] bg-white rounded-2xl shadow-2xl border border-gray-200">
+        <div className="w-96 bg-white rounded-xl shadow-xl border border-neutral-200">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">Upload Scholarship</h3>
+          <div className="flex items-center justify-between p-4 border-b border-neutral-200">
+            <h3 className="text-lg font-semibold text-neutral-900">
+              Upload Scholarship
+            </h3>
             <button
               onClick={onClose}
-              className="p-1 rounded-lg hover:bg-gray-100 transition-colors"
+              className="p-1 rounded-md bg-transparent border-0 cursor-pointer text-neutral-500 transition-all hover:bg-neutral-100"
             >
-              <X size={18} className="text-gray-500" />
+              <X size={18} />
             </button>
           </div>
 
           {/* Error Message */}
           {error && (
-            <div className="mx-4 mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <div className="mx-4 mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
               <p className="text-sm text-red-600">{error}</p>
             </div>
           )}
 
           {/* Content */}
-          <div className="p-4 max-h-[600px] overflow-y-auto">
+          <div className="p-4 max-h-96 overflow-y-auto">
             {uploadMode === 'file' ? (
-              <FileUploadArea onFileUpload={handleFileUpload} isUploading={isProcessing} />
+              <FileUploadArea
+                onFileUpload={handleFileUpload}
+                isUploading={isProcessing}
+              />
             ) : (
-              <ManualEntryForm onSubmit={handleManualSubmit} isSubmitting={isProcessing} />
+              <ManualEntryForm
+                onSubmit={handleManualSubmit}
+                isSubmitting={isProcessing}
+              />
             )}
           </div>
         </div>

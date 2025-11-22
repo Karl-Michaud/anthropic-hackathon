@@ -6,48 +6,48 @@
  * for essay optimization
  */
 
-import { NextRequest, NextResponse } from "next/server";
-import { generateAdaptiveWeights } from "../../lib/adaptive-weighting-extractor";
+import { NextRequest, NextResponse } from 'next/server'
+import { generateAdaptiveWeights } from '../../lib/adaptive-weighting-extractor'
 import {
   AdaptiveWeightingRequest,
   AdaptiveWeightingResponse,
-} from "../../types/adaptive-weighting";
+} from '../../types/adaptive-weighting'
 
 export async function POST(request: NextRequest) {
   try {
     // Parse request body
-    const body: AdaptiveWeightingRequest = await request.json();
-    const { ScholarshipName, ScholarshipDescription, EssayPrompt } = body;
+    const body: AdaptiveWeightingRequest = await request.json()
+    const { ScholarshipName, ScholarshipDescription, EssayPrompt } = body
 
     // Validate inputs
     if (!ScholarshipName) {
       return NextResponse.json(
         {
           success: false,
-          error: "Missing required field: ScholarshipName",
+          error: 'Missing required field: ScholarshipName',
         } as AdaptiveWeightingResponse,
-        { status: 400 }
-      );
+        { status: 400 },
+      )
     }
 
     if (!ScholarshipDescription) {
       return NextResponse.json(
         {
           success: false,
-          error: "Missing required field: ScholarshipDescription",
+          error: 'Missing required field: ScholarshipDescription',
         } as AdaptiveWeightingResponse,
-        { status: 400 }
-      );
+        { status: 400 },
+      )
     }
 
     if (!EssayPrompt) {
       return NextResponse.json(
         {
           success: false,
-          error: "Missing required field: EssayPrompt",
+          error: 'Missing required field: EssayPrompt',
         } as AdaptiveWeightingResponse,
-        { status: 400 }
-      );
+        { status: 400 },
+      )
     }
 
     // Generate adaptive weights using LLM
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
       ScholarshipName,
       ScholarshipDescription,
       EssayPrompt,
-    });
+    })
 
     // Return successful response
     return NextResponse.json(
@@ -63,10 +63,10 @@ export async function POST(request: NextRequest) {
         success: true,
         data: weights,
       } as AdaptiveWeightingResponse,
-      { status: 200 }
-    );
+      { status: 200 },
+    )
   } catch (error) {
-    console.error("Adaptive weighting error:", error);
+    console.error('Adaptive weighting error:', error)
 
     return NextResponse.json(
       {
@@ -74,10 +74,10 @@ export async function POST(request: NextRequest) {
         error:
           error instanceof Error
             ? error.message
-            : "An unexpected error occurred",
+            : 'An unexpected error occurred',
       } as AdaptiveWeightingResponse,
-      { status: 500 }
-    );
+      { status: 500 },
+    )
   }
 }
 
@@ -88,10 +88,10 @@ export async function OPTIONS() {
     {
       status: 200,
       headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type",
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
       },
-    }
-  );
+    },
+  )
 }

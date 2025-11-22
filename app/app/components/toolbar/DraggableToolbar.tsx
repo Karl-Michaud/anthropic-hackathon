@@ -58,20 +58,21 @@ export default function DraggableToolbar({
 
       const distances = {
         top: Math.sqrt(
-          Math.pow(dragPos.x - viewportWidth / 2, 2) + Math.pow(dragPos.y - 50, 2)
+          Math.pow(dragPos.x - viewportWidth / 2, 2) +
+            Math.pow(dragPos.y - 50, 2),
         ),
         right: Math.sqrt(
           Math.pow(dragPos.x - (viewportWidth - 50), 2) +
-            Math.pow(dragPos.y - viewportHeight / 2, 2)
+            Math.pow(dragPos.y - viewportHeight / 2, 2),
         ),
         bottom: Math.sqrt(
           Math.pow(dragPos.x - viewportWidth / 2, 2) +
-            Math.pow(dragPos.y - (viewportHeight - 50), 2)
+            Math.pow(dragPos.y - (viewportHeight - 50), 2),
         ),
       }
 
       const closest = Object.entries(distances).reduce((a, b) =>
-        a[1] < b[1] ? a : b
+        a[1] < b[1] ? a : b,
       )[0] as ToolbarPosition
 
       setPosition(closest)
@@ -88,7 +89,9 @@ export default function DraggableToolbar({
 
   const positionConfig = POSITIONS[position]
   const isVertical = position === 'right'
-  const dividerClassName = isVertical ? 'h-px w-6 bg-gray-300' : 'w-px h-6 bg-gray-300'
+  const dividerClassName = isVertical
+    ? 'h-px w-6 bg-gray-300'
+    : 'w-px h-6 bg-gray-300'
 
   return (
     <div
@@ -138,7 +141,7 @@ export default function DraggableToolbar({
       {/* Add Cell Button */}
       <button
         onClick={onAddCell}
-        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+        className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
         title="Add Cell"
       >
         <StickyNote size={20} className="text-gray-700" />

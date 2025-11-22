@@ -15,7 +15,10 @@ interface JsonOutputBlockProps {
   onDelete: () => void
 }
 
-export default function JsonOutputBlock({ data, onDelete }: JsonOutputBlockProps) {
+export default function JsonOutputBlock({
+  data,
+  onDelete,
+}: JsonOutputBlockProps) {
   const [copied, setCopied] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
 
@@ -29,7 +32,7 @@ export default function JsonOutputBlock({ data, onDelete }: JsonOutputBlockProps
 
   return (
     <div
-      className="w-[450px] bg-gray-900 rounded-xl shadow-lg border border-gray-700 overflow-hidden relative"
+      className="w-[450px] bg-neutral-900 rounded-xl shadow-lg border border-neutral-700 overflow-hidden relative"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -41,23 +44,25 @@ export default function JsonOutputBlock({ data, onDelete }: JsonOutputBlockProps
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2 bg-gray-800 border-b border-gray-700">
-        <span className="text-xs font-medium text-gray-400">AI Pipeline Output</span>
+      <div className="flex items-center justify-between py-2 px-4 bg-neutral-800 border-b border-neutral-700">
+        <span className="text-xs font-medium text-neutral-400">
+          AI Pipeline Output
+        </span>
         <button
           onClick={handleCopy}
-          className="p-1.5 hover:bg-gray-700 rounded transition-colors"
+          className="p-1 border-0 bg-transparent cursor-pointer rounded-sm transition-all hover:bg-neutral-700"
           title="Copy JSON"
         >
           {copied ? (
             <Check size={14} className="text-green-400" />
           ) : (
-            <Copy size={14} className="text-gray-400" />
+            <Copy size={14} className="text-neutral-400" />
           )}
         </button>
       </div>
 
       {/* JSON Content */}
-      <pre className="p-4 text-xs text-gray-300 overflow-x-auto font-mono leading-relaxed">
+      <pre className="p-4 text-xs text-neutral-300 overflow-x-auto font-mono leading-relaxed m-0">
         {jsonString}
       </pre>
     </div>

@@ -1,3 +1,5 @@
+'use server'
+
 // TODO: implement usage of previous contexts (like values and priorities)
 
 import Anthropic from '@anthropic-ai/sdk'
@@ -51,9 +53,9 @@ export async function requestClaude<T extends ClaudeResponse>(
   try {
     return JSON.parse(responseText) as T
   } catch (error) {
-    console.error('Failed to parse Claude response:', error)
-    console.error('Raw response:', responseText)
-    throw new Error(`Claude response did not match expected format for ${type}`)
+    throw new Error(
+      `Claude response did not match expected format for ${type}: ${error}`,
+    )
   }
 }
 
