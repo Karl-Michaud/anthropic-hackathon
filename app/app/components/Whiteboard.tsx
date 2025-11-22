@@ -9,6 +9,7 @@ import DraggableBlock from './DraggableBlock'
 import ScholarshipWithActions from './scholarship/ScholarshipWithActions'
 import EssayBlock from './essay/EssayBlock'
 import JsonOutputBlock from './scholarship/JsonOutputBlock'
+import { FeedbackPanel, submitFeedbackAnswers, clearFeedbackDraft, createDummyFeedbackData } from './DynamicFeedback'
 import { useWhiteboard } from '../context/WhiteboardContext'
 import { useEditing } from '../context/EditingContext'
 
@@ -44,7 +45,7 @@ export default function Whiteboard() {
 
   // Clipboard state
   const [clipboard, setClipboard] = useState<Array<{
-    type: 'cell' | 'scholarship' | 'essay' | 'jsonOutput'
+    type: 'cell' | 'scholarship' | 'essay' | 'jsonOutput' | 'feedbackPanel'
     data: any
   }> | null>(null)
 
@@ -61,6 +62,7 @@ export default function Whiteboard() {
     scholarships,
     essays,
     jsonOutputs,
+    feedbackPanels,
     blockPositions,
     addCell,
     updateCell,
@@ -72,6 +74,9 @@ export default function Whiteboard() {
     updateEssay,
     deleteEssay,
     deleteJsonOutput,
+    addFeedbackPanel,
+    updateFeedbackPanel,
+    deleteFeedbackPanel,
     updateBlockPosition,
     getBlockPosition,
   } = useWhiteboard()
@@ -84,6 +89,43 @@ export default function Whiteboard() {
       y: Math.max(-CANVAS_LIMIT, Math.min(CANVAS_LIMIT, y)),
     }
   }, [])
+
+  // Auto-focus to show both feedback panel and essay
+  const focusOnFeedbackAndEssay = useCallback(
+    (feedbackId: string, essayId: string) => {
+      const feedbackPos = getBlockPosition(feedbackId)
+      const essayPos = getBlockPosition(essayId)
+
+      // Calculate bounding box of both blocks
+      const minX = feedbackPos.x
+      const maxX = essayPos.x + 500 // essay width
+      const minY = Math.min(feedbackPos.y, essayPos.y)
+      const maxY = Math.max(feedbackPos.y + 600, essayPos.y + 400)
+
+      const centerX = (minX + maxX) / 2
+      const centerY = (minY + maxY) / 2
+      const width = maxX - minX
+      const height = maxY - minY
+
+      // Calculate zoom to fit both with 20% padding
+      const viewportWidth = window.innerWidth
+      const viewportHeight = window.innerHeight
+      const zoomX = viewportWidth / (width * 1.2)
+      const zoomY = viewportHeight / (height * 1.2)
+      const newZoom = Math.min(Math.max(zoomX, zoomY, ZOOM_MIN), ZOOM_MAX)
+
+      // Center viewport on both blocks
+      const viewportCenterX = viewportWidth / 2
+      const viewportCenterY = viewportHeight / 2
+
+      setPosition({
+        x: viewportCenterX - centerX * newZoom,
+        y: viewportCenterY - centerY * newZoom,
+      })
+      setZoom(newZoom)
+    },
+    [getBlockPosition]
+  )
 
   // Initialize positions for new scholarships
   useEffect(() => {
@@ -128,6 +170,25 @@ export default function Whiteboard() {
       }
     })
   }, [jsonOutputs, blockPositions, updateBlockPosition, clampToCanvas])
+
+  // Initialize positions for new feedback panels (placed to the LEFT of essays)
+  useEffect(() => {
+    feedbackPanels.forEach((panel) => {
+      const existing = blockPositions.find((p) => p.id === panel.id)
+      if (!existing) {
+        const essayPos = blockPositions.find((p) => p.id === panel.essayId)
+        // Position 650px to the LEFT of essay
+        const canvasX = essayPos ? essayPos.x - 650 : 100
+        const canvasY = essayPos ? essayPos.y : 100
+        const clamped = clampToCanvas(canvasX, canvasY)
+        updateBlockPosition(panel.id, clamped.x, clamped.y)
+
+        // Auto-focus to show both feedback and essay
+        focusOnFeedbackAndEssay(panel.id, panel.essayId)
+      }
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [feedbackPanels, blockPositions, updateBlockPosition, clampToCanvas])
 
   const handleBlockMouseDown = useCallback(
     (e: MouseEvent<HTMLDivElement>, blockId: string, blockX: number, blockY: number) => {
@@ -268,6 +329,37 @@ export default function Whiteboard() {
       rotation: randomRotation,
     })
   }, [position, zoom, addCell, clampToCanvas])
+
+  const addTestFeedback = useCallback(() => {
+    // Create a test essay if none exists, or use the first one
+    let targetEssayId = essays.length > 0 ? essays[0].id : null
+    let targetScholarshipId = scholarships.length > 0 ? scholarships[0].id : null
+
+    // If no essay exists, create a dummy one
+    if (!targetEssayId) {
+      // Create a dummy scholarship if needed
+      if (!targetScholarshipId) {
+        targetScholarshipId = addScholarship({
+          title: 'Test Scholarship - Community Leadership Award',
+          description: 'A scholarship for students who demonstrate exceptional leadership in their communities.',
+          prompt: 'Describe a time when you showed leadership in your community and the impact it had.',
+          hiddenRequirements: ['Resiliency', 'Leadership', 'Community Service'],
+          adaptiveWeights: {},
+        })
+      }
+
+      // Create a dummy essay
+      targetEssayId = addEssay({
+        scholarshipId: targetScholarshipId,
+        content: 'This is a test essay for demonstrating the feedback panel functionality. In my community, I have always been passionate about helping others...',
+        maxWordCount: 500,
+      })
+    }
+
+    // Create and add the feedback panel
+    const feedbackData = createDummyFeedbackData(targetEssayId, targetScholarshipId || 'test-scholarship')
+    addFeedbackPanel(feedbackData)
+  }, [essays, scholarships, addScholarship, addEssay, addFeedbackPanel])
 
   const handleCanvasMouseDown = useCallback(
     (e: MouseEvent<HTMLDivElement>) => {
@@ -456,10 +548,28 @@ export default function Whiteboard() {
         }
       })
 
+      // Check feedback panels
+      feedbackPanels.forEach((panel) => {
+        const pos = getBlockPosition(panel.id)
+        const blockLeft = pos.x
+        const blockRight = pos.x + 600
+        const blockTop = pos.y
+        const blockBottom = pos.y + 600
+
+        if (
+          blockRight > canvasBoxLeft &&
+          blockLeft < canvasBoxRight &&
+          blockBottom > canvasBoxTop &&
+          blockTop < canvasBoxBottom
+        ) {
+          newSelectedIds.add(panel.id)
+        }
+      })
+
       setSelectedIds(newSelectedIds)
       setSelectionBox(null)
     }
-  }, [selectionBox, position, zoom, cells, scholarships, essays, jsonOutputs, selectedIds, getBlockPosition])
+  }, [selectionBox, position, zoom, cells, scholarships, essays, jsonOutputs, feedbackPanels, selectedIds, getBlockPosition])
 
   const handleCellMouseDown = useCallback(
     (
@@ -612,6 +722,13 @@ export default function Whiteboard() {
       allObjectIds.add(jsonOutput.id)
     })
 
+    // Add feedback panels
+    feedbackPanels.forEach((panel) => {
+      const pos = getBlockPosition(panel.id)
+      objects.push({ x: pos.x, y: pos.y, width: 600, height: 600 })
+      allObjectIds.add(panel.id)
+    })
+
     // If no objects, do nothing
     if (objects.length === 0) {
       return
@@ -664,7 +781,7 @@ export default function Whiteboard() {
 
     // Select all objects to show their borders
     setSelectedIds(allObjectIds)
-  }, [cells, scholarships, essays, jsonOutputs, getBlockPosition])
+  }, [cells, scholarships, essays, jsonOutputs, feedbackPanels, getBlockPosition])
 
   // Context menu handlers
   const handleContextMenu = useCallback(
@@ -698,12 +815,15 @@ export default function Whiteboard() {
       } else if (id.startsWith('json-')) {
         const jsonOutput = jsonOutputs.find((j) => j.id === id)
         return jsonOutput ? { type: 'jsonOutput' as const, data: jsonOutput } : null
+      } else if (id.startsWith('feedback-')) {
+        const feedback = feedbackPanels.find((f) => f.id === id)
+        return feedback ? { type: 'feedbackPanel' as const, data: feedback } : null
       }
       return null
-    }).filter(Boolean) as Array<{ type: 'cell' | 'scholarship' | 'essay' | 'jsonOutput'; data: any }>
+    }).filter(Boolean) as Array<{ type: 'cell' | 'scholarship' | 'essay' | 'jsonOutput' | 'feedbackPanel'; data: any }>
 
     setClipboard(itemsToCopy)
-  }, [selectedIds, cells, scholarships, essays, jsonOutputs])
+  }, [selectedIds, cells, scholarships, essays, jsonOutputs, feedbackPanels])
 
   const handlePaste = useCallback(() => {
     if (!clipboard || clipboard.length === 0) return
@@ -760,10 +880,12 @@ export default function Whiteboard() {
         deleteEssay(id)
       } else if (id.startsWith('json-')) {
         deleteJsonOutput(id)
+      } else if (id.startsWith('feedback-')) {
+        deleteFeedbackPanel(id)
       }
     })
     setSelectedIds(new Set())
-  }, [selectedIds, deleteCell, deleteScholarship, deleteEssay, deleteJsonOutput])
+  }, [selectedIds, deleteCell, deleteScholarship, deleteEssay, deleteJsonOutput, deleteFeedbackPanel])
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -894,6 +1016,7 @@ export default function Whiteboard() {
       {/* Draggable Toolbar */}
       <DraggableToolbar
         onAddCell={addNewCell}
+        onAddTestFeedback={addTestFeedback}
         activeTool={activeTool}
         onToolChange={setActiveTool}
       />
@@ -1029,6 +1152,54 @@ export default function Whiteboard() {
               <JsonOutputBlock
                 data={jsonOutput.data}
                 onDelete={() => deleteJsonOutput(jsonOutput.id)}
+              />
+            </DraggableBlock>
+          )
+        })}
+
+        {/* Render feedback panels */}
+        {feedbackPanels.map((feedbackData) => {
+          const pos = getBlockPosition(feedbackData.id)
+          return (
+            <DraggableBlock
+              key={feedbackData.id}
+              id={feedbackData.id}
+              x={pos.x}
+              y={pos.y}
+              isDragging={draggingCellId === feedbackData.id}
+              isSelected={selectedIds.has(feedbackData.id)}
+              zoom={zoom}
+              onMouseDown={handleBlockMouseDown}
+              onContextMenu={(e, blockId) => handleContextMenu(e, blockId)}
+            >
+              <FeedbackPanel
+                data={feedbackData}
+                onClose={() => deleteFeedbackPanel(feedbackData.id)}
+                onSectionAnswerChange={(sectionId, questionId, answer) => {
+                  // Update section answer
+                  const updatedSections = feedbackData.sections.map((section) =>
+                    section.id === sectionId
+                      ? {
+                          ...section,
+                          questions: section.questions.map((q) =>
+                            q.id === questionId ? { ...q, answer } : q
+                          ),
+                        }
+                      : section
+                  )
+                  updateFeedbackPanel(feedbackData.id, { sections: updatedSections })
+                }}
+                onSectionComplete={(sectionId) => {
+                  // Mark section as complete
+                  const updatedSections = feedbackData.sections.map((section) =>
+                    section.id === sectionId ? { ...section, isComplete: true } : section
+                  )
+                  updateFeedbackPanel(feedbackData.id, { sections: updatedSections })
+                }}
+                onSubmitToAI={async () => {
+                  await submitFeedbackAnswers(feedbackData)
+                  deleteFeedbackPanel(feedbackData.id) // Remove after submission
+                }}
               />
             </DraggableBlock>
           )

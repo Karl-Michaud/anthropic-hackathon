@@ -1,6 +1,12 @@
 'use client'
 
 import { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from 'react'
+import { FeedbackData } from '../components/DynamicFeedback/types'
+import {
+  saveFeedbackDraft,
+  loadFeedbackDraft,
+  clearFeedbackDraft,
+} from '../components/DynamicFeedback/utils/feedbackApi'
 
 const STORAGE_KEY = 'whiteboard-data'
 const DEBOUNCE_MS = 500
@@ -62,6 +68,7 @@ interface WhiteboardContextType {
   scholarships: ScholarshipData[]
   essays: EssayData[]
   jsonOutputs: JsonOutputData[]
+  feedbackPanels: FeedbackData[]
   blockPositions: BlockPosition[]
 
   // Cell actions
@@ -82,6 +89,11 @@ interface WhiteboardContextType {
   // JSON output actions
   addJsonOutput: (scholarshipId: string, data: JsonOutputData['data']) => string
   deleteJsonOutput: (jsonOutputId: string) => void
+
+  // Feedback panel actions
+  addFeedbackPanel: (feedbackData: FeedbackData) => void
+  updateFeedbackPanel: (feedbackId: string, updates: Partial<FeedbackData>) => void
+  deleteFeedbackPanel: (feedbackId: string) => void
 
   // Position actions
   updateBlockPosition: (id: string, x: number, y: number) => void
@@ -128,6 +140,7 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
   const [scholarships, setScholarships] = useState<ScholarshipData[]>([])
   const [essays, setEssays] = useState<EssayData[]>([])
   const [jsonOutputs, setJsonOutputs] = useState<JsonOutputData[]>([])
+  const [feedbackPanels, setFeedbackPanels] = useState<FeedbackData[]>([])
   const [blockPositions, setBlockPositions] = useState<BlockPosition[]>([])
   const [isLoaded, setIsLoaded] = useState(false)
 
@@ -141,6 +154,17 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
     setEssays(stored.essays)
     setJsonOutputs(stored.jsonOutputs)
     setBlockPositions(stored.blockPositions)
+
+    // Load feedback panel drafts separately
+    const feedbackDrafts: FeedbackData[] = []
+    stored.essays.forEach((essay) => {
+      const draft = loadFeedbackDraft(essay.id)
+      if (draft) {
+        feedbackDrafts.push(draft)
+      }
+    })
+    setFeedbackPanels(feedbackDrafts)
+
     setIsLoaded(true)
   }, [])
 
@@ -260,12 +284,46 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
     [blockPositions]
   )
 
+  // Feedback panel actions
+  const addFeedbackPanel = useCallback((feedbackData: FeedbackData) => {
+    setFeedbackPanels((prev) => [...prev, feedbackData])
+    saveFeedbackDraft(feedbackData) // Auto-save to localStorage
+  }, [])
+
+  const updateFeedbackPanel = useCallback((feedbackId: string, updates: Partial<FeedbackData>) => {
+    setFeedbackPanels((prev) =>
+      prev.map((panel) =>
+        panel.id === feedbackId ? { ...panel, ...updates } : panel
+      )
+    )
+    // Auto-save updated panel
+    setFeedbackPanels((prev) => {
+      const updatedPanel = prev.find((p) => p.id === feedbackId)
+      if (updatedPanel) {
+        saveFeedbackDraft({ ...updatedPanel, ...updates })
+      }
+      return prev
+    })
+  }, [])
+
+  const deleteFeedbackPanel = useCallback((feedbackId: string) => {
+    setFeedbackPanels((prev) => {
+      const panel = prev.find((p) => p.id === feedbackId)
+      if (panel) {
+        clearFeedbackDraft(panel.essayId)
+      }
+      return prev.filter((p) => p.id !== feedbackId)
+    })
+    setBlockPositions((prev) => prev.filter((p) => p.id !== feedbackId))
+  }, [])
+
   // Clear all
   const clearAll = useCallback(() => {
     setCells([])
     setScholarships([])
     setEssays([])
     setJsonOutputs([])
+    setFeedbackPanels([])
     setBlockPositions([])
   }, [])
 
@@ -276,6 +334,7 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
         scholarships,
         essays,
         jsonOutputs,
+        feedbackPanels,
         blockPositions,
         addCell,
         updateCell,
@@ -288,6 +347,9 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
         deleteEssay,
         addJsonOutput,
         deleteJsonOutput,
+        addFeedbackPanel,
+        updateFeedbackPanel,
+        deleteFeedbackPanel,
         updateBlockPosition,
         getBlockPosition,
         clearAll,
