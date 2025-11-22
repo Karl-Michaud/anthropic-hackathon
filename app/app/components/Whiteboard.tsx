@@ -3,7 +3,8 @@
 import { useRef, useState, useCallback, useEffect, MouseEvent } from 'react'
 import Cell from './Cell'
 import ZoomComponent from './ZoomComponent'
-import DraggableToolbar from './DraggableToolbar'
+import DraggableToolbar, { Tool } from './toolbar/DraggableToolbar'
+import ContextMenu from './toolbar/ContextMenu'
 import DraggableBlock from './DraggableBlock'
 import ScholarshipWithActions from './scholarship/ScholarshipWithActions'
 import EssayBlock from './essay/EssayBlock'
@@ -24,8 +25,32 @@ export default function Whiteboard() {
 
   const [draggingCellId, setDraggingCellId] = useState<string | null>(null)
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
+  const [dragStartPositions, setDragStartPositions] = useState<Map<string, { x: number; y: number }>>(new Map())
 
   const [generatingEssayFor, setGeneratingEssayFor] = useState<string | null>(null)
+
+  // Tool state
+  const [activeTool, setActiveTool] = useState<Tool>('select')
+
+  // Selection state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+
+  // Context menu state
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
+
+  // Clipboard state
+  const [clipboard, setClipboard] = useState<Array<{
+    type: 'cell' | 'scholarship' | 'essay' | 'jsonOutput'
+    data: any
+  }> | null>(null)
+
+  // Selection box state
+  const [selectionBox, setSelectionBox] = useState<{
+    startX: number
+    startY: number
+    currentX: number
+    currentY: number
+  } | null>(null)
 
   const {
     cells,
@@ -36,6 +61,7 @@ export default function Whiteboard() {
     addCell,
     updateCell,
     deleteCell,
+    addScholarship,
     updateScholarship,
     deleteScholarship,
     addEssay,
@@ -91,13 +117,65 @@ export default function Whiteboard() {
   const handleBlockMouseDown = useCallback(
     (e: MouseEvent<HTMLDivElement>, blockId: string, blockX: number, blockY: number) => {
       e.stopPropagation()
-      setDraggingCellId(blockId)
-      setDragOffset({
-        x: e.clientX - position.x - blockX * zoom,
-        y: e.clientY - position.y - blockY * zoom,
-      })
+
+      // Close context menu if open
+      if (contextMenu) {
+        setContextMenu(null)
+      }
+
+      if (activeTool === 'hand') {
+        // Hand tool: just pan, don't interact with blocks
+        return
+      }
+
+      // Select tool: handle selection and dragging
+      if (e.button === 0) {
+        let newSelectedIds = selectedIds
+
+        // Handle multi-selection with cmd/ctrl
+        if (e.metaKey || e.ctrlKey) {
+          setSelectedIds((prev) => {
+            const newSet = new Set(prev)
+            if (newSet.has(blockId)) {
+              newSet.delete(blockId)
+            } else {
+              newSet.add(blockId)
+            }
+            newSelectedIds = newSet
+            return newSet
+          })
+        } else {
+          // Single selection
+          if (!selectedIds.has(blockId)) {
+            newSelectedIds = new Set([blockId])
+            setSelectedIds(newSelectedIds)
+          }
+        }
+
+        // Start dragging - store positions of all selected items
+        const positions = new Map<string, { x: number; y: number }>()
+
+        newSelectedIds.forEach((id) => {
+          if (id.startsWith('cell-')) {
+            const cell = cells.find((c) => c.id === id)
+            if (cell) {
+              positions.set(id, { x: cell.x, y: cell.y })
+            }
+          } else {
+            const pos = getBlockPosition(id)
+            positions.set(id, { x: pos.x, y: pos.y })
+          }
+        })
+
+        setDragStartPositions(positions)
+        setDraggingCellId(blockId)
+        setDragOffset({
+          x: e.clientX - position.x - blockX * zoom,
+          y: e.clientY - position.y - blockY * zoom,
+        })
+      }
     },
-    [position, zoom]
+    [position, zoom, activeTool, selectedIds, contextMenu, cells, getBlockPosition]
   )
 
   const handleCreateDraft = useCallback(
@@ -177,15 +255,37 @@ export default function Whiteboard() {
     (e: MouseEvent<HTMLDivElement>) => {
       if (isEditing) return
 
+      // Close context menu if open
+      if (contextMenu) {
+        setContextMenu(null)
+        return
+      }
+
       if (e.button === 0 && !draggingCellId) {
-        setIsPanning(true)
-        setStartPos({
-          x: e.clientX - position.x,
-          y: e.clientY - position.y,
-        })
+        // Hand tool always pans
+        if (activeTool === 'hand') {
+          setIsPanning(true)
+          setStartPos({
+            x: e.clientX - position.x,
+            y: e.clientY - position.y,
+          })
+        } else if (activeTool === 'select') {
+          // Select tool: start selection box
+          // Clear selection if not holding cmd/ctrl
+          if (!e.metaKey && !e.ctrlKey) {
+            setSelectedIds(new Set())
+          }
+          // Start selection box
+          setSelectionBox({
+            startX: e.clientX,
+            startY: e.clientY,
+            currentX: e.clientX,
+            currentY: e.clientY,
+          })
+        }
       }
     },
-    [position, draggingCellId, isEditing],
+    [position, draggingCellId, isEditing, activeTool, contextMenu],
   )
 
   const handleMouseMove = useCallback(
@@ -196,27 +296,146 @@ export default function Whiteboard() {
         setPosition({ x: newX, y: newY })
       }
 
-      if (draggingCellId) {
+      if (draggingCellId && dragStartPositions.size > 0) {
+        // Calculate the new position for the dragged item
         const newX = (e.clientX - dragOffset.x - position.x) / zoom
         const newY = (e.clientY - dragOffset.y - position.y) / zoom
 
-        if (draggingCellId.startsWith('cell-')) {
-          const cell = cells.find((c) => c.id === draggingCellId)
-          if (cell) {
-            updateCell({ ...cell, x: newX, y: newY })
-          }
-        } else {
-          updateBlockPosition(draggingCellId, newX, newY)
+        // Get the original position of the dragged item
+        const draggedOriginalPos = dragStartPositions.get(draggingCellId)
+        if (draggedOriginalPos) {
+          // Calculate the delta
+          const deltaX = newX - draggedOriginalPos.x
+          const deltaY = newY - draggedOriginalPos.y
+
+          // Move all selected items by the same delta
+          dragStartPositions.forEach((originalPos, id) => {
+            const newItemX = originalPos.x + deltaX
+            const newItemY = originalPos.y + deltaY
+
+            if (id.startsWith('cell-')) {
+              const cell = cells.find((c) => c.id === id)
+              if (cell) {
+                updateCell({ ...cell, x: newItemX, y: newItemY })
+              }
+            } else {
+              updateBlockPosition(id, newItemX, newItemY)
+            }
+          })
         }
       }
+
+      // Update selection box
+      if (selectionBox) {
+        setSelectionBox({
+          ...selectionBox,
+          currentX: e.clientX,
+          currentY: e.clientY,
+        })
+      }
     },
-    [isPanning, draggingCellId, startPos, dragOffset, position, zoom, cells, updateCell, updateBlockPosition],
+    [isPanning, draggingCellId, startPos, dragOffset, position, zoom, cells, updateCell, updateBlockPosition, selectionBox, dragStartPositions],
   )
 
   const handleMouseUp = useCallback(() => {
     setIsPanning(false)
     setDraggingCellId(null)
-  }, [])
+    setDragStartPositions(new Map())
+
+    // Handle selection box completion
+    if (selectionBox) {
+      const { startX, startY, currentX, currentY } = selectionBox
+
+      // Calculate selection box bounds in screen coordinates
+      const boxLeft = Math.min(startX, currentX)
+      const boxRight = Math.max(startX, currentX)
+      const boxTop = Math.min(startY, currentY)
+      const boxBottom = Math.max(startY, currentY)
+
+      // Convert bounds to canvas coordinates
+      const canvasBoxLeft = (boxLeft - position.x) / zoom
+      const canvasBoxRight = (boxRight - position.x) / zoom
+      const canvasBoxTop = (boxTop - position.y) / zoom
+      const canvasBoxBottom = (boxBottom - position.y) / zoom
+
+      const newSelectedIds = new Set<string>(selectedIds)
+
+      // Check cells
+      cells.forEach((cell) => {
+        const cellLeft = cell.x
+        const cellRight = cell.x + 192 // cell width
+        const cellTop = cell.y
+        const cellBottom = cell.y + 192 // cell height
+
+        // Check if cell intersects with selection box
+        if (
+          cellRight > canvasBoxLeft &&
+          cellLeft < canvasBoxRight &&
+          cellBottom > canvasBoxTop &&
+          cellTop < canvasBoxBottom
+        ) {
+          newSelectedIds.add(cell.id)
+        }
+      })
+
+      // Check scholarships
+      scholarships.forEach((scholarship) => {
+        const pos = getBlockPosition(scholarship.id)
+        const blockLeft = pos.x
+        const blockRight = pos.x + 550 // approximate block width
+        const blockTop = pos.y
+        const blockBottom = pos.y + 400 // approximate block height
+
+        if (
+          blockRight > canvasBoxLeft &&
+          blockLeft < canvasBoxRight &&
+          blockBottom > canvasBoxTop &&
+          blockTop < canvasBoxBottom
+        ) {
+          newSelectedIds.add(scholarship.id)
+        }
+      })
+
+      // Check essays
+      essays.forEach((essay) => {
+        const pos = getBlockPosition(essay.id)
+        const blockLeft = pos.x
+        const blockRight = pos.x + 500
+        const blockTop = pos.y
+        const blockBottom = pos.y + 400
+
+        if (
+          blockRight > canvasBoxLeft &&
+          blockLeft < canvasBoxRight &&
+          blockBottom > canvasBoxTop &&
+          blockTop < canvasBoxBottom
+        ) {
+          newSelectedIds.add(essay.id)
+        }
+      })
+
+      // Check JSON outputs
+      jsonOutputs.forEach((jsonOutput) => {
+        const pos = getBlockPosition(jsonOutput.id)
+        const blockLeft = pos.x
+        const blockRight = pos.x + 400
+        const blockTop = pos.y
+        const blockBottom = pos.y + 300
+
+        if (
+          blockRight > canvasBoxLeft &&
+          blockLeft < canvasBoxRight &&
+          blockBottom > canvasBoxTop &&
+          blockTop < canvasBoxBottom
+        ) {
+          newSelectedIds.add(jsonOutput.id)
+        }
+      })
+
+      setSelectedIds(newSelectedIds)
+      setSelectionBox(null)
+    }
+  }, [selectionBox, position, zoom, cells, scholarships, essays, jsonOutputs, selectedIds, getBlockPosition])
 
   const handleCellMouseDown = useCallback(
     (
@@ -226,13 +445,65 @@ export default function Whiteboard() {
       cellY: number,
     ) => {
       e.stopPropagation()
-      setDraggingCellId(cellId)
-      setDragOffset({
-        x: e.clientX - position.x - cellX * zoom,
-        y: e.clientY - position.y - cellY * zoom,
-      })
+
+      // Close context menu if open
+      if (contextMenu) {
+        setContextMenu(null)
+      }
+
+      if (activeTool === 'hand') {
+        // Hand tool: just pan, don't interact with cells
+        return
+      }
+
+      // Select tool: handle selection and dragging
+      if (e.button === 0) {
+        let newSelectedIds = selectedIds
+
+        // Handle multi-selection with cmd/ctrl
+        if (e.metaKey || e.ctrlKey) {
+          setSelectedIds((prev) => {
+            const newSet = new Set(prev)
+            if (newSet.has(cellId)) {
+              newSet.delete(cellId)
+            } else {
+              newSet.add(cellId)
+            }
+            newSelectedIds = newSet
+            return newSet
+          })
+        } else {
+          // Single selection
+          if (!selectedIds.has(cellId)) {
+            newSelectedIds = new Set([cellId])
+            setSelectedIds(newSelectedIds)
+          }
+        }
+
+        // Start dragging - store positions of all selected items
+        const positions = new Map<string, { x: number; y: number }>()
+
+        newSelectedIds.forEach((id) => {
+          if (id.startsWith('cell-')) {
+            const cell = cells.find((c) => c.id === id)
+            if (cell) {
+              positions.set(id, { x: cell.x, y: cell.y })
+            }
+          } else {
+            const pos = getBlockPosition(id)
+            positions.set(id, { x: pos.x, y: pos.y })
+          }
+        })
+
+        setDragStartPositions(positions)
+        setDraggingCellId(cellId)
+        setDragOffset({
+          x: e.clientX - position.x - cellX * zoom,
+          y: e.clientY - position.y - cellY * zoom,
+        })
+      }
     },
-    [position, zoom],
+    [position, zoom, activeTool, selectedIds, contextMenu, cells, getBlockPosition],
   )
 
   const handleTextChange = useCallback((cellId: string, newText: string) => {
@@ -250,8 +521,165 @@ export default function Whiteboard() {
     setZoom((prevZoom) => Math.max(prevZoom - ZOOM_STEP, ZOOM_MIN))
   }, [])
 
+  // Context menu handlers
+  const handleContextMenu = useCallback(
+    (e: MouseEvent<HTMLDivElement>, blockId?: string) => {
+      e.preventDefault()
+      e.stopPropagation()
+
+      // If clicking on a block that's not selected, select it first
+      if (blockId && !selectedIds.has(blockId)) {
+        setSelectedIds(new Set([blockId]))
+      }
+
+      setContextMenu({ x: e.clientX, y: e.clientY })
+    },
+    [selectedIds]
+  )
+
+  const handleCopy = useCallback(() => {
+    if (selectedIds.size === 0) return
+
+    const itemsToCopy = Array.from(selectedIds).map((id) => {
+      if (id.startsWith('cell-')) {
+        const cell = cells.find((c) => c.id === id)
+        return cell ? { type: 'cell' as const, data: cell } : null
+      } else if (id.startsWith('scholarship-')) {
+        const scholarship = scholarships.find((s) => s.id === id)
+        return scholarship ? { type: 'scholarship' as const, data: scholarship } : null
+      } else if (id.startsWith('essay-')) {
+        const essay = essays.find((e) => e.id === id)
+        return essay ? { type: 'essay' as const, data: essay } : null
+      } else if (id.startsWith('json-')) {
+        const jsonOutput = jsonOutputs.find((j) => j.id === id)
+        return jsonOutput ? { type: 'jsonOutput' as const, data: jsonOutput } : null
+      }
+      return null
+    }).filter(Boolean) as Array<{ type: 'cell' | 'scholarship' | 'essay' | 'jsonOutput'; data: any }>
+
+    setClipboard(itemsToCopy)
+  }, [selectedIds, cells, scholarships, essays, jsonOutputs])
+
+  const handlePaste = useCallback(() => {
+    if (!clipboard || clipboard.length === 0) return
+
+    const newIds = new Set<string>()
+
+    clipboard.forEach((item) => {
+      if (item.type === 'cell') {
+        const { id, ...cellData } = item.data
+        const newId = addCell({
+          ...cellData,
+          x: cellData.x + 50,
+          y: cellData.y + 50,
+        })
+        newIds.add(newId)
+      } else if (item.type === 'scholarship') {
+        const newId = addScholarship({
+          title: item.data.title,
+          description: item.data.description,
+          prompt: item.data.prompt,
+          hiddenRequirements: item.data.hiddenRequirements,
+        })
+        const pos = getBlockPosition(item.data.id)
+        updateBlockPosition(newId, pos.x + 50, pos.y + 50)
+        newIds.add(newId)
+      } else if (item.type === 'essay') {
+        const newId = addEssay({
+          scholarshipId: item.data.scholarshipId,
+          content: item.data.content,
+          maxWordCount: item.data.maxWordCount,
+        })
+        const pos = getBlockPosition(item.data.id)
+        updateBlockPosition(newId, pos.x + 50, pos.y + 50)
+        newIds.add(newId)
+      }
+    })
+
+    setSelectedIds(newIds)
+  }, [clipboard, addCell, addScholarship, addEssay, getBlockPosition, updateBlockPosition])
+
+  const handleDelete = useCallback(() => {
+    if (selectedIds.size === 0) return
+
+    selectedIds.forEach((id) => {
+      if (id.startsWith('cell-')) {
+        deleteCell(id)
+      } else if (id.startsWith('scholarship-')) {
+        deleteScholarship(id)
+      } else if (id.startsWith('essay-')) {
+        deleteEssay(id)
+      } else if (id.startsWith('json-')) {
+        deleteJsonOutput(id)
+      }
+    })
+    setSelectedIds(new Set())
+  }, [selectedIds, deleteCell, deleteScholarship, deleteEssay, deleteJsonOutput])
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger shortcuts when typing in input/textarea
+      const target = e.target as HTMLElement
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+        return
+      }
+
+      // Tool shortcuts (V and H only work when not using cmd/ctrl)
+      if (e.key === 'v' && !e.metaKey && !e.ctrlKey) {
+        setActiveTool('select')
+        return
+      }
+      if (e.key === 'h' && !e.metaKey && !e.ctrlKey) {
+        setActiveTool('hand')
+        return
+      }
+
+      // Copy (only when items are selected)
+      if ((e.metaKey || e.ctrlKey) && e.key === 'c') {
+        if (selectedIds.size > 0) {
+          e.preventDefault()
+          handleCopy()
+        }
+      }
+
+      // Paste (works even when nothing selected)
+      if ((e.metaKey || e.ctrlKey) && e.key === 'v') {
+        e.preventDefault()
+        handlePaste()
+      }
+
+      // Cut (only when items are selected)
+      if ((e.metaKey || e.ctrlKey) && e.key === 'x') {
+        if (selectedIds.size > 0) {
+          e.preventDefault()
+          handleCopy()
+          handleDelete()
+        }
+      }
+
+      // Delete (only when items are selected)
+      if (e.key === 'Backspace' || e.key === 'Delete') {
+        if (selectedIds.size > 0) {
+          e.preventDefault()
+          handleDelete()
+        }
+      }
+
+      // Undo (placeholder - would need more complex state management)
+      if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
+        e.preventDefault()
+        // TODO: Implement undo
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [selectedIds, handleCopy, handlePaste, handleDelete])
+
   const handleWheel = useCallback((e: WheelEvent) => {
     if (e.metaKey || e.ctrlKey) {
+      // Zoom with cmd/ctrl + scroll
       e.preventDefault()
 
       const delta = e.deltaY
@@ -260,6 +688,13 @@ export default function Whiteboard() {
       } else if (delta > 0) {
         setZoom((prevZoom) => Math.max(prevZoom - ZOOM_STEP, ZOOM_MIN))
       }
+    } else {
+      // Pan with trackpad/scroll wheel
+      e.preventDefault()
+      setPosition((prev) => ({
+        x: prev.x - e.deltaX,
+        y: prev.y - e.deltaY,
+      }))
     }
   }, [])
 
@@ -280,19 +715,30 @@ export default function Whiteboard() {
   return (
     <div
       ref={containerRef}
-      className="fixed inset-0 overflow-hidden bg-[#f5f3ed]"
+      className="fixed inset-0 overflow-hidden bg-[#f5f3ed] select-none"
       onMouseDown={handleCanvasMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
+      onContextMenu={(e) => handleContextMenu(e)}
       style={{
         backgroundImage: `radial-gradient(circle, ${dotColor} 1px, transparent 1px)`,
         backgroundSize: `${24 * zoom}px ${24 * zoom}px`,
-        cursor: isPanning ? 'grabbing' : 'default',
+        cursor: isPanning
+          ? 'grabbing'
+          : activeTool === 'hand'
+          ? 'grab'
+          : activeTool === 'select'
+          ? 'default'
+          : 'default',
       }}
     >
       {/* Draggable Toolbar */}
-      <DraggableToolbar onAddCell={addNewCell} />
+      <DraggableToolbar
+        onAddCell={addNewCell}
+        activeTool={activeTool}
+        onToolChange={setActiveTool}
+      />
 
       {/* Zoom Controls */}
       <div className="absolute top-4 right-4 z-50">
@@ -302,6 +748,34 @@ export default function Whiteboard() {
           onZoomOut={handleZoomOut}
         />
       </div>
+
+      {/* Context Menu */}
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onCopy={handleCopy}
+          onPaste={handlePaste}
+          onDelete={handleDelete}
+          onClose={() => setContextMenu(null)}
+          hasSelection={selectedIds.size > 0}
+        />
+      )}
+
+      {/* Selection Box */}
+      {selectionBox && (
+        <div
+          className="fixed pointer-events-none z-40"
+          style={{
+            left: Math.min(selectionBox.startX, selectionBox.currentX),
+            top: Math.min(selectionBox.startY, selectionBox.currentY),
+            width: Math.abs(selectionBox.currentX - selectionBox.startX),
+            height: Math.abs(selectionBox.currentY - selectionBox.startY),
+            border: '2px solid #3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          }}
+        />
+      )}
 
       {/* Panning canvas - infinite canvas that moves and scales */}
       <div
@@ -318,7 +792,9 @@ export default function Whiteboard() {
             key={cell.id}
             cell={cell}
             isDragging={draggingCellId === cell.id}
+            isSelected={selectedIds.has(cell.id)}
             onMouseDown={handleCellMouseDown}
+            onContextMenu={(e, cellId) => handleContextMenu(e, cellId)}
             onTextChange={handleTextChange}
             onDelete={deleteCell}
           />
@@ -334,7 +810,9 @@ export default function Whiteboard() {
               x={pos.x}
               y={pos.y}
               isDragging={draggingCellId === scholarship.id}
+              isSelected={selectedIds.has(scholarship.id)}
               onMouseDown={handleBlockMouseDown}
+              onContextMenu={(e, blockId) => handleContextMenu(e, blockId)}
             >
               <ScholarshipWithActions
                 data={scholarship}
@@ -357,7 +835,9 @@ export default function Whiteboard() {
               x={pos.x}
               y={pos.y}
               isDragging={draggingCellId === essay.id}
+              isSelected={selectedIds.has(essay.id)}
               onMouseDown={handleBlockMouseDown}
+              onContextMenu={(e, blockId) => handleContextMenu(e, blockId)}
             >
               <EssayBlock
                 data={essay}
@@ -380,7 +860,9 @@ export default function Whiteboard() {
               x={pos.x}
               y={pos.y}
               isDragging={draggingCellId === jsonOutput.id}
+              isSelected={selectedIds.has(jsonOutput.id)}
               onMouseDown={handleBlockMouseDown}
+              onContextMenu={(e, blockId) => handleContextMenu(e, blockId)}
             >
               <JsonOutputBlock
                 data={jsonOutput.data}

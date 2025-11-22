@@ -1,12 +1,16 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
-import { StickyNote, GripHorizontal } from 'lucide-react'
+import { StickyNote, GripHorizontal, Hand, MousePointer } from 'lucide-react'
+import ToolButton from './ToolButton'
 
 type ToolbarPosition = 'top' | 'right' | 'bottom'
+export type Tool = 'select' | 'hand'
 
 interface DraggableToolbarProps {
   onAddCell: () => void
+  activeTool: Tool
+  onToolChange: (tool: Tool) => void
 }
 
 const POSITIONS: Record<ToolbarPosition, { className: string }> = {
@@ -21,7 +25,11 @@ const POSITIONS: Record<ToolbarPosition, { className: string }> = {
   },
 }
 
-export default function DraggableToolbar({ onAddCell }: DraggableToolbarProps) {
+export default function DraggableToolbar({
+  onAddCell,
+  activeTool,
+  onToolChange,
+}: DraggableToolbarProps) {
   const [position, setPosition] = useState<ToolbarPosition>('bottom')
   const [isDragging, setIsDragging] = useState(false)
   const [dragPos, setDragPos] = useState({ x: 0, y: 0 })
@@ -43,11 +51,9 @@ export default function DraggableToolbar({ onAddCell }: DraggableToolbarProps) {
     const handleMouseUp = () => {
       setIsDragging(false)
 
-      // Calculate which position is closest
       const viewportWidth = window.innerWidth
       const viewportHeight = window.innerHeight
 
-      // Distance to each position's anchor point
       const distances = {
         top: Math.sqrt(
           Math.pow(dragPos.x - viewportWidth / 2, 2) + Math.pow(dragPos.y - 50, 2)
@@ -62,7 +68,6 @@ export default function DraggableToolbar({ onAddCell }: DraggableToolbarProps) {
         ),
       }
 
-      // Find closest position
       const closest = Object.entries(distances).reduce((a, b) =>
         a[1] < b[1] ? a : b
       )[0] as ToolbarPosition
@@ -103,6 +108,28 @@ export default function DraggableToolbar({ onAddCell }: DraggableToolbarProps) {
       >
         <GripHorizontal size={16} />
       </div>
+
+      {/* Divider */}
+      <div className="w-px h-6 bg-gray-300" />
+
+      {/* Select Tool */}
+      <ToolButton
+        icon={<MousePointer size={20} />}
+        title="Select (V)"
+        isActive={activeTool === 'select'}
+        onClick={() => onToolChange('select')}
+      />
+
+      {/* Hand Tool */}
+      <ToolButton
+        icon={<Hand size={20} />}
+        title="Hand Tool (H)"
+        isActive={activeTool === 'hand'}
+        onClick={() => onToolChange('hand')}
+      />
+
+      {/* Divider */}
+      <div className="w-px h-6 bg-gray-300" />
 
       {/* Add Cell Button */}
       <button
