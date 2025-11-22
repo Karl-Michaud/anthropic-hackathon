@@ -12,7 +12,8 @@ import {
 } from 'lucide-react'
 import { useEditing } from '../context/EditingContext'
 import { ScholarshipData, AdaptiveWeights } from '../context/WhiteboardContext'
-import { fetchAdaptiveWeights } from '../lib/fetch-adaptive-weights'
+import { requestClaude } from '../lib/request'
+import { IPromptWeights } from '../types/interfaces'
 
 export type { ScholarshipData }
 
@@ -359,7 +360,8 @@ export default function ScholarshipBlock({
     setIsLoading(true)
 
     try {
-      const adaptiveWeights = await fetchAdaptiveWeights(
+      const adaptiveWeights = await requestClaude<IPromptWeights>(
+        'promptWeights',
         editedData.title,
         editedData.description,
         editedData.prompt,

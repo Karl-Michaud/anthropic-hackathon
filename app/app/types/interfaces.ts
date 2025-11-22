@@ -32,29 +32,47 @@ export interface IPrompt {
 }
 
 export interface IPromptHiddenCriteria {
-  scholarshipHiddenCriteriaId?: string
-  trait: string
-  rationale: string
-  evidencePhrases: string[]
-  importance: ImportanceLevel
+  implicit_criteria: Array<{
+    trait: string
+    rationale: string
+    evidence_phrases: string[]
+    importance: string
+  }>
+  overall_pattern: string
+  summary: string
+  confidence_score: number
 }
 
 export interface IPromptPersonality {
-  spirit: string
-  toneStyle: string
-  valuesEmphasized: string[]
-  recommendedEssayFocus: string
+  personality_profile: {
+    core_identity: string
+    tone_style: string
+    communication_strategy: string
+    values_emphasized: string[]
+    hidden_criteria: string[]
+    recommended_essay_focus: string
+    contrast_examples: {
+      vs_merit_academic: string
+      vs_service: string
+    }
+  }
 }
 
 export interface IPromptPriorities {
-  primaryFocus: PrimaryFocus
-  priorityWeights: Record<string, number>
+  primary_focus: string
+  priority_weights: Record<string, number>
+  selection_signals: string[]
+  success_profile: string
+  summary: string
+  confidence_score: number
 }
 
 export interface IPromptValues {
-  valuesEmphasized: string[]
-  valueDefinitions: Record<string, string>
-  evidencePhrases: string[]
+  values_emphasized: string[]
+  value_definitions: Record<string, string>
+  evidence_phrases: string[]
+  summary: string
+  confidence_score: number
 }
 
 export interface IPromptWeights {

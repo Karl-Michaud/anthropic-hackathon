@@ -10,6 +10,7 @@ import type {
   IPromptWeights,
   // IGenerateDraft,
 } from '../types/interfaces'
+import { ImportanceLevel } from '../types/interfaces'
 
 export interface ScholarshipRecord {
   id: string
@@ -203,6 +204,26 @@ export async function savePromptHiddenCriteriaToDB(
   data: IPromptHiddenCriteria,
 ): Promise<void> {
   try {
+    // Use the first criterion from the array
+    if (!data.implicit_criteria || data.implicit_criteria.length === 0) {
+      return
+    }
+
+    const criterion = data.implicit_criteria[0]
+
+    // Map string importance to enum
+    const importanceMap: Record<string, ImportanceLevel> = {
+      high: ImportanceLevel.HIGH,
+      HIGH: ImportanceLevel.HIGH,
+      medium: ImportanceLevel.MEDIUM,
+      MEDIUM: ImportanceLevel.MEDIUM,
+      low: ImportanceLevel.LOW,
+      LOW: ImportanceLevel.LOW,
+    }
+
+    const importance =
+      importanceMap[criterion.importance] || ImportanceLevel.MEDIUM
+
     const existingCriteria = await prisma.promptHiddenCriteria.findUnique({
       where: { promptId },
     })
@@ -211,20 +232,20 @@ export async function savePromptHiddenCriteriaToDB(
       await prisma.promptHiddenCriteria.update({
         where: { promptId },
         data: {
-          trait: data.trait,
-          rationale: data.rationale,
-          evidencePhrases: data.evidencePhrases,
-          importance: data.importance,
+          trait: criterion.trait,
+          rationale: criterion.rationale,
+          evidencePhrases: criterion.evidence_phrases,
+          importance,
         },
       })
     } else {
       await prisma.promptHiddenCriteria.create({
         data: {
           promptId,
-          trait: data.trait,
-          rationale: data.rationale,
-          evidencePhrases: data.evidencePhrases,
-          importance: data.importance,
+          trait: criterion.trait,
+          rationale: criterion.rationale,
+          evidencePhrases: criterion.evidence_phrases,
+          importance,
         },
       })
     }
@@ -241,6 +262,8 @@ export async function savePromptPersonalityToDB(
   data: IPromptPersonality,
 ): Promise<void> {
   try {
+    const profile = data.personality_profile
+
     const existingPersonality = await prisma.promptPersonality.findUnique({
       where: { promptId },
     })
@@ -249,20 +272,20 @@ export async function savePromptPersonalityToDB(
       await prisma.promptPersonality.update({
         where: { promptId },
         data: {
-          spirit: data.spirit,
-          toneStyle: data.toneStyle,
-          valuesEmphasized: data.valuesEmphasized,
-          recommendedEssayFocus: data.recommendedEssayFocus,
+          spirit: profile.core_identity,
+          toneStyle: profile.tone_style,
+          valuesEmphasized: profile.values_emphasized,
+          recommendedEssayFocus: profile.recommended_essay_focus,
         },
       })
     } else {
       await prisma.promptPersonality.create({
         data: {
           promptId,
-          spirit: data.spirit,
-          toneStyle: data.toneStyle,
-          valuesEmphasized: data.valuesEmphasized,
-          recommendedEssayFocus: data.recommendedEssayFocus,
+          spirit: profile.core_identity,
+          toneStyle: profile.tone_style,
+          valuesEmphasized: profile.values_emphasized,
+          recommendedEssayFocus: profile.recommended_essay_focus,
         },
       })
     }
@@ -277,6 +300,27 @@ export async function savePromptPrioritiesToDB(
   data: IPromptPriorities,
 ): Promise<void> {
   try {
+    // Map string primary_focus to enum
+    const primaryFocusMap: Record<string, string> = {
+      merit: 'MERIT',
+      MERIT: 'MERIT',
+      community: 'COMMUNITY',
+      COMMUNITY: 'COMMUNITY',
+      innovation: 'INNOVATION',
+      INNOVATION: 'INNOVATION',
+      leadership: 'LEADERSHIP',
+      LEADERSHIP: 'LEADERSHIP',
+      academic_excellence: 'ACADEMIC_EXCELLENCE',
+      ACADEMIC_EXCELLENCE: 'ACADEMIC_EXCELLENCE',
+      equity: 'EQUITY',
+      EQUITY: 'EQUITY',
+      other: 'OTHER',
+      OTHER: 'OTHER',
+    }
+
+    const primaryFocusValue = (primaryFocusMap[data.primary_focus] ||
+      'OTHER') as any
+
     const existingPriorities = await prisma.promptPriorities.findUnique({
       where: { promptId },
     })
@@ -285,16 +329,16 @@ export async function savePromptPrioritiesToDB(
       await prisma.promptPriorities.update({
         where: { promptId },
         data: {
-          primaryFocus: data.primaryFocus,
-          priorityWeights: data.priorityWeights,
+          primaryFocus: primaryFocusValue,
+          priorityWeights: data.priority_weights,
         },
       })
     } else {
       await prisma.promptPriorities.create({
         data: {
           promptId,
-          primaryFocus: data.primaryFocus,
-          priorityWeights: data.priorityWeights,
+          primaryFocus: primaryFocusValue,
+          priorityWeights: data.priority_weights,
         },
       })
     }
@@ -317,18 +361,18 @@ export async function savePromptValuesToDB(
       await prisma.promptValues.update({
         where: { promptId },
         data: {
-          valuesEmphasized: data.valuesEmphasized,
-          valueDefinitions: data.valueDefinitions,
-          evidencePhrases: data.evidencePhrases,
+          valuesEmphasized: data.values_emphasized,
+          valueDefinitions: data.value_definitions,
+          evidencePhrases: data.evidence_phrases,
         },
       })
     } else {
       await prisma.promptValues.create({
         data: {
           promptId,
-          valuesEmphasized: data.valuesEmphasized,
-          valueDefinitions: data.valueDefinitions,
-          evidencePhrases: data.evidencePhrases,
+          valuesEmphasized: data.values_emphasized,
+          valueDefinitions: data.value_definitions,
+          evidencePhrases: data.evidence_phrases,
         },
       })
     }

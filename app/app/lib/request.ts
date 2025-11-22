@@ -52,7 +52,19 @@ export async function requestClaude<T extends ClaudeResponse>(
   const responseText = (message.content[0] as Anthropic.TextBlock).text
 
   try {
-    return JSON.parse(responseText) as T
+    // Strip markdown code blocks if present
+    let jsonText = responseText.trim()
+    if (jsonText.startsWith('```json')) {
+      jsonText = jsonText.slice(7) // Remove ```json
+    } else if (jsonText.startsWith('```')) {
+      jsonText = jsonText.slice(3) // Remove ```
+    }
+    if (jsonText.endsWith('```')) {
+      jsonText = jsonText.slice(0, -3) // Remove trailing ```
+    }
+    jsonText = jsonText.trim()
+
+    return JSON.parse(jsonText) as T
   } catch (error) {
     throw new Error(
       `Claude response did not match expected format for ${type}: ${error}`,
@@ -85,7 +97,9 @@ TASK:
 Infer what qualities this scholarship secretly values, based on tone, emphasis, and phrasing.
 Explain the rationale briefly and provide text evidence.
 
-Return JSON only:
+CRITICAL: Return ONLY valid JSON. Do NOT use markdown code blocks. Do NOT add explanatory text before or after the JSON.
+
+Response must be valid JSON only:
 
 {
   "implicit_criteria": [
@@ -121,6 +135,8 @@ Essay Prompt: ${prompt}
 ---
 
 ### TASK INSTRUCTIONS
+
+CRITICAL: Return ONLY valid JSON. Do NOT use markdown code blocks. Do NOT add explanatory text.
 
 Analyze the scholarship carefully and produce a **personality profile** that captures:
 1. **Core Identity (Archetype):** What kind of student this scholarship truly rewards — e.g., Innovator, Scholar, Servant Leader, Visionary, Entrepreneur, Changemaker.
@@ -174,6 +190,8 @@ Essay Prompt: ${prompt}
 TASK:
 Identify the scholarship's primary focus (merit, innovation, leadership, etc.), estimate relative weights, and describe the kind of student who best matches it. Highlight language that signals those priorities.
 
+CRITICAL: Return ONLY valid JSON. Do NOT use markdown code blocks. Do NOT add explanatory text.
+
 Return JSON only:
 
 {
@@ -209,8 +227,10 @@ Essay Prompt: ${prompt}
 ---
 
 TASK:
-List the top values this scholarship rewards (e.g., creativity, integrity, perseverance, impact, leadership).  
+List the top values this scholarship rewards (e.g., creativity, integrity, perseverance, impact, leadership).
 Define each value in this scholarship's context and include brief supporting language evidence.
+
+CRITICAL: Return ONLY valid JSON. Do NOT use markdown code blocks. Do NOT add explanatory text.
 
 Return results in **strict JSON format** matching this schema:
 
