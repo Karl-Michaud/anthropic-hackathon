@@ -7,7 +7,7 @@ import { FeedbackData } from '../types'
  */
 export async function analyzeFeedback(
   essayId: string,
-  scholarshipId: string
+  scholarshipId: string,
 ): Promise<FeedbackData | null> {
   // TODO: Implement AI analysis
   console.log('analyzeFeedback called:', { essayId, scholarshipId })
@@ -20,7 +20,7 @@ export async function analyzeFeedback(
  * FUTURE: Send to backend/AI pipeline
  */
 export async function submitFeedbackAnswers(
-  feedbackData: FeedbackData
+  feedbackData: FeedbackData,
 ): Promise<void> {
   // TODO: Implement submission to backend
   console.log('submitFeedbackAnswers called:', feedbackData)

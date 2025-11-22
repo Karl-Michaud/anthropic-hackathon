@@ -3,8 +3,8 @@
  * This represents the expected output from the AI extraction API
  */
 
-import { ScholarshipData } from '../components/scholarship/ScholarshipBlock'
-import { EssayData } from '../components/essay/EssayBlock'
+import { ScholarshipData } from '../components/ScholarshipBlock'
+import { EssayData } from '../components/EssayBlock'
 
 export const sampleScholarship: ScholarshipData = {
   id: 'scholarship-test-1',

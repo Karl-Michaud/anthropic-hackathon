@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs'
-import JsonOutputBlock from '../app/components/scholarship/JsonOutputBlock'
+import { JsonOutputBlock } from '../app/components/ScholarshipBlock'
 
 const meta: Meta<typeof JsonOutputBlock> = {
   title: 'Components/Scholarship/JsonOutputBlock',

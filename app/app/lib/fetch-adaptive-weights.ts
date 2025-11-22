@@ -1,31 +1,27 @@
-/**
- * Shared utility to fetch adaptive weights from the API
- */
+'use server'
 
+import { generateAdaptiveWeights } from './claudeApi'
+import type { AdaptiveWeightingInput } from '../types/adaptive-weighting'
+
+/**
+ * Server function to fetch adaptive weights
+ */
 export async function fetchAdaptiveWeights(
   name: string,
   description: string,
-  prompt: string
+  prompt: string,
 ) {
   try {
-    const response = await fetch('/api/adaptive-weighting', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        ScholarshipName: name,
-        ScholarshipDescription: description,
-        EssayPrompt: prompt,
-      }),
-    })
-
-    const result = await response.json()
-    if (result.success && result.data) {
-      return result.data
+    const input: AdaptiveWeightingInput = {
+      ScholarshipName: name,
+      ScholarshipDescription: description,
+      EssayPrompt: prompt,
     }
+
+    const weights = await generateAdaptiveWeights(input)
+    return weights
   } catch (err) {
-    console.error('Failed to fetch adaptive weights:', err)
+    console.error('Failed to generate adaptive weights:', err)
   }
   return undefined
 }

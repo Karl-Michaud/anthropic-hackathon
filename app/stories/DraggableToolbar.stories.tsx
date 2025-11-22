@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs'
-import DraggableToolbar from '../app/components/toolbar/DraggableToolbar'
+import DraggableToolbar from '../app/components/DraggableToolbar'
 
 const meta: Meta<typeof DraggableToolbar> = {
   title: 'Components/Canvas/DraggableToolbar',

@@ -292,3 +292,51 @@ function getPromptForType(
       throw new Error(`Unsupported Claude request type: ${type}`)
   }
 }
+
+// Generate all analysis data for a prompt
+export async function generateAllPromptAnalysis(
+  scholarshipTitle: string,
+  scholarshipDescription: string,
+  prompt: string,
+) {
+  try {
+    const [hiddenCriteria, personality, priorities, values] = await Promise.all(
+      [
+        requestClaude<IPromptHiddenCriteria>(
+          'promptHiddenCriteria',
+          scholarshipTitle,
+          scholarshipDescription,
+          prompt,
+        ),
+        requestClaude<IPromptPersonality>(
+          'promptPersonality',
+          scholarshipTitle,
+          scholarshipDescription,
+          prompt,
+        ),
+        requestClaude<IPromptPriorities>(
+          'promptPriorities',
+          scholarshipTitle,
+          scholarshipDescription,
+          prompt,
+        ),
+        requestClaude<IPromptValues>(
+          'promptValues',
+          scholarshipTitle,
+          scholarshipDescription,
+          prompt,
+        ),
+      ],
+    )
+
+    return {
+      hiddenCriteria,
+      personality,
+      priorities,
+      values,
+    }
+  } catch (error) {
+    console.error('Error generating prompt analysis:', error)
+    throw error
+  }
+}
