@@ -2,6 +2,7 @@
 
 import { MouseEvent, useState, useRef, useEffect } from 'react'
 import { useEditing } from '../context/EditingContext'
+import { useDarkMode } from '../context/DarkModeContext'
 import { CellData } from '../context/WhiteboardContext'
 import DeleteButton from './common/DeleteButton'
 
@@ -41,6 +42,14 @@ export default function Cell({
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const { setEditing } = useEditing()
 
+  let isDarkMode = false
+  try {
+    const darkModeContext = useDarkMode()
+    isDarkMode = darkModeContext.isDarkMode
+  } catch {
+    isDarkMode = false
+  }
+
   useEffect(() => {
     if (isEditingLocal && textareaRef.current) {
       textareaRef.current.focus()
@@ -75,6 +84,17 @@ export default function Cell({
   }
 
   const getColorStyles = (color: string) => {
+    if (isDarkMode) {
+      const darkColorMap: Record<string, { bg: string; border: string }> = {
+        yellow: { bg: '#78350f', border: '#f59e0b' },
+        blue: { bg: '#1e3a8a', border: '#60a5fa' },
+        pink: { bg: '#500724', border: '#f472b6' },
+        green: { bg: '#134e4a', border: '#4ade80' },
+        purple: { bg: '#3f0f5c', border: '#d8b4fe' },
+        orange: { bg: '#7c2d12', border: '#fb923c' },
+      }
+      return darkColorMap[color] || { bg: '#374151', border: '#6b7280' }
+    }
     const colorMap: Record<string, { bg: string; border: string }> = {
       yellow: { bg: '#fef3c7', border: '#fcd34d' },
       blue: { bg: '#dbeafe', border: '#93c5fd' },
@@ -128,12 +148,18 @@ export default function Cell({
           onChange={(e) => setEditText(e.target.value)}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
-          className="w-full h-full text-sm text-neutral-700 bg-transparent border-0 outline-none resize-none"
+          className={`w-full h-full text-sm bg-transparent border-0 outline-none resize-none ${
+            isDarkMode ? 'text-gray-100' : 'text-neutral-700'
+          }`}
           onClick={(e) => e.stopPropagation()}
           onMouseDown={(e) => e.stopPropagation()}
         />
       ) : (
-        <p className="text-sm text-neutral-700 whitespace-pre-wrap wrap-break-word m-0">
+        <p
+          className={`text-sm whitespace-pre-wrap wrap-break-word m-0 ${
+            isDarkMode ? 'text-gray-100' : 'text-neutral-700'
+          }`}
+        >
           {cell.text}
         </p>
       )}

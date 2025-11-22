@@ -240,8 +240,7 @@ export async function savePromptPrioritiesToDB(
       OTHER: 'OTHER',
     }
 
-    const primaryFocusValue = (primaryFocusMap[data.primary_focus] ||
-      'OTHER') as unknown
+    const primaryFocusValue = (primaryFocusMap[data.primary_focus] || 'OTHER') as 'MERIT' | 'COMMUNITY' | 'INNOVATION' | 'LEADERSHIP' | 'ACADEMIC_EXCELLENCE' | 'EQUITY' | 'OTHER'
 
     const existingPriorities = await prisma.promptPriorities.findUnique({
       where: { scholarshipId },

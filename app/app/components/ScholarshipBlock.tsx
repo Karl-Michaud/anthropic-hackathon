@@ -3,15 +3,43 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { MoreVertical, Pencil, Trash2, Plus, Loader2 } from 'lucide-react'
 import { useEditing } from '../context/EditingContext'
+import { useDarkMode } from '../context/DarkModeContext'
 import { ScholarshipData } from '../context/WhiteboardContext'
 import { requestClaude } from '../lib/request'
 import { IPromptWeights } from '../types/interfaces'
 
 export type { ScholarshipData }
 
+// Dark mode helper function
+const getDarkModeClasses = (isDarkMode: boolean) => ({
+  heading: isDarkMode ? 'text-gray-200' : 'text-gray-700',
+  subheading: isDarkMode ? 'text-gray-300' : 'text-gray-600',
+  label: isDarkMode ? 'text-gray-400' : 'text-gray-400',
+  surface: isDarkMode ? 'bg-gray-700' : 'bg-gray-50',
+  border: isDarkMode ? 'border-gray-600' : 'border-gray-200',
+  text: isDarkMode ? 'text-gray-300' : 'text-gray-600',
+  button: isDarkMode
+    ? 'bg-blue-600 hover:bg-blue-700 text-white'
+    : 'bg-blue-600 hover:bg-blue-700 text-white',
+  input: isDarkMode
+    ? 'bg-gray-700 text-white border-gray-600'
+    : 'bg-blue-50 text-gray-900 border-blue-500',
+  menu: isDarkMode
+    ? 'bg-gray-800 border-gray-700'
+    : 'bg-white border-gray-200',
+  menuText: isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700',
+})
+
 // Personality Display
-function PersonalityDisplay({ data }: { data?: Record<string, unknown> }) {
+function PersonalityDisplay({
+  data,
+  isDarkMode = false,
+}: {
+  data?: Record<string, unknown>
+  isDarkMode?: boolean
+}) {
   const [isExpanded, setIsExpanded] = useState(false)
+  const classes = getDarkModeClasses(isDarkMode)
 
   if (!data) return null
 
@@ -35,38 +63,54 @@ function PersonalityDisplay({ data }: { data?: Record<string, unknown> }) {
     return null
 
   return (
-    <div className="mt-4 border-t border-gray-200 pt-4">
+    <div className={`mt-4 border-t pt-4 ${classes.border}`}>
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full text-left flex items-center justify-between hover:bg-gray-50 px-2 py-1 rounded transition-colors cursor-pointer"
+        className={`w-full text-left flex items-center justify-between px-2 py-1 rounded transition-colors cursor-pointer ${
+          isDarkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-50'
+        }`}
       >
-        <h4 className="text-sm font-semibold text-gray-700">Personality</h4>
-        <span className="text-xs text-gray-400">{isExpanded ? '▼' : '▶'}</span>
+        <h4 className={`text-sm font-semibold ${classes.heading}`}>
+          Personality
+        </h4>
+        <span className={`text-xs ${classes.label}`}>
+          {isExpanded ? '▼' : '▶'}
+        </span>
       </button>
       {isExpanded && (
-        <div className="mt-2 p-3 bg-gray-50 rounded text-xs text-gray-600 space-y-3">
+        <div
+          className={`mt-2 p-3 rounded text-xs space-y-3 ${classes.surface} ${classes.text}`}
+        >
           {spirit && (
             <div>
-              <p className="font-semibold text-gray-700 mb-1">Core Identity:</p>
-              <p className="text-gray-600">{spirit}</p>
+              <p className={`font-semibold mb-1 ${classes.heading}`}>
+                Core Identity:
+              </p>
+              <p className={classes.text}>{spirit}</p>
             </div>
           )}
           {toneStyle && (
             <div>
-              <p className="font-semibold text-gray-700 mb-1">Tone & Style:</p>
-              <p className="text-gray-600">{toneStyle}</p>
+              <p className={`font-semibold mb-1 ${classes.heading}`}>
+                Tone & Style:
+              </p>
+              <p className={classes.text}>{toneStyle}</p>
             </div>
           )}
           {valuesEmphasized && valuesEmphasized.length > 0 && (
             <div>
-              <p className="font-semibold text-gray-700 mb-1">
+              <p className={`font-semibold mb-1 ${classes.heading}`}>
                 Values Emphasized:
               </p>
               <div className="flex flex-wrap gap-1">
                 {valuesEmphasized.map((value: string, idx: number) => (
                   <span
                     key={idx}
-                    className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs"
+                    className={`px-2 py-1 rounded text-xs ${
+                      isDarkMode
+                        ? 'bg-blue-900 text-blue-200'
+                        : 'bg-blue-100 text-blue-700'
+                    }`}
                   >
                     {value}
                   </span>
@@ -76,10 +120,10 @@ function PersonalityDisplay({ data }: { data?: Record<string, unknown> }) {
           )}
           {recommendedEssayFocus && (
             <div>
-              <p className="font-semibold text-gray-700 mb-1">
+              <p className={`font-semibold mb-1 ${classes.heading}`}>
                 Recommended Essay Focus:
               </p>
-              <p className="text-gray-600">{recommendedEssayFocus}</p>
+              <p className={classes.text}>{recommendedEssayFocus}</p>
             </div>
           )}
         </div>
@@ -89,8 +133,15 @@ function PersonalityDisplay({ data }: { data?: Record<string, unknown> }) {
 }
 
 // Priorities Display
-function PrioritiesDisplay({ data }: { data?: Record<string, unknown> }) {
+function PrioritiesDisplay({
+  data,
+  isDarkMode = false,
+}: {
+  data?: Record<string, unknown>
+  isDarkMode?: boolean
+}) {
   const [isExpanded, setIsExpanded] = useState(false)
+  const classes = getDarkModeClasses(isDarkMode)
 
   if (!data) return null
 
@@ -107,36 +158,48 @@ function PrioritiesDisplay({ data }: { data?: Record<string, unknown> }) {
   if (!primaryFocus && !selectionSignals && !successProfile) return null
 
   return (
-    <div className="mt-4 border-t border-gray-200 pt-4">
+    <div className={`mt-4 border-t pt-4 ${classes.border}`}>
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full text-left flex items-center justify-between hover:bg-gray-50 px-2 py-1 rounded transition-colors cursor-pointer"
+        className={`w-full text-left flex items-center justify-between px-2 py-1 rounded transition-colors cursor-pointer ${
+          isDarkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-50'
+        }`}
       >
-        <h4 className="text-sm font-semibold text-gray-700">Priorities</h4>
-        <span className="text-xs text-gray-400">{isExpanded ? '▼' : '▶'}</span>
+        <h4 className={`text-sm font-semibold ${classes.heading}`}>
+          Priorities
+        </h4>
+        <span className={`text-xs ${classes.label}`}>
+          {isExpanded ? '▼' : '▶'}
+        </span>
       </button>
       {isExpanded && (
-        <div className="mt-2 p-3 bg-gray-50 rounded text-xs text-gray-600 space-y-3">
+        <div
+          className={`mt-2 p-3 rounded text-xs space-y-3 ${classes.surface} ${classes.text}`}
+        >
           {primaryFocus && (
             <div>
-              <p className="font-semibold text-gray-700 mb-1">Primary Focus:</p>
-              <p className="text-gray-600">{primaryFocus}</p>
+              <p className={`font-semibold mb-1 ${classes.heading}`}>
+                Primary Focus:
+              </p>
+              <p className={classes.text}>{primaryFocus}</p>
             </div>
           )}
           {successProfile && (
             <div>
-              <p className="font-semibold text-gray-700 mb-1">
+              <p className={`font-semibold mb-1 ${classes.heading}`}>
                 Success Profile:
               </p>
-              <p className="text-gray-600">{successProfile}</p>
+              <p className={classes.text}>{successProfile}</p>
             </div>
           )}
           {selectionSignals && selectionSignals.length > 0 && (
             <div>
-              <p className="font-semibold text-gray-700 mb-1">
+              <p className={`font-semibold mb-1 ${classes.heading}`}>
                 Selection Signals:
               </p>
-              <ul className="list-disc list-inside text-gray-600 space-y-1">
+              <ul
+                className={`list-disc list-inside space-y-1 ${classes.text}`}
+              >
                 {selectionSignals.map((signal: string, idx: number) => (
                   <li key={idx}>{signal}</li>
                 ))}
@@ -150,8 +213,15 @@ function PrioritiesDisplay({ data }: { data?: Record<string, unknown> }) {
 }
 
 // Values Display
-function ValuesDisplay({ data }: { data?: Record<string, unknown> }) {
+function ValuesDisplay({
+  data,
+  isDarkMode = false,
+}: {
+  data?: Record<string, unknown>
+  isDarkMode?: boolean
+}) {
   const [isExpanded, setIsExpanded] = useState(false)
+  const classes = getDarkModeClasses(isDarkMode)
 
   if (!data) return null
 
@@ -168,26 +238,36 @@ function ValuesDisplay({ data }: { data?: Record<string, unknown> }) {
   if (!valuesEmphasized && !valueDefinitions && !evidencePhrases) return null
 
   return (
-    <div className="mt-4 border-t border-gray-200 pt-4">
+    <div className={`mt-4 border-t pt-4 ${classes.border}`}>
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full text-left flex items-center justify-between hover:bg-gray-50 px-2 py-1 rounded transition-colors cursor-pointer"
+        className={`w-full text-left flex items-center justify-between px-2 py-1 rounded transition-colors cursor-pointer ${
+          isDarkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-50'
+        }`}
       >
-        <h4 className="text-sm font-semibold text-gray-700">Values</h4>
-        <span className="text-xs text-gray-400">{isExpanded ? '▼' : '▶'}</span>
+        <h4 className={`text-sm font-semibold ${classes.heading}`}>Values</h4>
+        <span className={`text-xs ${classes.label}`}>
+          {isExpanded ? '▼' : '▶'}
+        </span>
       </button>
       {isExpanded && (
-        <div className="mt-2 p-3 bg-gray-50 rounded text-xs text-gray-600 space-y-3">
+        <div
+          className={`mt-2 p-3 rounded text-xs space-y-3 ${classes.surface} ${classes.text}`}
+        >
           {valuesEmphasized && valuesEmphasized.length > 0 && (
             <div>
-              <p className="font-semibold text-gray-700 mb-1">
+              <p className={`font-semibold mb-1 ${classes.heading}`}>
                 Values Emphasized:
               </p>
               <div className="flex flex-wrap gap-1">
                 {valuesEmphasized.map((value: string, idx: number) => (
                   <span
                     key={idx}
-                    className="bg-purple-100 text-purple-700 px-2 py-1 rounded text-xs"
+                    className={`px-2 py-1 rounded text-xs ${
+                      isDarkMode
+                        ? 'bg-purple-900 text-purple-200'
+                        : 'bg-purple-100 text-purple-700'
+                    }`}
                   >
                     {value}
                   </span>
@@ -197,15 +277,15 @@ function ValuesDisplay({ data }: { data?: Record<string, unknown> }) {
           )}
           {valueDefinitions && Object.keys(valueDefinitions).length > 0 && (
             <div>
-              <p className="font-semibold text-gray-700 mb-2">
+              <p className={`font-semibold mb-2 ${classes.heading}`}>
                 Value Definitions:
               </p>
               <div className="space-y-2 ml-2">
                 {Object.entries(valueDefinitions).map(
                   ([key, value]: [string, unknown]) => (
                     <div key={key}>
-                      <p className="font-medium text-gray-700">{key}:</p>
-                      <p className="text-gray-600 ml-2">{String(value)}</p>
+                      <p className={`font-medium ${classes.heading}`}>{key}:</p>
+                      <p className={`ml-2 ${classes.text}`}>{String(value)}</p>
                     </div>
                   ),
                 )}
@@ -214,10 +294,12 @@ function ValuesDisplay({ data }: { data?: Record<string, unknown> }) {
           )}
           {evidencePhrases && evidencePhrases.length > 0 && (
             <div>
-              <p className="font-semibold text-gray-700 mb-1">
+              <p className={`font-semibold mb-1 ${classes.heading}`}>
                 Evidence Phrases:
               </p>
-              <ul className="list-disc list-inside text-gray-600 space-y-1">
+              <ul
+                className={`list-disc list-inside space-y-1 ${classes.text}`}
+              >
                 {evidencePhrases.map((phrase: string, idx: number) => (
                   <li key={idx}>{phrase}</li>
                 ))}
@@ -231,8 +313,15 @@ function ValuesDisplay({ data }: { data?: Record<string, unknown> }) {
 }
 
 // Weights Display
-function WeightsDisplay({ data }: { data?: Record<string, unknown> }) {
+function WeightsDisplay({
+  data,
+  isDarkMode = false,
+}: {
+  data?: Record<string, unknown>
+  isDarkMode?: boolean
+}) {
   const [isExpanded, setIsExpanded] = useState(false)
+  const classes = getDarkModeClasses(isDarkMode)
 
   if (!data) return null
 
@@ -242,18 +331,24 @@ function WeightsDisplay({ data }: { data?: Record<string, unknown> }) {
   if (!weightsData || Object.keys(weightsData).length === 0) return null
 
   return (
-    <div className="mt-4 border-t border-gray-200 pt-4">
+    <div className={`mt-4 border-t pt-4 ${classes.border}`}>
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full text-left flex items-center justify-between hover:bg-gray-50 px-2 py-1 rounded transition-colors cursor-pointer"
+        className={`w-full text-left flex items-center justify-between px-2 py-1 rounded transition-colors cursor-pointer ${
+          isDarkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-50'
+        }`}
       >
-        <h4 className="text-sm font-semibold text-gray-700">
+        <h4 className={`text-sm font-semibold ${classes.heading}`}>
           Hidden Criteria and Weights
         </h4>
-        <span className="text-xs text-gray-400">{isExpanded ? '▼' : '▶'}</span>
+        <span className={`text-xs ${classes.label}`}>
+          {isExpanded ? '▼' : '▶'}
+        </span>
       </button>
       {isExpanded && (
-        <div className="mt-2 p-3 bg-gray-50 rounded text-xs text-gray-600 space-y-3">
+        <div
+          className={`mt-2 p-3 rounded text-xs space-y-3 ${classes.surface} ${classes.text}`}
+        >
           {Object.entries(weightsData).map(
             ([category, categoryData]: [string, unknown]) => {
               const catData = categoryData as
@@ -261,14 +356,14 @@ function WeightsDisplay({ data }: { data?: Record<string, unknown> }) {
                 | undefined
               return (
                 <div key={category}>
-                  <p className="font-semibold text-gray-700 mb-2 capitalize">
+                  <p className={`font-semibold mb-2 capitalize ${classes.heading}`}>
                     {category}
                   </p>
                   <div className="ml-2 space-y-1">
                     {catData && typeof catData.weight !== 'undefined' && (
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Main Weight:</span>
-                        <span className="font-semibold text-gray-700">
+                        <span className={classes.text}>Main Weight:</span>
+                        <span className={`font-semibold ${classes.heading}`}>
                           {typeof catData.weight === 'number'
                             ? `${(catData.weight * 100).toFixed(1)}%`
                             : String(catData.weight)}
@@ -280,13 +375,19 @@ function WeightsDisplay({ data }: { data?: Record<string, unknown> }) {
                     typeof catData.subweights === 'object' &&
                     Object.keys(catData.subweights as Record<string, unknown>)
                       .length > 0 ? (
-                      <div className="mt-2 ml-2 space-y-1 border-l-2 border-gray-300 pl-2">
+                      <div
+                        className={`mt-2 ml-2 space-y-1 border-l-2 pl-2 ${
+                          isDarkMode
+                            ? 'border-gray-600'
+                            : 'border-gray-300'
+                        }`}
+                      >
                         {Object.entries(
                           catData.subweights as Record<string, unknown>,
                         ).map(([subkey, subvalue]: [string, unknown]) => (
                           <div key={subkey} className="flex justify-between">
-                            <span className="text-gray-600">{subkey}:</span>
-                            <span className="font-semibold text-gray-700">
+                            <span className={classes.text}>{subkey}:</span>
+                            <span className={`font-semibold ${classes.heading}`}>
                               {typeof subvalue === 'number'
                                 ? `${(subvalue * 100).toFixed(1)}%`
                                 : String(subvalue)}
@@ -314,6 +415,7 @@ function EditableField({
   className = '',
   isTitle = false,
   placeholder = 'Click to edit...',
+  isDarkMode = false,
 }: {
   value: string
   onChange: (value: string) => void
@@ -321,6 +423,7 @@ function EditableField({
   className?: string
   isTitle?: boolean
   placeholder?: string
+  isDarkMode?: boolean
 }) {
   const inputRef = useRef<HTMLTextAreaElement | HTMLInputElement>(null)
 
@@ -345,7 +448,11 @@ function EditableField({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className={`w-full bg-blue-50 border-b-4 border-blue-500 outline-none pb-2 text-gray-900 transition-all ${className}`}
+          className={`w-full border-b-4 border-blue-500 outline-none pb-2 transition-all ${
+            isDarkMode
+              ? 'bg-blue-900 text-blue-100'
+              : 'bg-blue-50 text-gray-900'
+          } ${className}`}
         />
       )
     }
@@ -356,14 +463,26 @@ function EditableField({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         rows={4}
-        className={`w-full bg-blue-50 border-2 border-blue-500 rounded-lg p-3 outline-none resize-none text-gray-900 leading-relaxed transition-all ${className}`}
+        className={`w-full border-2 border-blue-500 rounded-lg p-3 outline-none resize-none leading-relaxed transition-all ${
+          isDarkMode
+            ? 'bg-blue-900 text-blue-100'
+            : 'bg-blue-50 text-gray-900'
+        } ${className}`}
       />
     )
   }
 
   return (
     <div
-      className={`transition-colors ${value ? 'text-gray-800' : 'text-gray-400 italic'} ${className}`}
+      className={`transition-colors ${
+        value
+          ? isDarkMode
+            ? 'text-gray-200'
+            : 'text-gray-800'
+          : isDarkMode
+            ? 'text-gray-500 italic'
+            : 'text-gray-400 italic'
+      } ${className}`}
     >
       {value || placeholder}
     </div>
@@ -374,12 +493,15 @@ function EditableField({
 function ScholarshipMenu({
   onEdit,
   onDelete,
+  isDarkMode = false,
 }: {
   onEdit: () => void
   onDelete: () => void
+  isDarkMode?: boolean
 }) {
   const [showMenu, setShowMenu] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+  const classes = getDarkModeClasses(isDarkMode)
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -407,24 +529,39 @@ function ScholarshipMenu({
     <div className="relative" ref={menuRef}>
       <button
         onClick={() => setShowMenu(!showMenu)}
-        className="p-1.5 hover:bg-gray-100 rounded transition-colors cursor-pointer"
+        className={`p-1.5 rounded transition-colors cursor-pointer ${
+          isDarkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-100'
+        }`}
         title="Options"
       >
-        <MoreVertical size={18} className="text-gray-400" />
+        <MoreVertical
+          size={18}
+          className={isDarkMode ? 'text-gray-500' : 'text-gray-400'}
+        />
       </button>
 
       {showMenu && (
-        <div className="absolute top-8 right-0 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-50 min-w-[140px]">
+        <div
+          className={`absolute top-8 right-0 rounded-lg shadow-xl border py-1 z-50 min-w-[140px] ${classes.menu}`}
+        >
           <button
             onClick={handleEdit}
-            className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 cursor-pointer"
+            className={`w-full px-3 py-2 text-left text-sm flex items-center gap-2 cursor-pointer ${
+              isDarkMode
+                ? 'text-gray-300 hover:bg-gray-700'
+                : 'text-gray-700 hover:bg-gray-50'
+            }`}
           >
             <Pencil size={14} />
             Edit
           </button>
           <button
             onClick={handleDelete}
-            className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 cursor-pointer"
+            className={`w-full px-3 py-2 text-left text-sm flex items-center gap-2 cursor-pointer ${
+              isDarkMode
+                ? 'text-red-400 hover:bg-red-900/30'
+                : 'text-red-600 hover:bg-red-50'
+            }`}
           >
             <Trash2 size={14} />
             Delete
@@ -439,20 +576,34 @@ function ScholarshipMenu({
 function ScholarshipDeleteConfirm({
   onConfirm,
   onCancel,
+  isDarkMode = false,
 }: {
   onConfirm: () => void
   onCancel: () => void
+  isDarkMode?: boolean
 }) {
   return (
-    <div className="absolute inset-0 bg-white/90 backdrop-blur-sm rounded-xl flex items-center justify-center z-50">
+    <div
+      className={`absolute inset-0 backdrop-blur-sm rounded-xl flex items-center justify-center z-50 ${
+        isDarkMode ? 'bg-gray-900/90' : 'bg-white/90'
+      }`}
+    >
       <div className="text-center p-6">
-        <p className="text-gray-700 font-medium mb-4">
+        <p
+          className={`font-medium mb-4 ${
+            isDarkMode ? 'text-gray-200' : 'text-gray-700'
+          }`}
+        >
           Delete this scholarship?
         </p>
         <div className="flex gap-3 justify-center">
           <button
             onClick={onCancel}
-            className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
+            className={`px-4 py-2 text-sm rounded-lg transition-colors cursor-pointer ${
+              isDarkMode
+                ? 'text-gray-300 hover:bg-gray-700'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
           >
             Cancel
           </button>
@@ -473,17 +624,27 @@ function ScholarshipEditButtons({
   onSave,
   onCancel,
   isLoading,
+  isDarkMode = false,
 }: {
   onSave: () => void
   onCancel: () => void
   isLoading: boolean
+  isDarkMode?: boolean
 }) {
   return (
-    <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-gray-200">
+    <div
+      className={`flex justify-end gap-2 mt-4 pt-4 border-t ${
+        isDarkMode ? 'border-gray-700' : 'border-gray-200'
+      }`}
+    >
       <button
         onClick={onCancel}
         disabled={isLoading}
-        className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        className={`px-4 py-2 text-sm font-medium rounded-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+          isDarkMode
+            ? 'text-gray-300 bg-gray-700 hover:bg-gray-600'
+            : 'text-gray-700 bg-gray-100 hover:bg-gray-200'
+        }`}
       >
         Cancel
       </button>
@@ -556,6 +717,14 @@ export function ScholarshipBlock({
   const [editedData, setEditedData] = useState(data)
   const { setEditing: setGlobalEditing } = useEditing()
 
+  let isDarkMode = false
+  try {
+    const darkModeContext = useDarkMode()
+    isDarkMode = darkModeContext.isDarkMode
+  } catch {
+    isDarkMode = false
+  }
+
   const startEditing = () => {
     setIsEditing(true)
     setGlobalEditing(true)
@@ -610,14 +779,24 @@ export function ScholarshipBlock({
 
   return (
     <div
-      className={`w-[550px] bg-white rounded-xl p-6 relative transition-all border ${
-        isEditing ? 'shadow-lg border-blue-500' : 'shadow-md border-gray-200'
+      className={`w-[550px] rounded-xl p-6 relative transition-all border ${
+        isDarkMode
+          ? isEditing
+            ? 'bg-gray-800 shadow-lg border-blue-400'
+            : 'bg-gray-800 shadow-md border-gray-700'
+          : isEditing
+            ? 'bg-white shadow-lg border-blue-500'
+            : 'bg-white shadow-md border-gray-200'
       }`}
     >
       {/* Menu - top right */}
       {!isEditing && (
         <div className="absolute top-3 right-3">
-          <ScholarshipMenu onEdit={startEditing} onDelete={handleDelete} />
+          <ScholarshipMenu
+            onEdit={startEditing}
+            onDelete={handleDelete}
+            isDarkMode={isDarkMode}
+          />
         </div>
       )}
 
@@ -626,6 +805,7 @@ export function ScholarshipBlock({
         <ScholarshipDeleteConfirm
           onConfirm={confirmDelete}
           onCancel={() => setShowDeleteConfirm(false)}
+          isDarkMode={isDarkMode}
         />
       )}
 
@@ -637,11 +817,16 @@ export function ScholarshipBlock({
         className="pr-8"
         isTitle
         placeholder="Scholarship Title"
+        isDarkMode={isDarkMode}
       />
 
       {/* Description */}
       <div className="mb-4">
-        <h3 className="text-sm font-semibold text-gray-700 mb-1">
+        <h3
+          className={`text-sm font-semibold mb-1 ${
+            isDarkMode ? 'text-gray-200' : 'text-gray-700'
+          }`}
+        >
           Description
         </h3>
         <EditableField
@@ -650,33 +835,47 @@ export function ScholarshipBlock({
           isEditing={isEditing}
           className="text-sm leading-relaxed"
           placeholder="Enter scholarship description..."
+          isDarkMode={isDarkMode}
         />
       </div>
 
       {/* Prompt */}
       <div className="mb-4">
-        <h3 className="text-sm font-semibold text-gray-700 mb-1">Prompt</h3>
+        <h3
+          className={`text-sm font-semibold mb-1 ${
+            isDarkMode ? 'text-gray-200' : 'text-gray-700'
+          }`}
+        >
+          Prompt
+        </h3>
         <EditableField
           value={currentData.prompt}
           onChange={(value) => handleFieldChange('prompt', value)}
           isEditing={isEditing}
           className="text-sm leading-relaxed"
           placeholder="Enter essay prompt..."
+          isDarkMode={isDarkMode}
         />
       </div>
 
       {/* AI Analysis Sections */}
       {!isEditing && (
         <>
-          <PersonalityDisplay data={data.personality} />
-          <PrioritiesDisplay data={data.priorities} />
-          <ValuesDisplay data={data.values} />
-          <WeightsDisplay data={data.weights} />
+          <PersonalityDisplay data={data.personality} isDarkMode={isDarkMode} />
+          <PrioritiesDisplay data={data.priorities} isDarkMode={isDarkMode} />
+          <ValuesDisplay data={data.values} isDarkMode={isDarkMode} />
+          <WeightsDisplay data={data.weights} isDarkMode={isDarkMode} />
           {!data.personality &&
             !data.priorities &&
             !data.values &&
             !data.weights && (
-              <div className="mt-4 p-3 bg-gray-50 rounded text-sm text-gray-500 italic">
+              <div
+                className={`mt-4 p-3 rounded text-sm italic ${
+                  isDarkMode
+                    ? 'bg-gray-700 text-gray-400'
+                    : 'bg-gray-50 text-gray-500'
+                }`}
+              >
                 No AI analysis available. Generate analysis to see personality,
                 priorities, values, and weights.
               </div>
@@ -690,6 +889,7 @@ export function ScholarshipBlock({
           onSave={handleSave}
           onCancel={handleCancel}
           isLoading={isLoading}
+          isDarkMode={isDarkMode}
         />
       )}
 

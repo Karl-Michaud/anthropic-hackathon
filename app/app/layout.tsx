@@ -4,6 +4,7 @@ import './globals.css'
 import Navigation from './components/Navigation'
 import { WhiteboardProvider } from './context/WhiteboardContext'
 import { EditingProvider } from './context/EditingContext'
+import { DarkModeProvider } from './context/DarkModeContext'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -26,19 +27,21 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <EditingProvider>
-          <WhiteboardProvider>
-            <div className="relative flex">
-              <Navigation />
+        <DarkModeProvider>
+          <EditingProvider>
+            <WhiteboardProvider>
+              <div className="relative flex">
+                <Navigation />
 
-              <main className="flex-1 ml-24 p-6">{children}</main>
-            </div>
-          </WhiteboardProvider>
-        </EditingProvider>
+                <main className="flex-1 ml-24 p-6">{children}</main>
+              </div>
+            </WhiteboardProvider>
+          </EditingProvider>
+        </DarkModeProvider>
       </body>
     </html>
   )

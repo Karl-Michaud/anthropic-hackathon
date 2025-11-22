@@ -10,11 +10,21 @@ interface DraggableBlockProps {
   isSelected?: boolean
   zoom: number
   zIndex?: number
+  width?: number
+  height?: number
   onMouseDown: (
     e: MouseEvent<HTMLDivElement>,
     id: string,
     x: number,
     y: number,
+  ) => void
+  onResizeStart?: (
+    e: MouseEvent<HTMLDivElement>,
+    id: string,
+    startX: number,
+    startY: number,
+    startWidth: number,
+    startHeight: number,
   ) => void
   onContextMenu?: (e: MouseEvent<HTMLDivElement>, id: string) => void
   children: ReactNode
@@ -28,7 +38,10 @@ export default function DraggableBlock({
   isSelected = false,
   zoom,
   zIndex = 1,
+  width,
+  height,
   onMouseDown,
+  onResizeStart,
   onContextMenu,
   children,
 }: DraggableBlockProps) {
@@ -41,11 +54,19 @@ export default function DraggableBlock({
       target.tagName === 'BUTTON' ||
       target.closest('button') ||
       target.closest('input') ||
-      target.closest('textarea')
+      target.closest('textarea') ||
+      target.closest('[data-resize-handle]')
     ) {
       return
     }
     onMouseDown(e, id, x, y)
+  }
+
+  const handleResizeStart = (e: MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation()
+    if (onResizeStart && width && height) {
+      onResizeStart(e, id, e.clientX, e.clientY, width, height)
+    }
   }
 
   const handleContextMenu = (e: MouseEvent<HTMLDivElement>) => {
@@ -66,6 +87,8 @@ export default function DraggableBlock({
       style={{
         left: x,
         top: y,
+        width: width,
+        height: height,
         transition: isDragging ? 'none' : 'box-shadow 0.2s, outline 0.2s',
         boxShadow: isDragging
           ? '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
@@ -78,6 +101,23 @@ export default function DraggableBlock({
       onContextMenu={handleContextMenu}
     >
       {children}
+      {isSelected && width && height && (
+        <div
+          data-resize-handle
+          onMouseDown={handleResizeStart}
+          style={{
+            position: 'absolute',
+            bottom: -4 / zoom,
+            right: -4 / zoom,
+            width: `${16 / zoom}px`,
+            height: `${16 / zoom}px`,
+            cursor: 'nwse-resize',
+            backgroundColor: '#0ea5e9',
+            borderRadius: '2px',
+          }}
+          title="Drag to resize"
+        />
+      )}
     </div>
   )
 }

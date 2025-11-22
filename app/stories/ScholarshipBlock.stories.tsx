@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs'
-import ScholarshipBlock from '../app/components/ScholarshipBlock'
+import { ScholarshipBlock } from '../app/components/ScholarshipBlock'
 
 const meta: Meta<typeof ScholarshipBlock> = {
   title: 'Components/Scholarship/ScholarshipBlock',
