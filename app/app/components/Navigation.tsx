@@ -7,11 +7,14 @@ import {
   User,
   Upload,
   FileText,
+  Moon,
+  Sun,
   type LucideIcon,
 } from 'lucide-react'
 import NextLink from 'next/link'
 import { useState, useRef, ChangeEvent, DragEvent } from 'react'
 import { useWhiteboard } from '../context/WhiteboardContext'
+import { useDarkMode } from '../context/DarkModeContext'
 import {
   saveScholarshipToDB,
   generateAndSavePromptAnalysis,
@@ -20,10 +23,41 @@ import {
 import { extractScholarshipInfo } from '../lib/claudeApi'
 import { requestClaude } from '../lib/request'
 import type { FeedbackData } from './DynamicFeedback/types'
-import type { AdaptiveWeights } from '../context/WhiteboardContext'
 import { IPromptWeights } from '../types/interfaces'
 
 const navItems = [{ href: '/', icon: Home, label: 'Home' }]
+
+// DarkModeToggle component
+function DarkModeToggle() {
+  const { isDarkMode, toggleDarkMode } = useDarkMode()
+
+  return (
+    <button
+      onClick={toggleDarkMode}
+      className={`group relative p-2 rounded-xl transition-all duration-200 hover:scale-105 cursor-pointer ${
+        isDarkMode
+          ? 'hover:bg-gray-600/40 text-yellow-300'
+          : 'hover:bg-white/40 text-gray-500 group-hover:text-gray-600'
+      }`}
+      aria-label="Toggle dark mode"
+    >
+      {isDarkMode ? (
+        <Sun size={28} />
+      ) : (
+        <Moon size={28} />
+      )}
+      <span
+        className={`absolute left-12 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 text-xs rounded-md px-2 py-1 transition-all duration-200 ${
+          isDarkMode
+            ? 'bg-gray-900 text-yellow-100'
+            : 'bg-gray-900 text-white'
+        }`}
+      >
+        {isDarkMode ? 'Light Mode' : 'Dark Mode'}
+      </span>
+    </button>
+  )
+}
 
 // NavigationItem component
 function NavigationItem({
@@ -280,12 +314,10 @@ export interface ScholarshipUploadResult {
   title: string
   description: string
   prompts: string[]
-  hiddenRequirements: string[]
-  adaptiveWeights?: AdaptiveWeights
-  weights?: AdaptiveWeights
-  personality?: Record<string, any>
-  priorities?: Record<string, any>
-  values?: Record<string, any>
+  weights?: Record<string, unknown>
+  personality?: Record<string, unknown>
+  priorities?: Record<string, unknown>
+  values?: Record<string, unknown>
 }
 
 function ScholarshipUploadPopup({
@@ -348,8 +380,7 @@ function ScholarshipUploadPopup({
           title,
           description,
           prompts: [prompt],
-          hiddenRequirements: result.HiddenRequirements || [],
-          weights: weights as any,
+          weights: weights as Record<string, unknown>,
           personality: dbScholarship?.promptPersonality || undefined,
           priorities: dbScholarship?.promptPriorities || undefined,
           values: dbScholarship?.promptValues || undefined,
@@ -401,8 +432,7 @@ function ScholarshipUploadPopup({
         title,
         description,
         prompts,
-        hiddenRequirements: [],
-        weights: weights as any,
+        weights: weights as Record<string, unknown>,
         personality: dbScholarship?.promptPersonality || undefined,
         priorities: dbScholarship?.promptPriorities || undefined,
         values: dbScholarship?.promptValues || undefined,
@@ -500,6 +530,14 @@ function ScholarshipUploadPopup({
 // Main Navigation component
 export default function Navigation() {
   const [isPopupOpen, setIsPopupOpen] = useState(false)
+  let isDarkMode = false
+  try {
+    const darkModeContext = useDarkMode()
+    isDarkMode = darkModeContext.isDarkMode
+  } catch {
+    // Provider not available
+    isDarkMode = false
+  }
   const { addScholarship, addJsonOutput, addFeedbackPanel } = useWhiteboard()
 
   const handleScholarshipCreated = (data: ScholarshipUploadResult) => {
@@ -511,9 +549,7 @@ export default function Navigation() {
       title: data.title,
       description: data.description,
       prompt: data.prompts?.[0] || '',
-      hiddenRequirements: data.hiddenRequirements,
-      adaptiveWeights: data.adaptiveWeights || data.weights,
-      weights: data.weights || data.adaptiveWeights,
+      weights: data.weights,
       personality: data.personality,
       priorities: data.priorities,
       values: data.values,
@@ -524,8 +560,6 @@ export default function Navigation() {
       ScholarshipName: data.title,
       ScholarshipDescription: data.description,
       EssayPrompt: data.prompts?.[0] || '',
-      HiddenRequirements: data.hiddenRequirements,
-      AdaptiveWeights: data.weights,
       Personality: data.personality,
       Priorities: data.priorities,
       Values: data.values,
@@ -560,7 +594,13 @@ export default function Navigation() {
 
   return (
     <>
-      <div className="fixed left-6 top-6 bottom-6 z-50 rounded-2xl backdrop-blur-md bg-white/80 shadow-lg border border-white/80 p-2 flex flex-col items-center">
+      <div
+        className={`fixed left-6 top-6 bottom-6 z-50 rounded-2xl backdrop-blur-md shadow-lg p-2 flex flex-col items-center transition-colors duration-200 ${
+          isDarkMode
+            ? 'bg-gray-700/80 border border-gray-600/80'
+            : 'bg-white/80 border border-white/80'
+        }`}
+      >
         {/* Top navigation items */}
         <nav className="flex flex-col gap-4 items-center py-4">
           {navItems.map(({ href, icon, label }) => (
@@ -573,6 +613,7 @@ export default function Navigation() {
 
         {/* Bottom buttons */}
         <div className="flex flex-col gap-4 items-center py-4">
+          <DarkModeToggle />
           <ScholarshipUploadButton onClick={() => setIsPopupOpen(true)} />
           <AccountButton />
         </div>

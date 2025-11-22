@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/nextjs'
-import { ScholarshipWithActions } from '../app/components/ScholarshipBlock'
+import { ScholarshipActions } from '../app/components/ScholarshipBlock'
 
-const meta: Meta<typeof ScholarshipWithActions> = {
-  title: 'Components/Scholarship/ScholarshipWithActions',
-  component: ScholarshipWithActions,
+const meta: Meta<typeof ScholarshipActions> = {
+  title: 'Components/Scholarship/ScholarshipActions',
+  component: ScholarshipActions,
   tags: ['autodocs'],
   parameters: {
     layout: 'centered',
@@ -11,60 +11,18 @@ const meta: Meta<typeof ScholarshipWithActions> = {
 }
 
 export default meta
-type Story = StoryObj<typeof ScholarshipWithActions>
-
-const mockScholarship = {
-  id: 'scholarship-1',
-  title: 'Tech Innovation Scholarship',
-  description: 'Awarded to students demonstrating innovation in technology and creative problem-solving. The scholarship covers tuition and provides mentorship opportunities.',
-  prompt: 'Describe a time when you used technology to solve a real-world problem.',
-  hiddenRequirements: ['Innovation', 'Leadership'],
-}
+type Story = StoryObj<typeof ScholarshipActions>
 
 export const Default: Story = {
   args: {
-    data: mockScholarship,
-    onUpdate: (data) => console.log('Updated:', data),
-    onDelete: (id) => console.log('Deleted:', id),
+    onDraft: () => console.log('Draft created'),
+    isGenerating: false,
   },
 }
 
-export const WithoutHiddenRequirements: Story = {
+export const Generating: Story = {
   args: {
-    data: {
-      ...mockScholarship,
-      hiddenRequirements: [],
-    },
-    onUpdate: (data) => console.log('Updated:', data),
-    onDelete: (id) => console.log('Deleted:', id),
-  },
-}
-
-export const LongDescription: Story = {
-  args: {
-    data: {
-      ...mockScholarship,
-      description: `This is a comprehensive scholarship program for students interested in technology and innovation.
-
-      Eligibility Requirements:
-      - Current undergraduate or graduate student
-      - Strong GPA (3.5+)
-      - Demonstrated interest in technology
-      - Community involvement
-
-      Application Requirements:
-      - Resume
-      - Essay (500-1000 words)
-      - Two letters of recommendation
-      - Portfolio of technical projects
-
-      Selection Criteria:
-      - Technical excellence
-      - Innovation and creativity
-      - Leadership potential
-      - Community impact`,
-    },
-    onUpdate: (data) => console.log('Updated:', data),
-    onDelete: (id) => console.log('Deleted:', id),
+    onDraft: () => console.log('Draft created'),
+    isGenerating: true,
   },
 }

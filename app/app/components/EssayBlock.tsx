@@ -3,47 +3,41 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { Loader2, MoreVertical, Trash2 } from 'lucide-react'
 import { useEditing } from '../context/EditingContext'
-import {
-  EssayData,
-  HighlightedSection,
-  SocraticQuestion,
-} from '../context/WhiteboardContext'
+import { useDarkMode } from '../context/DarkModeContext'
+import { EssayData, HighlightedSection } from '../context/WhiteboardContext'
 import { colors, typography, transitions } from '../styles/design-system'
 import SocraticPanel, { SocraticPanelData } from './SocraticPanel'
-import {
-  analyzeSocraticQuestions,
-  submitSocraticAnswers,
-} from './DynamicFeedback'
+import { submitSocraticAnswers } from './DynamicFeedback'
 
 export type { EssayData }
 
-// Highlight color map
+// Highlight color map - vibrant colors for better visibility
 const HIGHLIGHT_COLORS: Record<
   string,
   { bg: string; text: string; ring: string }
 > = {
   amber: {
-    bg: 'bg-amber-100',
+    bg: 'bg-yellow-200',
     text: 'text-amber-900',
-    ring: 'ring-amber-500',
+    ring: 'ring-yellow-500',
   },
   cyan: {
-    bg: 'bg-cyan-100',
+    bg: 'bg-cyan-200',
     text: 'text-cyan-900',
     ring: 'ring-cyan-500',
   },
   pink: {
-    bg: 'bg-pink-100',
+    bg: 'bg-pink-200',
     text: 'text-pink-900',
     ring: 'ring-pink-500',
   },
   lime: {
-    bg: 'bg-lime-100',
+    bg: 'bg-lime-300',
     text: 'text-lime-900',
     ring: 'ring-lime-500',
   },
   purple: {
-    bg: 'bg-purple-100',
+    bg: 'bg-purple-200',
     text: 'text-purple-900',
     ring: 'ring-purple-500',
   },
@@ -295,6 +289,14 @@ export default function EssayBlock({
   const blockRef = useRef<HTMLDivElement>(null)
   const { setEditing } = useEditing()
 
+  let isDarkMode = false
+  try {
+    const darkModeContext = useDarkMode()
+    isDarkMode = darkModeContext.isDarkMode
+  } catch {
+    isDarkMode = false
+  }
+
   const wordCount = useMemo(() => {
     return data.content.trim() ? data.content.trim().split(/\s+/).length : 0
   }, [data.content])
@@ -302,8 +304,7 @@ export default function EssayBlock({
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto'
-      const minHeight = data.content ? 100 : 200
-      textareaRef.current.style.height = `${Math.max(textareaRef.current.scrollHeight, minHeight)}px`
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`
     }
   }, [data.content])
 
@@ -324,6 +325,13 @@ export default function EssayBlock({
     }
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [selectedSection])
+
+  // Automatically exit edit mode when highlights are generated
+  useEffect(() => {
+    if (data.highlightedSections && data.highlightedSections.length > 0) {
+      setIsEditMode(false)
+    }
+  }, [data.highlightedSections])
 
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newContent = e.target.value
@@ -430,12 +438,26 @@ export default function EssayBlock({
 
   return (
     <div
-      className="w-[500px] bg-white rounded-xl shadow-lg border border-neutral-200 relative"
+      className={`w-[500px] rounded-xl shadow-lg relative transition-colors duration-200 ${
+        isDarkMode
+          ? 'bg-gray-800 border border-gray-700'
+          : 'bg-white border border-neutral-200'
+      }`}
       ref={blockRef}
     >
-      <div className="flex items-center justify-between py-3 px-4 bg-neutral-50 border-b border-neutral-200 rounded-t-xl">
+      <div
+        className={`flex items-center justify-between py-3 px-4 border-b rounded-t-xl transition-colors duration-200 ${
+          isDarkMode
+            ? 'bg-gray-700 border-gray-600'
+            : 'bg-neutral-50 border-neutral-200'
+        }`}
+      >
         <div className="flex-1">
-          <h3 className="text-sm font-semibold text-neutral-700 m-0">
+          <h3
+            className={`text-sm font-semibold m-0 ${
+              isDarkMode ? 'text-gray-100' : 'text-neutral-700'
+            }`}
+          >
             {scholarshipTitle ? `Draft for ${scholarshipTitle}` : 'Essay Draft'}
           </h3>
         </div>
@@ -460,7 +482,9 @@ export default function EssayBlock({
         {isGenerating ? (
           <div className="flex items-center justify-center p-12 py-0">
             <Loader2 size={32} className="animate-spin text-primary-500" />
-            <span className="ml-3 text-neutral-600">Generating essay...</span>
+            <span className={`ml-3 ${isDarkMode ? 'text-gray-400' : 'text-neutral-600'}`}>
+              Generating essay...
+            </span>
           </div>
         ) : isEditMode ||
           !data.highlightedSections ||
@@ -471,13 +495,21 @@ export default function EssayBlock({
             onChange={handleContentChange}
             onFocus={() => setEditing(true)}
             onBlur={() => setEditing(false)}
+            onWheel={(e) => e.stopPropagation()}
             placeholder="Start writing your essay here..."
-            className="w-full min-h-[200px] max-h-[500px] resize-none outline-none text-neutral-800 text-sm leading-relaxed overflow-y-auto border-0 p-0"
+            className={`w-full min-h-[200px] resize-none outline-none text-sm leading-relaxed border-0 p-0 transition-colors ${
+              isDarkMode
+                ? 'bg-gray-800 text-gray-100 placeholder-gray-500'
+                : 'bg-white text-neutral-800 placeholder-gray-400'
+            }`}
           />
         ) : (
           <div
-            className="w-full min-h-[200px] max-h-[500px] overflow-y-auto border-0 p-0 text-neutral-800 text-sm leading-relaxed cursor-pointer"
+            className={`w-full min-h-[200px] border-0 p-0 text-sm leading-relaxed cursor-pointer transition-colors ${
+              isDarkMode ? 'text-gray-100' : 'text-neutral-800'
+            }`}
             onClick={() => setIsEditMode(true)}
+            onWheel={(e) => e.stopPropagation()}
           >
             {renderHighlightedText(
               data.content,

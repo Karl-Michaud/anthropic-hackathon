@@ -1,10 +1,12 @@
 'use client'
 
-import { X, Check } from 'lucide-react'
-import { useEffect, useRef } from 'react'
+import { X, Check, Loader2, Save, GripHorizontal } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { useDarkMode } from '../context/DarkModeContext'
 import type { FeedbackData, Question } from './DynamicFeedback/types'
+import { colors } from '../styles/design-system'
 
-// Question component - auto-resizing textarea
+// Question component - auto-resizing textarea with auto-save
 function Question({
   question,
   value,
@@ -17,6 +19,8 @@ function Question({
   placeholder?: string
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const [isSaving, setIsSaving] = useState(false)
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -25,11 +29,38 @@ function Question({
     }
   }, [value])
 
+  // Auto-save indicator (visual feedback) - intentional setState in effect for UI feedback
+  useEffect(() => {
+    if (value.length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIsSaving(true)
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
+      }
+      saveTimeoutRef.current = setTimeout(() => {
+        setIsSaving(false)
+      }, 800)
+    }
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
+      }
+    }
+  }, [value])
+
   return (
     <div className="mb-4">
-      <label className="block text-sm font-medium text-neutral-700 mb-2">
-        {question}
-      </label>
+      <div className="flex items-center justify-between mb-2">
+        <label className="block text-sm font-medium text-neutral-700">
+          {question}
+        </label>
+        {isSaving && (
+          <div className="flex items-center gap-1 text-xs text-primary-600">
+            <Save size={12} />
+            Saving...
+          </div>
+        )}
+      </div>
       <textarea
         ref={textareaRef}
         value={value}
@@ -40,6 +71,9 @@ function Question({
       />
       <div className="mt-1 text-xs text-neutral-500">
         {value.length} characters
+        {value.length > 0 && value.length < 20 && (
+          <span className="ml-2 text-neutral-400">(add more details...)</span>
+        )}
       </div>
     </div>
   )
@@ -106,9 +140,10 @@ function FeedbackSection({
         <button
           onClick={onComplete}
           disabled={!allQuestionsAnswered}
-          className="mt-4 w-full bg-primary-600 text-neutral-0 px-4 py-2 rounded-lg font-medium hover:bg-primary-700 disabled:bg-neutral-300 disabled:cursor-not-allowed transition-colors"
+          className="mt-4 w-full bg-primary-600 text-neutral-0 px-4 py-2 rounded-lg font-medium hover:bg-primary-700 disabled:bg-neutral-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
         >
-          Complete Section
+          <Check size={16} />
+          Mark as Complete
         </button>
       )}
     </div>
@@ -131,25 +166,75 @@ export default function FeedbackPanel({
     answer: string,
   ) => void
   onSectionComplete: (sectionId: string) => void
-  onSubmitToAI: () => void
+  onSubmitToAI: () => Promise<void> | void
 }) {
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  let isDarkMode = false
+  try {
+    const darkModeContext = useDarkMode()
+    isDarkMode = darkModeContext.isDarkMode
+  } catch {
+    isDarkMode = false
+  }
+
   const completedSections = data.sections.filter((s) => s.isComplete).length
   const totalSections = data.sections.length
   const allSectionsComplete = completedSections === totalSections
 
+  const handleSubmit = async () => {
+    setIsSubmitting(true)
+    try {
+      await onSubmitToAI()
+    } catch (error) {
+      console.error('Error submitting feedback:', error)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   return (
-    <div className="w-[600px] bg-white rounded-xl shadow-lg border border-neutral-200 flex flex-col max-h-[800px]">
-      <div className="p-6 border-b border-neutral-200 shrink-0 relative bg-white">
+    <div
+      className={`w-[600px] rounded-xl shadow-lg flex flex-col max-h-[800px] transition-colors ${
+        isDarkMode
+          ? 'bg-gray-800 border border-gray-700'
+          : 'bg-white border border-neutral-200'
+      }`}
+    >
+      <div
+        className={`p-6 border-b shrink-0 relative flex items-center justify-between gap-4 group cursor-grab active:cursor-grabbing transition-colors ${
+          isDarkMode
+            ? 'bg-gray-800 border-gray-700'
+            : 'bg-white border-neutral-200'
+        }`}
+      >
+        {/* Drag Handle */}
+        <div
+          className="flex items-center gap-2 transition-opacity opacity-50 group-hover:opacity-100"
+          style={{
+            color: isDarkMode ? colors.neutral[500] : colors.neutral[400],
+          }}
+        >
+          <GripHorizontal size={18} />
+        </div>
+
+        {/* Title */}
+        <h2
+          className={`text-2xl font-bold flex-1 min-w-0 ${
+            isDarkMode ? 'text-gray-100' : 'text-neutral-900'
+          }`}
+        >
+          {data.problemTitle}
+        </h2>
+
+        {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-neutral-400 hover:text-neutral-600 transition-colors"
+          className="shrink-0 text-neutral-400 hover:text-neutral-600 transition-colors"
           aria-label="Close feedback panel"
         >
           <X size={24} />
         </button>
-        <h2 className="text-2xl font-bold text-neutral-900 pr-10">
-          {data.problemTitle}
-        </h2>
       </div>
 
       <div className="p-6 overflow-y-auto flex-1 bg-white">
@@ -168,16 +253,31 @@ export default function FeedbackPanel({
         ))}
       </div>
 
-      <div className="p-6 border-t border-neutral-200 shrink-0 bg-white">
+      <div className="p-6 border-t border-neutral-200 shrink-0 bg-white space-y-2">
         <button
-          onClick={onSubmitToAI}
-          disabled={!allSectionsComplete}
-          className="w-full bg-primary-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-primary-700 disabled:bg-neutral-300 disabled:cursor-not-allowed transition-colors"
+          onClick={handleSubmit}
+          disabled={!allSectionsComplete || isSubmitting}
+          className="w-full bg-primary-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-primary-700 disabled:bg-neutral-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
         >
-          {allSectionsComplete
-            ? 'Send to AI ✓ All Done'
-            : `Send to AI (${completedSections}/${totalSections} complete)`}
+          {isSubmitting ? (
+            <>
+              <Loader2 size={16} className="animate-spin" />
+              Enhancing Essay...
+            </>
+          ) : allSectionsComplete ? (
+            <>
+              <Check size={16} />
+              Send to AI ✓ All Done
+            </>
+          ) : (
+            `Send to AI (${completedSections}/${totalSections} complete)`
+          )}
         </button>
+        {!allSectionsComplete && (
+          <p className="text-xs text-neutral-500 text-center">
+            Complete all sections to submit
+          </p>
+        )}
       </div>
     </div>
   )

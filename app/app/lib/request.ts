@@ -115,7 +115,6 @@ Respond **only** in strict JSON format:
     "tone_style": "string",
     "communication_strategy": "string",
     "values_emphasized": ["string", "string", ...],
-    "hidden_criteria": ["string", "string", ...],
     "recommended_essay_focus": "string",
     "contrast_examples": {
       "vs_merit_academic": "string",

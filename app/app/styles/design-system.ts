@@ -1,13 +1,14 @@
 /**
  * Modern, Sleek Design System
  * A cohesive, minimal design language with smooth interactions
+ * Supports both light and dark modes
  */
 
 // ============================================================================
-// COLOR PALETTE
+// COLOR PALETTE - LIGHT MODE
 // ============================================================================
 
-export const colors = {
+export const colorsLight = {
   // Primary - Sophisticated Blue
   primary: {
     50: '#f0f7ff',
@@ -95,6 +96,102 @@ export const colors = {
     success: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
   },
 }
+
+// ============================================================================
+// COLOR PALETTE - DARK MODE
+// ============================================================================
+
+export const colorsDark = {
+  // Primary - Sophisticated Blue (brighter for dark mode)
+  primary: {
+    50: '#0c3d66',
+    100: '#075985',
+    200: '#0369a1',
+    300: '#0284c7',
+    400: '#0ea5e9',
+    500: '#38bdf8', // Main primary
+    600: '#7dd3fc',
+    700: '#bae6fd',
+    800: '#e0efff',
+    900: '#f0f7ff',
+  },
+
+  // Accent - Vibrant Teal (brighter for dark mode)
+  accent: {
+    50: '#0f2f2a',
+    100: '#134e4a',
+    200: '#0f766e',
+    300: '#0d9488',
+    400: '#14b8a6',
+    500: '#2dd4bf', // Main accent
+    600: '#5eead4',
+    700: '#99f6e4',
+    800: '#ccfbf1',
+    900: '#f0fdfa',
+  },
+
+  // Success - Emerald (adjusted for dark mode)
+  success: {
+    50: '#14532d',
+    100: '#15803d',
+    200: '#16a34a',
+    400: '#4ade80',
+    500: '#22c55e',
+    600: '#86efac',
+    700: '#bbf7d0',
+    900: '#f0fdf4',
+  },
+
+  // Warning - Amber (adjusted for dark mode)
+  warning: {
+    50: '#78350f',
+    100: '#b45309',
+    200: '#d97706',
+    400: '#fbbf24',
+    500: '#f59e0b',
+    600: '#fde68a',
+    700: '#fef3c7',
+    900: '#fffbeb',
+  },
+
+  // Danger - Rose (adjusted for dark mode)
+  danger: {
+    50: '#881337',
+    100: '#be185d',
+    200: '#e11d48',
+    400: '#fb7185',
+    500: '#f43f5e',
+    600: '#fecdd3',
+    700: '#ffe4e6',
+    900: '#fff5f7',
+  },
+
+  // Neutral - Modern Gray (inverted for dark mode)
+  neutral: {
+    0: '#030712',
+    50: '#111827',
+    100: '#1f2937',
+    200: '#374151',
+    300: '#4b5563',
+    400: '#6b7280',
+    500: '#9ca3af',
+    600: '#d1d5db',
+    700: '#e5e7eb',
+    800: '#f3f4f6',
+    900: '#f9fafb',
+    950: '#ffffff',
+  },
+
+  // Gradients
+  gradients: {
+    primary: 'linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%)',
+    accent: 'linear-gradient(135deg, #2dd4bf 0%, #14b8a6 100%)',
+    success: 'linear-gradient(135deg, #4ade80 0%, #22c55e 100%)',
+  },
+}
+
+// Default export is light mode
+export const colors = colorsLight
 
 // ============================================================================
 // TYPOGRAPHY
@@ -324,17 +421,97 @@ export const components = {
 }
 
 // ============================================================================
+// DARK MODE COMPONENT TOKENS
+// ============================================================================
+
+export const componentsDark = {
+  // Button sizes (same as light mode)
+  button: {
+    xs: {
+      height: '1.75rem',
+      padding: '0 0.5rem',
+      fontSize: typography.sizes.xs,
+    },
+    sm: {
+      height: '2rem',
+      padding: '0 0.75rem',
+      fontSize: typography.sizes.sm,
+    },
+    md: {
+      height: '2.5rem',
+      padding: '0 1rem',
+      fontSize: typography.sizes.base,
+    },
+    lg: {
+      height: '3rem',
+      padding: '0 1.5rem',
+      fontSize: typography.sizes.lg,
+    },
+  },
+
+  // Input sizes (same as light mode)
+  input: {
+    sm: {
+      height: '2rem',
+      padding: '0.5rem 0.75rem',
+      fontSize: typography.sizes.sm,
+      borderRadius: borderRadius.md,
+    },
+    md: {
+      height: '2.5rem',
+      padding: '0.75rem 1rem',
+      fontSize: typography.sizes.base,
+      borderRadius: borderRadius.md,
+    },
+    lg: {
+      height: '3rem',
+      padding: '1rem 1.25rem',
+      fontSize: typography.sizes.lg,
+      borderRadius: borderRadius.lg,
+    },
+  },
+
+  // Card styling (dark mode variant)
+  card: {
+    padding: spacing[6],
+    borderRadius: borderRadius.xl,
+    background: colorsDark.neutral[100],
+    shadow: shadows.md,
+    border: `1px solid ${colorsDark.neutral[200]}`,
+  },
+
+  // Surface variants (dark mode)
+  surface: {
+    primary: {
+      background: colorsDark.primary[100],
+      border: `1px solid ${colorsDark.primary[200]}`,
+    },
+    secondary: {
+      background: colorsDark.neutral[100],
+      border: `1px solid ${colorsDark.neutral[200]}`,
+    },
+    accent: {
+      background: colorsDark.accent[100],
+      border: `1px solid ${colorsDark.accent[200]}`,
+    },
+  },
+}
+
+// ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
 
 export const designSystem = {
   colors,
+  colorsDark,
+  colorsLight,
   typography,
   spacing,
   borderRadius,
   shadows,
   transitions,
   components,
+  componentsDark,
 }
 
 // Re-export all for convenience

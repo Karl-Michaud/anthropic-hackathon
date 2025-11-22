@@ -8,6 +8,7 @@ import {
   shadows,
   transitions,
 } from '../../styles/design-system'
+import { useDarkMode } from '../../context/DarkModeContext'
 
 interface DeleteButtonProps {
   onClick: () => void
@@ -18,6 +19,14 @@ export default function DeleteButton({
   onClick,
   size = 'sm',
 }: DeleteButtonProps) {
+  let isDarkMode = false
+  try {
+    const darkModeContext = useDarkMode()
+    isDarkMode = darkModeContext.isDarkMode
+  } catch {
+    isDarkMode = false
+  }
+
   const handleClick = (e: MouseEvent) => {
     e.stopPropagation()
     onClick()
@@ -30,6 +39,11 @@ export default function DeleteButton({
 
   const config = sizeConfig[size]
 
+  const bgColor = isDarkMode ? colors.neutral[700] : colors.neutral[100]
+  const textColor = colors.danger[500]
+  const hoverBgColor = colors.danger[500]
+  const hoverTextColor = isDarkMode ? colors.danger[100] : colors.neutral[0]
+
   return (
     <button
       onClick={handleClick}
@@ -39,21 +53,21 @@ export default function DeleteButton({
         width: config.width,
         height: config.height,
         borderRadius: borderRadius.full,
-        background: colors.neutral[100],
-        color: colors.danger[500],
+        background: bgColor,
+        color: textColor,
         boxShadow: shadows.xs,
         transition: transitions.common.all,
       }}
       onMouseEnter={(e) => {
         const button = e.currentTarget as HTMLButtonElement
-        button.style.background = colors.danger[500]
-        button.style.color = colors.neutral[0]
+        button.style.background = hoverBgColor
+        button.style.color = hoverTextColor
         button.style.boxShadow = shadows.md
       }}
       onMouseLeave={(e) => {
         const button = e.currentTarget as HTMLButtonElement
-        button.style.background = colors.neutral[100]
-        button.style.color = colors.danger[500]
+        button.style.background = bgColor
+        button.style.color = textColor
         button.style.boxShadow = shadows.xs
       }}
       title="Delete"

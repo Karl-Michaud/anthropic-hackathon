@@ -9,8 +9,10 @@ import {
   Copy,
   Trash2,
   Clipboard,
+  RotateCcw,
 } from 'lucide-react'
 import { colors } from '../styles/design-system'
+import { useDarkMode } from '../context/DarkModeContext'
 
 type ToolbarPosition = 'top' | 'right' | 'bottom'
 export type Tool = 'select' | 'hand'
@@ -19,6 +21,7 @@ interface DraggableToolbarProps {
   onAddCell: () => void
   activeTool: Tool
   onToolChange: (tool: Tool) => void
+  onClearBoard: () => void
 }
 
 interface ToolButtonProps {
@@ -26,6 +29,7 @@ interface ToolButtonProps {
   title: string
   isActive: boolean
   onClick: () => void
+  isDarkMode?: boolean
 }
 
 interface ContextMenuProps {
@@ -36,15 +40,26 @@ interface ContextMenuProps {
   onDelete: () => void
   onClose: () => void
   hasSelection: boolean
+  isDarkMode?: boolean
 }
 
 // ToolButton component
-function ToolButton({ icon, title, isActive, onClick }: ToolButtonProps) {
+function ToolButton({
+  icon,
+  title,
+  isActive,
+  onClick,
+  isDarkMode = false,
+}: ToolButtonProps) {
   return (
     <button
       onClick={onClick}
       className={`p-2 rounded-lg transition-colors ${
-        isActive ? 'text-white' : 'text-neutral-700 hover:bg-neutral-100'
+        isActive
+          ? 'text-white'
+          : isDarkMode
+            ? 'text-gray-300 hover:bg-gray-700'
+            : 'text-neutral-700 hover:bg-neutral-100'
       }`}
       style={{
         backgroundColor: isActive ? colors.primary[500] : 'transparent',
@@ -65,6 +80,7 @@ function ContextMenu({
   onDelete,
   onClose,
   hasSelection,
+  isDarkMode = false,
 }: ContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -97,8 +113,8 @@ function ContextMenu({
       style={{
         left: x,
         top: y,
-        backgroundColor: colors.neutral[900],
-        borderColor: colors.neutral[700],
+        backgroundColor: isDarkMode ? colors.neutral[800] : colors.neutral[900],
+        borderColor: isDarkMode ? colors.neutral[700] : colors.neutral[700],
       }}
     >
       <button
@@ -188,10 +204,19 @@ export default function DraggableToolbar({
   onAddCell,
   activeTool,
   onToolChange,
+  onClearBoard,
 }: DraggableToolbarProps) {
   const [position, setPosition] = useState<ToolbarPosition>('bottom')
   const [isDragging, setIsDragging] = useState(false)
   const [dragPos, setDragPos] = useState({ x: 0, y: 0 })
+
+  let isDarkMode = false
+  try {
+    const darkModeContext = useDarkMode()
+    isDarkMode = darkModeContext.isDarkMode
+  } catch {
+    isDarkMode = false
+  }
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
@@ -254,8 +279,8 @@ export default function DraggableToolbar({
         isDragging ? 'cursor-grabbing' : ''
       } ${!isDragging ? `${positionConfig.className} transition-all duration-300` : ''}`}
       style={{
-        backgroundColor: `${colors.neutral[0]}e6`,
-        borderColor: colors.neutral[200],
+        backgroundColor: isDarkMode ? `${colors.neutral[800]}e6` : `${colors.neutral[0]}e6`,
+        borderColor: isDarkMode ? colors.neutral[700] : colors.neutral[200],
         ...(isDragging
           ? {
               left: dragPos.x - 40,
@@ -269,7 +294,9 @@ export default function DraggableToolbar({
       <div
         onMouseDown={handleMouseDown}
         className="p-1 cursor-grab active:cursor-grabbing transition-colors"
-        style={{ color: colors.neutral[400] }}
+        style={{
+          color: isDarkMode ? colors.neutral[500] : colors.neutral[400],
+        }}
       >
         <GripHorizontal size={16} />
       </div>
@@ -277,7 +304,9 @@ export default function DraggableToolbar({
       {/* Divider */}
       <div
         className={dividerClassName}
-        style={{ backgroundColor: colors.neutral[300] }}
+        style={{
+          backgroundColor: isDarkMode ? colors.neutral[700] : colors.neutral[300],
+        }}
       />
 
       {/* Select Tool */}
@@ -286,6 +315,7 @@ export default function DraggableToolbar({
         title="Select (V)"
         isActive={activeTool === 'select'}
         onClick={() => onToolChange('select')}
+        isDarkMode={isDarkMode}
       />
 
       {/* Hand Tool */}
@@ -294,12 +324,15 @@ export default function DraggableToolbar({
         title="Hand Tool (H)"
         isActive={activeTool === 'hand'}
         onClick={() => onToolChange('hand')}
+        isDarkMode={isDarkMode}
       />
 
       {/* Divider */}
       <div
         className={dividerClassName}
-        style={{ backgroundColor: colors.neutral[300] }}
+        style={{
+          backgroundColor: isDarkMode ? colors.neutral[700] : colors.neutral[300],
+        }}
       />
 
       {/* Add Cell Button */}
@@ -307,12 +340,34 @@ export default function DraggableToolbar({
         onClick={onAddCell}
         className="p-2 rounded-lg transition-colors cursor-pointer"
         style={{
-          color: colors.neutral[700],
-          backgroundColor: `${colors.neutral[100]}80`,
+          color: isDarkMode ? colors.neutral[300] : colors.neutral[700],
+          backgroundColor: isDarkMode
+            ? `${colors.neutral[700]}80`
+            : `${colors.neutral[100]}80`,
         }}
         title="Add Cell"
       >
         <StickyNote size={20} />
+      </button>
+
+      {/* Divider */}
+      <div
+        className={dividerClassName}
+        style={{
+          backgroundColor: isDarkMode ? colors.neutral[700] : colors.neutral[300],
+        }}
+      />
+
+      {/* Clear Board Button */}
+      <button
+        onClick={onClearBoard}
+        className="p-2 rounded-lg transition-colors cursor-pointer hover:bg-danger-100"
+        style={{
+          color: isDarkMode ? colors.danger[400] : colors.danger[600],
+        }}
+        title="Clear Board"
+      >
+        <RotateCcw size={20} />
       </button>
     </div>
   )

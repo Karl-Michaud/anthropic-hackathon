@@ -5,12 +5,16 @@ import Cell from './Cell'
 import ZoomComponent from './ZoomComponent'
 import DraggableToolbar, { Tool } from './DraggableToolbar'
 import DraggableBlock from './DraggableBlock'
-import { ScholarshipWithActions, JsonOutputBlock } from './ScholarshipBlock'
+import { ScholarshipBlock } from './ScholarshipBlock'
 import EssayBlock from './EssayBlock'
-import { submitFeedbackAnswers } from './DynamicFeedback/utils/feedbackApi'
+import {
+  submitFeedbackAnswers,
+  analyzeSocraticQuestions,
+} from './DynamicFeedback/utils/feedbackApi'
 import FeedbackPanel from './FeedbackPanel'
 import { useWhiteboard } from '../context/WhiteboardContext'
 import { useEditing } from '../context/EditingContext'
+import { useDarkMode } from '../context/DarkModeContext'
 import { saveEssayDraftToDB } from '../lib/dbUtils'
 import { requestClaude } from '../lib/request'
 import type { IGenerateDraft } from '../types/interfaces'
@@ -46,6 +50,14 @@ export default function Whiteboard() {
   const [momentum, setMomentum] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1.0)
 
+  let isDarkMode = false
+  try {
+    const darkModeContext = useDarkMode()
+    isDarkMode = darkModeContext.isDarkMode
+  } catch {
+    isDarkMode = false
+  }
+
   const [draggingCellId, setDraggingCellId] = useState<string | null>(null)
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
   const [syncingData, setSyncingData] = useState(false)
@@ -71,6 +83,15 @@ export default function Whiteboard() {
     currentY: number
   } | null>(null)
   const [zIndexStack, setZIndexStack] = useState<string[]>([])
+  const [blockDimensions, setBlockDimensions] = useState<
+    Map<string, { width: number; height: number }>
+  >(new Map())
+  const [isResizing, setIsResizing] = useState(false)
+  const [resizingBlockId, setResizingBlockId] = useState<string | null>(null)
+  const [resizeStartDimensions, setResizeStartDimensions] = useState<{
+    width: number
+    height: number
+  } | null>(null)
 
   const {
     cells,
@@ -93,6 +114,7 @@ export default function Whiteboard() {
     deleteFeedbackPanel,
     updateBlockPosition,
     getBlockPosition,
+    clearAll,
   } = useWhiteboard()
   const { isEditing } = useEditing()
 
@@ -274,7 +296,7 @@ export default function Whiteboard() {
         try {
           for (const essay of essays) {
             if (essay.scholarshipId && essay.content) {
-              await saveEssayDraftToDB(essay.scholarshipId, 0, essay.content)
+              await saveEssayDraftToDB(essay.scholarshipId, essay.content)
             }
           }
         } catch (error) {
@@ -339,6 +361,31 @@ export default function Whiteboard() {
     ],
   )
 
+  const handleResizeStart = useCallback(
+    (
+      e: MouseEvent<HTMLDivElement>,
+      blockId: string,
+      startX: number,
+      startY: number,
+      startWidth: number,
+      startHeight: number,
+    ) => {
+      e.stopPropagation()
+      setIsResizing(true)
+      setResizingBlockId(blockId)
+      setDragOffset({
+        x: startX,
+        y: startY,
+      })
+      setResizeStartDimensions({
+        width: startWidth,
+        height: startHeight,
+      })
+      setMomentum({ x: 0, y: 0 })
+    },
+    [],
+  )
+
   const handleGenerateEssay = useCallback(
     async (scholarshipId: string) => {
       const scholarship = scholarships.find((s) => s.id === scholarshipId)
@@ -360,6 +407,7 @@ export default function Whiteboard() {
           scholarshipId,
           content: essayContent,
           maxWordCount: undefined,
+          lastEditedAt: Date.now(),
         })
 
         // Position essay to the right of the scholarship
@@ -371,7 +419,7 @@ export default function Whiteboard() {
 
         // Save to database
         if (scholarship.id) {
-          await saveEssayDraftToDB(scholarship.id, 0, essayContent)
+          await saveEssayDraftToDB(scholarship.id, essayContent)
         }
       } catch (error) {
         console.error('Failed to generate essay:', error)
@@ -381,6 +429,58 @@ export default function Whiteboard() {
     },
     [scholarships, addEssay, getBlockPosition, updateBlockPosition],
   )
+
+  const handleGenerateSocraticQuestions = useCallback(
+    async (essayId: string) => {
+      const essay = essays.find((e) => e.id === essayId)
+      if (!essay) return
+
+      try {
+        const scholarship = scholarships.find(
+          (s) => s.id === essay.scholarshipId,
+        )
+        const analysisResult = await analyzeSocraticQuestions(
+          essay.content,
+          scholarship?.title,
+        )
+
+        updateEssay({
+          ...essay,
+          highlightedSections: analysisResult.highlightedSections,
+          socraticData: analysisResult.socraticData,
+        })
+      } catch (error) {
+        console.error('Failed to generate Socratic questions:', error)
+      }
+    },
+    [essays, scholarships, updateEssay],
+  )
+
+  // Auto-generate Socratic questions for new essays without highlights
+  useEffect(() => {
+    const essaysWithoutHighlights = essays.filter((essay) => {
+      // Only generate for essays with content and no highlights
+      if (!essay.content || essay.content.trim().length === 0) return false
+      if (essay.highlightedSections && essay.highlightedSections.length > 0) {
+        return false
+      }
+      // Only generate if essay was recently modified (within last 2 seconds)
+      // This prevents continuous regeneration
+      const now = Date.now()
+      const lastEdited = essay.lastEditedAt || 0
+      return now - lastEdited < 2000
+    })
+
+    if (essaysWithoutHighlights.length === 0) return
+
+    // Generate highlights for the first essay without highlights
+    const essayToProcess = essaysWithoutHighlights[0]
+    const timer = setTimeout(() => {
+      handleGenerateSocraticQuestions(essayToProcess.id)
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [essays, handleGenerateSocraticQuestions])
 
   const addNewCell = useCallback(() => {
     const colors = ['yellow', 'blue', 'pink', 'green', 'purple', 'orange']
@@ -432,6 +532,21 @@ export default function Whiteboard() {
 
   const handleMouseMove = useCallback(
     (e: MouseEvent<HTMLDivElement>) => {
+      if (isResizing && resizingBlockId && resizeStartDimensions) {
+        const deltaX = (e.clientX - dragOffset.x) / zoom
+        const deltaY = (e.clientY - dragOffset.y) / zoom
+
+        const newWidth = Math.max(200, resizeStartDimensions.width + deltaX)
+        const newHeight = Math.max(200, resizeStartDimensions.height + deltaY)
+
+        setBlockDimensions((prev) => {
+          const updated = new Map(prev)
+          updated.set(resizingBlockId, { width: newWidth, height: newHeight })
+          return updated
+        })
+        return
+      }
+
       if (isPanning && !draggingCellId) {
         const newX = e.clientX - startPos.x
         const newY = e.clientY - startPos.y
@@ -484,12 +599,15 @@ export default function Whiteboard() {
       }
     },
     [
+      isResizing,
+      resizingBlockId,
+      resizeStartDimensions,
+      dragOffset,
+      zoom,
       isPanning,
       draggingCellId,
       startPos,
-      dragOffset,
       position,
-      zoom,
       cells,
       updateCell,
       updateBlockPosition,
@@ -503,6 +621,9 @@ export default function Whiteboard() {
     setIsPanning(false)
     setDraggingCellId(null)
     setDragStartPositions(new Map())
+    setIsResizing(false)
+    setResizingBlockId(null)
+    setResizeStartDimensions(null)
 
     // Handle selection box completion
     if (selectionBox) {
@@ -888,7 +1009,6 @@ export default function Whiteboard() {
           title: item.data.title,
           description: item.data.description,
           prompt: item.data.prompt,
-          hiddenRequirements: item.data.hiddenRequirements,
           weights: item.data.weights,
         })
         const pos = getBlockPosition(scholarshipData.id)
@@ -1050,13 +1170,17 @@ export default function Whiteboard() {
   }, [handleWheel])
 
   const dotOpacity = zoom
-  const dotColor = `rgba(208, 201, 184, ${dotOpacity})`
+  const dotColor = isDarkMode
+    ? `rgba(107, 114, 128, ${dotOpacity})`
+    : `rgba(208, 201, 184, ${dotOpacity})`
   const dotSize = 24 * zoom
 
   return (
     <div
       ref={containerRef}
-      className="fixed inset-0 overflow-hidden bg-neutral-50 select-none"
+      className={`fixed inset-0 overflow-hidden select-none transition-colors duration-200 ${
+        isDarkMode ? 'bg-gray-900' : 'bg-neutral-50'
+      }`}
       onMouseDown={handleCanvasMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
@@ -1080,6 +1204,17 @@ export default function Whiteboard() {
         onAddCell={addNewCell}
         activeTool={activeTool}
         onToolChange={setActiveTool}
+        onClearBoard={() => {
+          if (
+            window.confirm(
+              'Are you sure you want to clear the entire board? This cannot be undone.',
+            )
+          ) {
+            clearAll()
+            setSelectedIds(new Set())
+            setZIndexStack([])
+          }
+        }}
       />
 
       {/* Zoom Controls */}
@@ -1125,20 +1260,27 @@ export default function Whiteboard() {
         {/* Render scholarship blocks */}
         {scholarships.map((scholarship) => {
           const pos = getBlockPosition(scholarship.id)
+          const dims = blockDimensions.get(scholarship.id) || {
+            width: 550,
+            height: 400,
+          }
           return (
             <DraggableBlock
               key={scholarship.id}
               id={scholarship.id}
               x={pos.x}
               y={pos.y}
+              width={dims.width}
+              height={dims.height}
               isDragging={draggingCellId === scholarship.id}
               isSelected={selectedIds.has(scholarship.id)}
               zoom={zoom}
               zIndex={getZIndex(scholarship.id)}
               onMouseDown={handleBlockMouseDown}
+              onResizeStart={handleResizeStart}
               onContextMenu={(e, blockId) => handleContextMenu(e, blockId)}
             >
-              <ScholarshipWithActions
+              <ScholarshipBlock
                 data={scholarship}
                 onUpdate={updateScholarship}
                 onDelete={deleteScholarship}
@@ -1155,17 +1297,24 @@ export default function Whiteboard() {
           const scholarship = scholarships.find(
             (s) => s.id === essay.scholarshipId,
           )
+          const dims = blockDimensions.get(essay.id) || {
+            width: 500,
+            height: 600,
+          }
           return (
             <DraggableBlock
               key={essay.id}
               id={essay.id}
               x={pos.x}
               y={pos.y}
+              width={dims.width}
+              height={dims.height}
               isDragging={draggingCellId === essay.id}
               isSelected={selectedIds.has(essay.id)}
               zoom={zoom}
               zIndex={getZIndex(essay.id)}
               onMouseDown={handleBlockMouseDown}
+              onResizeStart={handleResizeStart}
               onContextMenu={(e, blockId) => handleContextMenu(e, blockId)}
             >
               <EssayBlock
@@ -1174,30 +1323,7 @@ export default function Whiteboard() {
                 onUpdate={updateEssay}
                 onDelete={deleteEssay}
                 isGenerating={generatingEssayFor === essay.scholarshipId}
-              />
-            </DraggableBlock>
-          )
-        })}
-
-        {/* Render JSON output blocks */}
-        {jsonOutputs.map((jsonOutput) => {
-          const pos = getBlockPosition(jsonOutput.id)
-          return (
-            <DraggableBlock
-              key={jsonOutput.id}
-              id={jsonOutput.id}
-              x={pos.x}
-              y={pos.y}
-              isDragging={draggingCellId === jsonOutput.id}
-              isSelected={selectedIds.has(jsonOutput.id)}
-              zoom={zoom}
-              zIndex={getZIndex(jsonOutput.id)}
-              onMouseDown={handleBlockMouseDown}
-              onContextMenu={(e, blockId) => handleContextMenu(e, blockId)}
-            >
-              <JsonOutputBlock
-                data={jsonOutput.data}
-                onDelete={() => deleteJsonOutput(jsonOutput.id)}
+                onGenerateSocraticQuestions={handleGenerateSocraticQuestions}
               />
             </DraggableBlock>
           )
@@ -1206,17 +1332,24 @@ export default function Whiteboard() {
         {/* Render feedback panels */}
         {feedbackPanels.map((feedbackData) => {
           const pos = getBlockPosition(feedbackData.id)
+          const dims = blockDimensions.get(feedbackData.id) || {
+            width: 600,
+            height: 600,
+          }
           return (
             <DraggableBlock
               key={feedbackData.id}
               id={feedbackData.id}
               x={pos.x}
               y={pos.y}
+              width={dims.width}
+              height={dims.height}
               isDragging={draggingCellId === feedbackData.id}
               isSelected={selectedIds.has(feedbackData.id)}
               zoom={zoom}
               zIndex={getZIndex(feedbackData.id)}
               onMouseDown={handleBlockMouseDown}
+              onResizeStart={handleResizeStart}
               onContextMenu={(e, blockId) => handleContextMenu(e, blockId)}
             >
               <FeedbackPanel
@@ -1252,8 +1385,37 @@ export default function Whiteboard() {
                   })
                 }}
                 onSubmitToAI={async () => {
-                  await submitFeedbackAnswers(feedbackData)
-                  deleteFeedbackPanel(feedbackData.id) // Remove after submission
+                  try {
+                    // Find the associated essay
+                    const essay = essays.find((e) => e.id === feedbackData.essayId)
+                    if (!essay) {
+                      console.error('Essay not found:', feedbackData.essayId)
+                      return
+                    }
+
+                    // Submit feedback and get updated essay
+                    const updatedEssayContent = await submitFeedbackAnswers(
+                      feedbackData,
+                      essay.content,
+                    )
+
+                    // Update the essay with the enhanced content
+                    updateEssay({
+                      ...essay,
+                      content: updatedEssayContent,
+                      highlightedSections: undefined, // Clear highlights to regenerate
+                      socraticData: undefined,
+                      lastEditedAt: Date.now(),
+                    })
+
+                    // Trigger regeneration of highlights
+                    await handleGenerateSocraticQuestions(essay.id)
+
+                    // Remove the feedback panel
+                    deleteFeedbackPanel(feedbackData.id)
+                  } catch (error) {
+                    console.error('Error submitting feedback:', error)
+                  }
                 }}
               />
             </DraggableBlock>

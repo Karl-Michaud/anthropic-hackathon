@@ -17,7 +17,7 @@ export async function extractScholarshipInfo(
 
   try {
     const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-5-20250929',
+      model: 'claude-sonnet-4-5',
       max_tokens: 1024,
       messages: [
         {
@@ -95,7 +95,6 @@ function parseExtractionResponse(response: string): ScholarshipExtraction {
       ScholarshipName: parsed.ScholarshipName || 'Missing',
       ScholarshipDescription: parsed.ScholarshipDescription || 'Missing',
       EssayPrompt: parsed.EssayPrompt || 'Missing',
-      HiddenRequirements: parsed.HiddenRequirements || [],
     }
 
     return extraction

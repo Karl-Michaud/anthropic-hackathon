@@ -8,5 +8,4 @@ export interface ScholarshipExtraction {
   ScholarshipName: string
   ScholarshipDescription: string
   EssayPrompt: string
-  HiddenRequirements?: string[]
 }

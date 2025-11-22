@@ -1,15 +1,17 @@
+'use client'
+
 import { FeedbackData } from '../types'
 import {
   HighlightedSection,
   SocraticQuestion,
 } from '../../../context/WhiteboardContext'
+import { analyzeSocratic, submitSocraticAnswers as submitSocraticLib } from '../../../lib/socratic'
+import { analyzeFeedback as analyzeFeedbackLib, submitFeedback as submitFeedbackLib } from '../../../lib/feedback'
 
 interface SocraticAnalysisResult {
   highlightedSections: HighlightedSection[]
   socraticData: Record<string, SocraticQuestion[]>
 }
-
-const HIGHLIGHT_COLORS = ['amber', 'cyan', 'pink', 'lime', 'purple'] as const
 
 /**
  * Analyze essay and return highlighted sections with Socratic questions
@@ -19,20 +21,7 @@ export async function analyzeSocraticQuestions(
   scholarshipTitle?: string,
 ): Promise<SocraticAnalysisResult> {
   try {
-    const response = await fetch('/api/socratic', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        essayContent,
-        scholarshipTitle,
-      }),
-    })
-
-    if (!response.ok) {
-      throw new Error('Failed to analyze essay for Socratic questions')
-    }
-
-    const result = await response.json()
+    const result = await analyzeSocratic(essayContent, scholarshipTitle)
     return {
       highlightedSections: result.highlightedSections || [],
       socraticData: result.socraticData || {},
@@ -55,22 +44,8 @@ export async function submitSocraticAnswers(
   answers: Record<string, string>,
 ): Promise<string> {
   try {
-    const response = await fetch('/api/socratic/submit', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        essayContent,
-        sectionId,
-        answers,
-      }),
-    })
-
-    if (!response.ok) {
-      throw new Error('Failed to submit Socratic answers')
-    }
-
-    const result = await response.json()
-    return result.updatedEssay || essayContent
+    const updatedEssay = await submitSocraticLib(essayContent, answers)
+    return updatedEssay || essayContent
   } catch (error) {
     console.error('Error submitting Socratic answers:', error)
     return essayContent
@@ -78,36 +53,42 @@ export async function submitSocraticAnswers(
 }
 
 /**
- * Analyze essay and return feedback data
- * STUB: Returns null for now
- * FUTURE: Call AI to analyze essay against requirements
+ * Analyze essay and return feedback data with improvement suggestions
  */
 export async function analyzeFeedback(
+  essayContent: string,
   essayId: string,
   scholarshipId: string,
+  scholarshipTitle?: string,
 ): Promise<FeedbackData | null> {
-  // TODO: Implement AI analysis
-  console.log('analyzeFeedback called:', { essayId, scholarshipId })
-  return null
+  try {
+    const feedbackData = await analyzeFeedbackLib({
+      essayContent,
+      essayId,
+      scholarshipId,
+      scholarshipTitle,
+    })
+    return feedbackData || null
+  } catch (error) {
+    console.error('Error analyzing essay for feedback:', error)
+    return null
+  }
 }
 
 /**
- * Submit completed feedback answers to AI
- * STUB: Console logs data for now
- * FUTURE: Send to backend/AI pipeline
+ * Submit completed feedback answers to update essay
  */
 export async function submitFeedbackAnswers(
   feedbackData: FeedbackData,
-): Promise<void> {
-  // TODO: Implement submission to backend
-  console.log('submitFeedbackAnswers called:', feedbackData)
-
-  // Simulate API delay
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve()
-    }, 500)
-  })
+  essayContent: string,
+): Promise<string> {
+  try {
+    const updatedEssay = await submitFeedbackLib(essayContent, feedbackData)
+    return updatedEssay || essayContent
+  } catch (error) {
+    console.error('Error submitting feedback answers:', error)
+    throw error
+  }
 }
 
 /**
