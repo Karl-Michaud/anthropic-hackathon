@@ -8,7 +8,10 @@ interface FileUploadAreaProps {
   isUploading: boolean
 }
 
-export default function FileUploadArea({ onFileUpload, isUploading }: FileUploadAreaProps) {
+export default function FileUploadArea({
+  onFileUpload,
+  isUploading,
+}: FileUploadAreaProps) {
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -53,24 +56,26 @@ export default function FileUploadArea({ onFileUpload, isUploading }: FileUpload
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        className={`border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer ${
+        className={`border-2 border-dashed rounded-xl transition-all cursor-pointer p-8 text-neutral-900 ${
           isDragging
-            ? 'border-gray-900 bg-gray-50'
-            : 'border-gray-300 hover:border-gray-400'
+            ? 'border-primary-500 bg-primary-50'
+            : 'border-neutral-300 hover:border-primary-400'
         } ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}
         onClick={() => fileInputRef.current?.click()}
       >
         <div className="flex flex-col items-center gap-3">
           {isUploading ? (
-            <Upload size={48} className="text-gray-400 animate-pulse" />
+            <Upload size={48} className="animate-pulse text-primary-500" />
           ) : (
-            <FileText size={48} className="text-gray-400" />
+            <FileText size={48} className="text-primary-400" />
           )}
           <div>
-            <p className="text-base font-medium text-gray-900">
-              {isUploading ? 'Uploading...' : 'Drop your file here or click to browse'}
+            <p className="text-base font-medium text-neutral-900 mb-2">
+              {isUploading
+                ? 'Uploading...'
+                : 'Drop your file here or click to browse'}
             </p>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-neutral-500">
               Supports TXT, JSON, and PDF files
             </p>
           </div>

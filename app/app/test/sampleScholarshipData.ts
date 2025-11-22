@@ -48,9 +48,6 @@ This experience solidified my commitment to using technology for social good and
   maxWordCount: 300,
 }
 
-/**
- * Sample API response from /api/extract-scholarship
- */
 export const sampleApiResponse = {
   success: true,
   data: {

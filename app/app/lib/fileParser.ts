@@ -3,7 +3,7 @@
  * Supports TXT, JSON, and PDF formats
  */
 
-import { SupportedFileType } from "../types/scholarship-extraction";
+import { SupportedFileType } from '../types/scholarship-extraction'
 
 /**
  * Parse file content based on file type
@@ -13,20 +13,20 @@ import { SupportedFileType } from "../types/scholarship-extraction";
  */
 export async function parseFileContent(
   content: string,
-  fileType: SupportedFileType
+  fileType: SupportedFileType,
 ): Promise<string> {
   switch (fileType) {
-    case "txt":
-      return parseTxtContent(content);
+    case 'txt':
+      return parseTxtContent(content)
 
-    case "json":
-      return parseJsonContent(content);
+    case 'json':
+      return parseJsonContent(content)
 
-    case "pdf":
-      return await parsePdfContent(content);
+    case 'pdf':
+      return await parsePdfContent(content)
 
     default:
-      throw new Error(`Unsupported file type: ${fileType}`);
+      throw new Error(`Unsupported file type: ${fileType}`)
   }
 }
 
@@ -34,7 +34,7 @@ export async function parseFileContent(
  * Parse plain text content
  */
 function parseTxtContent(content: string): string {
-  return content.trim();
+  return content.trim()
 }
 
 /**
@@ -43,17 +43,17 @@ function parseTxtContent(content: string): string {
  */
 function parseJsonContent(content: string): string {
   try {
-    const json = JSON.parse(content);
+    const json = JSON.parse(content)
 
     // If JSON is already structured scholarship data, stringify it nicely
-    if (typeof json === "object" && json !== null) {
+    if (typeof json === 'object' && json !== null) {
       // Convert JSON object to readable text format
-      return JSON.stringify(json, null, 2);
+      return JSON.stringify(json, null, 2)
     }
 
-    return content;
-  } catch (error) {
-    throw new Error("Invalid JSON format");
+    return content
+  } catch {
+    throw new Error('Invalid JSON format')
   }
 }
 
@@ -65,53 +65,56 @@ function parseJsonContent(content: string): string {
 async function parsePdfContent(base64Content: string): Promise<string> {
   try {
     // Dynamically import pdf-parse (only when needed)
-    const pdfParse = await import("pdf-parse/lib/pdf-parse");
+    // @ts-expect-error - pdf-parse doesn't have type definitions
+    const pdfParse = await import('pdf-parse/lib/pdf-parse')
 
     // Extract base64 data if it's a data URL
-    let base64Data = base64Content;
-    if (base64Content.startsWith("data:")) {
-      const base64Match = base64Content.match(/base64,(.+)/);
+    let base64Data = base64Content
+    if (base64Content.startsWith('data:')) {
+      const base64Match = base64Content.match(/base64,(.+)/)
       if (base64Match) {
-        base64Data = base64Match[1];
+        base64Data = base64Match[1]
       } else {
-        throw new Error("Invalid PDF data URL format");
+        throw new Error('Invalid PDF data URL format')
       }
     }
 
     // Convert base64 to buffer
-    const buffer = Buffer.from(base64Data, "base64");
+    const buffer = Buffer.from(base64Data, 'base64')
 
     // Parse PDF
-    const data = await pdfParse.default(buffer);
+    const data = await pdfParse.default(buffer)
 
-    return data.text.trim();
+    return data.text.trim()
   } catch (error) {
     // If pdf-parse is not installed, provide helpful error
-    if ((error as Error).message.includes("Cannot find module")) {
+    if ((error as Error).message.includes('Cannot find module')) {
       throw new Error(
-        "PDF parsing requires 'pdf-parse' package. Install with: npm install pdf-parse"
-      );
+        "PDF parsing requires 'pdf-parse' package. Install with: npm install pdf-parse",
+      )
     }
-    throw new Error(`Failed to parse PDF: ${(error as Error).message}`);
+    throw new Error(`Failed to parse PDF: ${(error as Error).message}`)
   }
 }
 
 /**
  * Validate file type
  */
-export function isValidFileType(fileType: string): fileType is SupportedFileType {
-  return ["txt", "json", "pdf"].includes(fileType.toLowerCase());
+export function isValidFileType(
+  fileType: string,
+): fileType is SupportedFileType {
+  return ['txt', 'json', 'pdf'].includes(fileType.toLowerCase())
 }
 
 /**
  * Extract file type from filename
  */
 export function getFileType(filename: string): SupportedFileType | null {
-  const extension = filename.split(".").pop()?.toLowerCase();
+  const extension = filename.split('.').pop()?.toLowerCase()
 
   if (extension && isValidFileType(extension)) {
-    return extension;
+    return extension
   }
 
-  return null;
+  return null
 }

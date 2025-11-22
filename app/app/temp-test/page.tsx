@@ -1,70 +1,55 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import Link from "next/link";
+import { useState } from 'react'
+import Link from 'next/link'
+import { extractScholarshipInfo } from '@/app/lib/claudeApi'
+import { ScholarshipExtraction } from '@/app/types/scholarship-extraction'
 
 interface ExtractionResult {
-  inputText: string;
-  extractedData: {
-    title: string;
-    criteria: string;
-    amount: string;
-    deadline: string;
-    eligibility: string | string[];
-  };
-  error?: string;
-  timestamp: string;
+  inputText: string
+  extractedData: ScholarshipExtraction | null
+  error?: string
+  timestamp: string
 }
 
 export default function TempTestPage() {
-  const [inputText, setInputText] = useState("");
-  const [displayedData, setDisplayedData] = useState<ExtractionResult[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [inputText, setInputText] = useState('')
+  const [displayedData, setDisplayedData] = useState<ExtractionResult[]>([])
+  const [isLoading, setIsLoading] = useState(false)
 
   const handleSubmit = async () => {
-    if (!inputText.trim()) return;
+    if (!inputText.trim()) return
 
-    setIsLoading(true);
+    setIsLoading(true)
 
     try {
-      const response = await fetch("/api/extract-scholarship", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          content: inputText,
-          fileType: "txt",
-        }),
-      });
-
-      const result = await response.json();
+      const result = await extractScholarshipInfo(inputText)
 
       const newEntry: ExtractionResult = {
         inputText: inputText,
-        extractedData: result.success ? result.data : null,
-        error: result.error,
+        extractedData: result ? result : null,
+        error: undefined,
         timestamp: new Date().toLocaleTimeString(),
-      };
+      }
 
-      setDisplayedData([...displayedData, newEntry]);
-      setInputText("");
+      setDisplayedData([...displayedData, newEntry])
+      setInputText('')
     } catch (error) {
       const newEntry: ExtractionResult = {
         inputText: inputText,
         extractedData: null,
-        error: `Failed to call API: ${error.message}`,
+        error: (error as Error).message,
         timestamp: new Date().toLocaleTimeString(),
-      };
-      setDisplayedData([...displayedData, newEntry]);
+      }
+      setDisplayedData([...displayedData, newEntry])
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   const handleClear = () => {
-    setDisplayedData([]);
-  };
+    setDisplayedData([])
+  }
 
   return (
     <div className="min-h-screen p-8 bg-gray-50 dark:bg-gray-900">
@@ -80,11 +65,15 @@ export default function TempTestPage() {
           Scholarship Extraction Pipeline Test
         </h1>
         <p className="text-sm text-gray-600 dark:text-gray-400 mb-8">
-          Test the scholarship extraction API - paste scholarship descriptions to see extracted data
+          Test the scholarship extraction API - paste scholarship descriptions
+          to see extracted data
         </p>
 
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
-          <label htmlFor="textInput" className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+          <label
+            htmlFor="textInput"
+            className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300"
+          >
             Enter scholarship description:
           </label>
           <textarea
@@ -101,7 +90,7 @@ export default function TempTestPage() {
               disabled={isLoading || !inputText.trim()}
               className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
-              {isLoading ? "Extracting..." : "Extract Data"}
+              {isLoading ? 'Extracting...' : 'Extract Data'}
             </button>
             <button
               onClick={handleClear}
@@ -118,7 +107,8 @@ export default function TempTestPage() {
           </h2>
           {displayedData.length === 0 ? (
             <p className="text-gray-500 dark:text-gray-400 italic">
-              No data yet. Enter scholarship description above and click "Extract Data".
+              No data yet. Enter scholarship description above and click
+              &quot;Extract Data&quot;.
             </p>
           ) : (
             <div className="space-y-6">
@@ -174,5 +164,5 @@ export default function TempTestPage() {
         </div>
       </div>
     </div>
-  );
+  )
 }

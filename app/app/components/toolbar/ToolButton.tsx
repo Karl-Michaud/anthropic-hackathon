@@ -5,7 +5,12 @@ interface ToolButtonProps {
   onClick: () => void
 }
 
-export default function ToolButton({ icon, title, isActive, onClick }: ToolButtonProps) {
+export default function ToolButton({
+  icon,
+  title,
+  isActive,
+  onClick,
+}: ToolButtonProps) {
   return (
     <button
       onClick={onClick}

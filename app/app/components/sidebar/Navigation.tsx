@@ -5,12 +5,12 @@ import { useState } from 'react'
 import NavigationItem from './NavigationItem'
 import ScholarshipUploadButton from './ScholarshipUploadButton'
 import AccountButton from './AccountButton'
-import ScholarshipUploadPopup, { ScholarshipUploadResult } from './ScholarshipUploadPopup'
+import ScholarshipUploadPopup, {
+  ScholarshipUploadResult,
+} from './ScholarshipUploadPopup'
 import { useWhiteboard } from '../../context/WhiteboardContext'
 
-const navItems = [
-  { href: '/', icon: Home, label: 'Home' },
-]
+const navItems = [{ href: '/', icon: Home, label: 'Home' }]
 
 export default function Navigation() {
   const [isPopupOpen, setIsPopupOpen] = useState(false)
@@ -20,7 +20,7 @@ export default function Navigation() {
     const scholarshipId = addScholarship({
       title: data.title,
       description: data.description,
-      prompt: data.prompt,
+      prompt: data.prompts?.[0] || '',
       hiddenRequirements: data.hiddenRequirements,
     })
 
@@ -28,7 +28,7 @@ export default function Navigation() {
     addJsonOutput(scholarshipId, {
       ScholarshipName: data.title,
       ScholarshipDescription: data.description,
-      EssayPrompt: data.prompt,
+      EssayPrompt: data.prompts?.[0] || '',
       HiddenRequirements: data.hiddenRequirements,
     })
   }
@@ -39,12 +39,7 @@ export default function Navigation() {
         {/* Top navigation items */}
         <nav className="flex flex-col gap-4 items-center py-4">
           {navItems.map(({ href, icon, label }) => (
-            <NavigationItem
-              key={href}
-              href={href}
-              icon={icon}
-              label={label}
-            />
+            <NavigationItem key={href} href={href} icon={icon} label={label} />
           ))}
         </nav>
 

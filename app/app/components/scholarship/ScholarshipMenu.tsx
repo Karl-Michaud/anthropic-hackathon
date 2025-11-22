@@ -8,7 +8,10 @@ interface ScholarshipMenuProps {
   onDelete: () => void
 }
 
-export default function ScholarshipMenu({ onEdit, onDelete }: ScholarshipMenuProps) {
+export default function ScholarshipMenu({
+  onEdit,
+  onDelete,
+}: ScholarshipMenuProps) {
   const [showMenu, setShowMenu] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -38,7 +41,7 @@ export default function ScholarshipMenu({ onEdit, onDelete }: ScholarshipMenuPro
     <div className="relative" ref={menuRef}>
       <button
         onClick={() => setShowMenu(!showMenu)}
-        className="p-1.5 hover:bg-gray-100 rounded transition-colors"
+        className="p-1.5 hover:bg-gray-100 rounded transition-colors cursor-pointer"
         title="Options"
       >
         <MoreVertical size={18} className="text-gray-400" />
@@ -48,14 +51,14 @@ export default function ScholarshipMenu({ onEdit, onDelete }: ScholarshipMenuPro
         <div className="absolute top-8 right-0 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-50 min-w-[140px]">
           <button
             onClick={handleEdit}
-            className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+            className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 cursor-pointer"
           >
             <Pencil size={14} />
             Edit
           </button>
           <button
             onClick={handleDelete}
-            className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+            className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 cursor-pointer"
           >
             <Trash2 size={14} />
             Delete

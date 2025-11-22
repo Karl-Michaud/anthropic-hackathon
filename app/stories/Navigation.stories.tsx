@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs'
-import Navigation from './Navigation'
+import Navigation from '../app/components/sidebar/Navigation'
 
 const meta: Meta<typeof Navigation> = {
   title: 'Components/Navigation',

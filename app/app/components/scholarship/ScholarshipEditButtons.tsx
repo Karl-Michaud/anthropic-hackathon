@@ -14,18 +14,18 @@ export default function ScholarshipEditButtons({
   isLoading,
 }: ScholarshipEditButtonsProps) {
   return (
-    <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-gray-200">
+    <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-neutral-200">
       <button
         onClick={onCancel}
         disabled={isLoading}
-        className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50"
+        className="px-4 py-2 text-sm font-medium text-neutral-700 bg-neutral-100 hover:bg-neutral-200 rounded-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
       >
         Cancel
       </button>
       <button
         onClick={onSave}
         disabled={isLoading}
-        className="px-4 py-2 text-sm font-medium text-white bg-blue-500 hover:bg-blue-600 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
+        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isLoading && <Loader2 size={14} className="animate-spin" />}
         {isLoading ? 'Saving...' : 'Save'}
