@@ -56,14 +56,11 @@ function ToolButton({
       onClick={onClick}
       className={`p-2 rounded-lg transition-colors ${
         isActive
-          ? 'text-white'
+          ? 'bg-blue-500 text-white'
           : isDarkMode
             ? 'text-gray-300 hover:bg-gray-700'
             : 'text-neutral-700 hover:bg-neutral-100'
       }`}
-      style={{
-        backgroundColor: isActive ? colors.primary[500] : 'transparent',
-      }}
       title={title}
     >
       {icon}
@@ -109,12 +106,14 @@ function ContextMenu({
   return (
     <div
       ref={menuRef}
-      className="fixed z-100 rounded-lg shadow-xl py-1.5 min-w-40 select-none border"
+      className={`fixed z-100 rounded-lg shadow-xl py-1.5 min-w-40 select-none border ${
+        isDarkMode
+          ? 'bg-neutral-800 border-neutral-700'
+          : 'bg-neutral-900 border-neutral-700'
+      }`}
       style={{
         left: x,
         top: y,
-        backgroundColor: isDarkMode ? colors.neutral[800] : colors.neutral[900],
-        borderColor: isDarkMode ? colors.neutral[700] : colors.neutral[700],
       }}
     >
       <button
@@ -128,14 +127,10 @@ function ContextMenu({
         }}
         disabled={!hasSelection}
         className={`w-full px-4 py-2.5 text-left flex items-center gap-3 text-sm font-medium transition-colors ${
-          hasSelection ? 'cursor-pointer' : 'cursor-not-allowed'
+          hasSelection
+            ? 'cursor-pointer text-neutral-100 bg-neutral-700/20'
+            : 'cursor-not-allowed text-neutral-500 bg-transparent'
         }`}
-        style={{
-          color: hasSelection ? colors.neutral[100] : colors.neutral[500],
-          backgroundColor: hasSelection
-            ? `${colors.neutral[700]}33`
-            : 'transparent',
-        }}
       >
         <Copy size={16} />
         Copy
@@ -147,19 +142,12 @@ function ContextMenu({
           onPaste()
           onClose()
         }}
-        className="w-full px-4 py-2.5 text-left flex items-center gap-3 text-sm font-medium transition-colors cursor-pointer"
-        style={{
-          color: colors.neutral[100],
-          backgroundColor: `${colors.neutral[700]}33`,
-        }}
+        className="w-full px-4 py-2.5 text-left flex items-center gap-3 text-sm font-medium transition-colors cursor-pointer text-neutral-100 bg-neutral-700/20"
       >
         <Clipboard size={16} />
         Paste
       </button>
-      <div
-        className="border-t my-1"
-        style={{ borderColor: colors.neutral[700] }}
-      />
+      <div className="border-t my-1 border-neutral-700" />
       <button
         onMouseDown={(e) => {
           e.preventDefault()
@@ -171,14 +159,10 @@ function ContextMenu({
         }}
         disabled={!hasSelection}
         className={`w-full px-4 py-2.5 text-left flex items-center gap-3 text-sm font-medium transition-colors ${
-          hasSelection ? 'cursor-pointer' : 'cursor-not-allowed'
+          hasSelection
+            ? 'cursor-pointer text-red-400 bg-red-900/20'
+            : 'cursor-not-allowed text-neutral-600 bg-transparent'
         }`}
-        style={{
-          color: hasSelection ? colors.danger[400] : colors.neutral[600],
-          backgroundColor: hasSelection
-            ? `${colors.danger[900]}33`
-            : 'transparent',
-        }}
       >
         <Trash2 size={16} />
         Delete
@@ -235,29 +219,32 @@ export default function DraggableToolbar({
     const handleMouseUp = () => {
       setIsDragging(false)
 
-      const viewportWidth = window.innerWidth
-      const viewportHeight = window.innerHeight
+      setDragPos((currentPos) => {
+        const viewportWidth = window.innerWidth
+        const viewportHeight = window.innerHeight
 
-      const distances = {
-        top: Math.sqrt(
-          Math.pow(dragPos.x - viewportWidth / 2, 2) +
-            Math.pow(dragPos.y - 50, 2),
-        ),
-        right: Math.sqrt(
-          Math.pow(dragPos.x - (viewportWidth - 50), 2) +
-            Math.pow(dragPos.y - viewportHeight / 2, 2),
-        ),
-        bottom: Math.sqrt(
-          Math.pow(dragPos.x - viewportWidth / 2, 2) +
-            Math.pow(dragPos.y - (viewportHeight - 50), 2),
-        ),
-      }
+        const distances = {
+          top: Math.sqrt(
+            Math.pow(currentPos.x - viewportWidth / 2, 2) +
+              Math.pow(currentPos.y - 50, 2),
+          ),
+          right: Math.sqrt(
+            Math.pow(currentPos.x - (viewportWidth - 50), 2) +
+              Math.pow(currentPos.y - viewportHeight / 2, 2),
+          ),
+          bottom: Math.sqrt(
+            Math.pow(currentPos.x - viewportWidth / 2, 2) +
+              Math.pow(currentPos.y - (viewportHeight - 50), 2),
+          ),
+        }
 
-      const closest = Object.entries(distances).reduce((a, b) =>
-        a[1] < b[1] ? a : b,
-      )[0] as ToolbarPosition
+        const closest = Object.entries(distances).reduce((a, b) =>
+          a[1] < b[1] ? a : b,
+        )[0] as ToolbarPosition
 
-      setPosition(closest)
+        setPosition(closest)
+        return currentPos
+      })
     }
 
     window.addEventListener('mousemove', handleMouseMove)
@@ -267,7 +254,7 @@ export default function DraggableToolbar({
       window.removeEventListener('mousemove', handleMouseMove)
       window.removeEventListener('mouseup', handleMouseUp)
     }
-  }, [isDragging, dragPos])
+  }, [isDragging])
 
   const positionConfig = POSITIONS[position]
   const isVertical = position === 'right'
@@ -275,42 +262,37 @@ export default function DraggableToolbar({
 
   return (
     <div
+      suppressHydrationWarning
       className={`fixed z-50 flex items-center gap-1 p-2 backdrop-blur-md rounded-xl shadow-lg border ${
-        isDragging ? 'cursor-grabbing' : ''
-      } ${!isDragging ? `${positionConfig.className} transition-all duration-300` : ''}`}
-      style={{
-        backgroundColor: isDarkMode
-          ? `${colors.neutral[800]}e6`
-          : `${colors.neutral[0]}e6`,
-        borderColor: isDarkMode ? colors.neutral[700] : colors.neutral[200],
-        ...(isDragging
+        isDarkMode
+          ? 'bg-neutral-800/90 border-neutral-700'
+          : 'bg-white/90 border-neutral-200'
+      } ${isDragging ? 'cursor-grabbing' : ''} ${!isDragging ? `${positionConfig.className} transition-all duration-300` : ''}`}
+      style={
+        isDragging
           ? {
               left: dragPos.x - 40,
               top: dragPos.y - 20,
               transform: 'none',
             }
-          : {}),
-      }}
+          : {}
+      }
     >
       {/* Drag Handle */}
       <div
         onMouseDown={handleMouseDown}
-        className="p-1 cursor-grab active:cursor-grabbing transition-colors"
-        style={{
-          color: isDarkMode ? colors.neutral[500] : colors.neutral[400],
-        }}
+        className={`p-1 cursor-grab active:cursor-grabbing transition-colors ${
+          isDarkMode ? 'text-neutral-500' : 'text-neutral-400'
+        }`}
       >
         <GripHorizontal size={16} />
       </div>
 
       {/* Divider */}
       <div
-        className={dividerClassName}
-        style={{
-          backgroundColor: isDarkMode
-            ? colors.neutral[700]
-            : colors.neutral[300],
-        }}
+        className={`${dividerClassName} ${
+          isDarkMode ? 'bg-neutral-700' : 'bg-neutral-300'
+        }`}
       />
 
       {/* Select Tool */}
@@ -333,24 +315,19 @@ export default function DraggableToolbar({
 
       {/* Divider */}
       <div
-        className={dividerClassName}
-        style={{
-          backgroundColor: isDarkMode
-            ? colors.neutral[700]
-            : colors.neutral[300],
-        }}
+        className={`${dividerClassName} ${
+          isDarkMode ? 'bg-neutral-700' : 'bg-neutral-300'
+        }`}
       />
 
       {/* Add Cell Button */}
       <button
         onClick={onAddCell}
-        className="p-2 rounded-lg transition-colors cursor-pointer"
-        style={{
-          color: isDarkMode ? colors.neutral[300] : colors.neutral[700],
-          backgroundColor: isDarkMode
-            ? `${colors.neutral[700]}80`
-            : `${colors.neutral[100]}80`,
-        }}
+        className={`p-2 rounded-lg transition-colors cursor-pointer ${
+          isDarkMode
+            ? 'text-neutral-300 hover:bg-neutral-700'
+            : 'text-neutral-700 hover:bg-neutral-100'
+        }`}
         title="Add Cell"
       >
         <StickyNote size={20} />
@@ -358,21 +335,19 @@ export default function DraggableToolbar({
 
       {/* Divider */}
       <div
-        className={dividerClassName}
-        style={{
-          backgroundColor: isDarkMode
-            ? colors.neutral[700]
-            : colors.neutral[300],
-        }}
+        className={`${dividerClassName} ${
+          isDarkMode ? 'bg-neutral-700' : 'bg-neutral-300'
+        }`}
       />
 
       {/* Clear Board Button */}
       <button
         onClick={onClearBoard}
-        className="p-2 rounded-lg transition-colors cursor-pointer hover:bg-danger-100"
-        style={{
-          color: isDarkMode ? colors.danger[400] : colors.danger[600],
-        }}
+        className={`p-2 rounded-lg transition-colors cursor-pointer ${
+          isDarkMode
+            ? 'text-red-400 hover:bg-gray-700'
+            : 'text-red-600 hover:bg-red-100'
+        }`}
         title="Clear Board"
       >
         <RotateCcw size={20} />

@@ -22,7 +22,8 @@ import {
 } from '../lib/dbUtils'
 import { extractScholarshipInfo } from '../lib/claudeApi'
 import { requestClaude } from '../lib/request'
-import type { FeedbackData } from '../lib/dynamicFeedback'
+import { parseFileContent, getFileType } from '../lib/fileParser'
+import type { FeedbackData } from '../lib/dynamicFeedback/types'
 import { IPromptWeights } from '../types/interfaces'
 
 const navItems = [{ href: '/', icon: Home, label: 'Home' }]
@@ -350,9 +351,27 @@ function ScholarshipUploadPopup({
     setError(null)
 
     try {
-      const content = await readFileContent(file)
+      // Validate file size (max 10MB)
+      const maxFileSize = 10 * 1024 * 1024 // 10MB
+      if (file.size > maxFileSize) {
+        setError('File is too large. Maximum file size is 10MB.')
+        setIsProcessing(false)
+        return
+      }
 
-      const result = await extractScholarshipInfo(content)
+      const rawContent = await readFileContent(file)
+      const fileType = await getFileType(file.name)
+
+      if (!fileType) {
+        setError(
+          'Unable to determine file type. Please use TXT, JSON, or PDF files.',
+        )
+        setIsProcessing(false)
+        return
+      }
+
+      const parsedContent = await parseFileContent(rawContent, fileType)
+      const result = await extractScholarshipInfo(parsedContent)
 
       if (result && result.ScholarshipName) {
         const getValue = (extracted: string, fallback: string) =>
@@ -605,6 +624,7 @@ export default function Navigation() {
   return (
     <>
       <div
+        suppressHydrationWarning
         className={`fixed left-6 top-6 bottom-6 z-50 rounded-2xl backdrop-blur-md shadow-lg p-2 flex flex-col items-center transition-colors duration-200 ${
           isDarkMode
             ? 'bg-gray-700/80 border border-gray-600/80'

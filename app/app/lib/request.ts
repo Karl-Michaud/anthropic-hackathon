@@ -27,10 +27,13 @@ export interface IDraftAnalysisData {
     valueDefinitions: Record<string, string>
     evidencePhrases: string[]
   }
-  weights?: Record<string, {
-    weight: number
-    subweights: Record<string, number>
-  }>
+  weights?: Record<
+    string,
+    {
+      weight: number
+      subweights: Record<string, number>
+    }
+  >
 }
 
 const anthropic = new Anthropic({
@@ -437,7 +440,9 @@ ${valueDefsStr}
       const weightsStr = Object.entries(analysisData.weights)
         .map(([category, data]) => {
           const subweightsStr = Object.entries(data.subweights)
-            .map(([sub, weight]) => `    - ${sub}: ${(weight * 100).toFixed(0)}%`)
+            .map(
+              ([sub, weight]) => `    - ${sub}: ${(weight * 100).toFixed(0)}%`,
+            )
             .join('\n')
           return `  - **${category}** (${(data.weight * 100).toFixed(0)}%):\n${subweightsStr}`
         })
@@ -463,13 +468,17 @@ ${weightsStr}
 **Essay Prompt**: ${prompt}
 
 ---
-${analysisSection ? `
+${
+  analysisSection
+    ? `
 ## SCHOLARSHIP ANALYSIS
 
 The following analysis reveals what this scholarship truly values and how the essay should be crafted:
 ${analysisSection}
 ---
-` : ''}
+`
+    : ''
+}
 ## TASK
 
 Write a draft essay that:
@@ -607,30 +616,40 @@ export async function generateDraftWithAnalysis(
         spirit: scholarship.promptPersonality.spirit,
         toneStyle: scholarship.promptPersonality.toneStyle,
         valuesEmphasized: scholarship.promptPersonality.valuesEmphasized,
-        recommendedEssayFocus: scholarship.promptPersonality.recommendedEssayFocus,
+        recommendedEssayFocus:
+          scholarship.promptPersonality.recommendedEssayFocus,
       }
     }
 
     if (scholarship.promptPriorities) {
       analysisData.priorities = {
         primaryFocus: scholarship.promptPriorities.primaryFocus,
-        priorityWeights: scholarship.promptPriorities.priorityWeights as Record<string, number>,
+        priorityWeights: scholarship.promptPriorities.priorityWeights as Record<
+          string,
+          number
+        >,
       }
     }
 
     if (scholarship.promptValues) {
       analysisData.values = {
         valuesEmphasized: scholarship.promptValues.valuesEmphasized,
-        valueDefinitions: scholarship.promptValues.valueDefinitions as Record<string, string>,
+        valueDefinitions: scholarship.promptValues.valueDefinitions as Record<
+          string,
+          string
+        >,
         evidencePhrases: scholarship.promptValues.evidencePhrases,
       }
     }
 
     if (scholarship.promptWeights) {
-      analysisData.weights = scholarship.promptWeights.weights as Record<string, {
-        weight: number
-        subweights: Record<string, number>
-      }>
+      analysisData.weights = scholarship.promptWeights.weights as Record<
+        string,
+        {
+          weight: number
+          subweights: Record<string, number>
+        }
+      >
     }
 
     // Generate the prompt with analysis data

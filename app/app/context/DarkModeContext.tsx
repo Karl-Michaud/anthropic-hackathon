@@ -5,6 +5,7 @@ import {
   useContext,
   useState,
   useLayoutEffect,
+  useEffect,
   ReactNode,
 } from 'react'
 
@@ -18,26 +19,31 @@ const DarkModeContext = createContext<DarkModeContextType | undefined>(
 )
 
 export function DarkModeProvider({ children }: { children: ReactNode }) {
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    if (typeof window === 'undefined') {
-      return false
-    }
+  // Initialize with false to match server-side rendering
+  const [isDarkMode, setIsDarkMode] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
+
+  // Sync dark mode on mount to avoid hydration mismatch
+  useLayoutEffect(() => {
     const saved = localStorage.getItem('darkMode')
-    if (saved !== null) {
-      return JSON.parse(saved)
-    }
-    return window.matchMedia('(prefers-color-scheme: dark)').matches
-  })
+    const darkMode =
+      saved !== null
+        ? JSON.parse(saved)
+        : window.matchMedia('(prefers-color-scheme: dark)').matches
+    setIsDarkMode(darkMode)
+    setIsMounted(true)
+  }, [])
 
   // Update DOM and localStorage when dark mode changes
-  useLayoutEffect(() => {
+  useEffect(() => {
+    if (!isMounted) return
     localStorage.setItem('darkMode', JSON.stringify(isDarkMode))
     if (isDarkMode) {
       document.documentElement.classList.add('dark')
     } else {
       document.documentElement.classList.remove('dark')
     }
-  }, [isDarkMode])
+  }, [isDarkMode, isMounted])
 
   const toggleDarkMode = () => {
     setIsDarkMode((prev: boolean) => !prev)
