@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 'use client'
 
 import { useRef, useState, useCallback, useEffect, MouseEvent } from 'react'
@@ -20,11 +19,13 @@ const CANVAS_LIMIT = 65000 // Figma-style canvas size limit in pixels
 
 export default function Whiteboard() {
   const containerRef = useRef<HTMLDivElement>(null)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const animationFrameRef = useRef<number | null>(null)
 
   const [isPanning, setIsPanning] = useState(false)
   const [position, setPosition] = useState({ x: 0, y: 0 })
   const [startPos, setStartPos] = useState({ x: 0, y: 0 })
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [momentum, setMomentum] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1.0)
 
@@ -33,7 +34,10 @@ export default function Whiteboard() {
   const [syncingData, setSyncingData] = useState(false)
 
   // Mouse position for zoom-to-cursor
-  const [mousePosition, setMousePosition] = useState<{ x: number; y: number } | null>(null)
+  const [mousePosition, setMousePosition] = useState<{
+    x: number
+    y: number
+  } | null>(null)
 
   // Tool state
   const [activeTool, setActiveTool] = useState<Tool>('select')
@@ -98,7 +102,14 @@ export default function Whiteboard() {
         updateBlockPosition(scholarship.id, clamped.x, clamped.y)
       }
     })
-  }, [scholarships, blockPositions, position, zoom, updateBlockPosition, clampToCanvas])
+  }, [
+    scholarships,
+    blockPositions,
+    position,
+    zoom,
+    updateBlockPosition,
+    clampToCanvas,
+  ])
 
   // Initialize positions for new essays
   useEffect(() => {
@@ -107,13 +118,22 @@ export default function Whiteboard() {
       if (!existing) {
         const viewportCenterX = window.innerWidth / 2
         const viewportCenterY = window.innerHeight / 2
-        const canvasX = (viewportCenterX - position.x) / zoom - 250 + Math.random() * 100
-        const canvasY = (viewportCenterY - position.y) / zoom - 150 + Math.random() * 100
+        const canvasX =
+          (viewportCenterX - position.x) / zoom - 250 + Math.random() * 100
+        const canvasY =
+          (viewportCenterY - position.y) / zoom - 150 + Math.random() * 100
         const clamped = clampToCanvas(canvasX, canvasY)
         updateBlockPosition(essay.id, clamped.x, clamped.y)
       }
     })
-  }, [essays, blockPositions, position, zoom, updateBlockPosition, clampToCanvas])
+  }, [
+    essays,
+    blockPositions,
+    position,
+    zoom,
+    updateBlockPosition,
+    clampToCanvas,
+  ])
 
   // Initialize positions for new JSON outputs
   useEffect(() => {
@@ -365,7 +385,20 @@ export default function Whiteboard() {
         })
       }
     },
-    [isPanning, draggingCellId, startPos, dragOffset, position, zoom, cells, updateCell, updateBlockPosition, selectionBox, dragStartPositions, clampToCanvas],
+    [
+      isPanning,
+      draggingCellId,
+      startPos,
+      dragOffset,
+      position,
+      zoom,
+      cells,
+      updateCell,
+      updateBlockPosition,
+      selectionBox,
+      dragStartPositions,
+      clampToCanvas,
+    ],
   )
 
   const handleMouseUp = useCallback(() => {
@@ -555,7 +588,7 @@ export default function Whiteboard() {
       setZoom(clampedZoom)
       setPosition({ x: newX, y: newY })
     },
-    [zoom, position, mousePosition]
+    [zoom, position, mousePosition],
   )
 
   const handleZoomIn = useCallback(() => {
@@ -569,7 +602,12 @@ export default function Whiteboard() {
   // Recenter viewport to show all objects (zoom to fit)
   const recenterToObjects = useCallback(() => {
     // Collect all object positions and dimensions
-    const objects: Array<{ x: number; y: number; width: number; height: number }> = []
+    const objects: Array<{
+      x: number
+      y: number
+      width: number
+      height: number
+    }> = []
     const allObjectIds = new Set<string>()
 
     // Add cells
@@ -708,7 +746,8 @@ export default function Whiteboard() {
 
     clipboard.forEach((item) => {
       if (item.type === 'cell') {
-        const { id, ...cellData } = item.data
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
+        const { id: _id, ...cellData } = item.data as any
         const clamped = clampToCanvas(cellData.x + 50, cellData.y + 50)
         const newId = addCell({
           ...cellData,
@@ -725,7 +764,7 @@ export default function Whiteboard() {
           prompt: scholarshipData.prompt,
           hiddenRequirements: scholarshipData.hiddenRequirements,
         })
-        const pos = getBlockPosition(item.data.id)
+        const pos = getBlockPosition(scholarshipData.id)
         const clamped = clampToCanvas(pos.x + 50, pos.y + 50)
         updateBlockPosition(newId, clamped.x, clamped.y)
         newIds.add(newId)
@@ -737,7 +776,7 @@ export default function Whiteboard() {
           content: essayData.content,
           maxWordCount: essayData.maxWordCount,
         })
-        const pos = getBlockPosition(item.data.id)
+        const pos = getBlockPosition(essayData.id)
         const clamped = clampToCanvas(pos.x + 50, pos.y + 50)
         updateBlockPosition(newId, clamped.x, clamped.y)
         newIds.add(newId)
@@ -745,7 +784,15 @@ export default function Whiteboard() {
     })
 
     setSelectedIds(newIds)
-  }, [clipboard, addCell, addScholarship, addEssay, getBlockPosition, updateBlockPosition, clampToCanvas])
+  }, [
+    clipboard,
+    addCell,
+    addScholarship,
+    addEssay,
+    getBlockPosition,
+    updateBlockPosition,
+    clampToCanvas,
+  ])
 
   const handleDelete = useCallback(() => {
     if (selectedIds.size === 0) return
@@ -858,7 +905,7 @@ export default function Whiteboard() {
         }))
       }
     },
-    [zoom, zoomToPoint]
+    [zoom, zoomToPoint],
   )
 
   useEffect(() => {

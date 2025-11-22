@@ -88,6 +88,8 @@ export default function Cell({
   const outlineWidth = 2 / zoom
   const outlineOffset = 2 / zoom
 
+  const colorStyles = getColorStyles(cell.color)
+
   return (
     <div
       className={`absolute w-48 h-48 shadow-lg rounded-sm p-4 ${!isDragging ? 'transition-all' : ''}`}
