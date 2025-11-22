@@ -8,7 +8,7 @@ import ScholarshipMenu from './ScholarshipMenu'
 import ScholarshipDeleteConfirm from './ScholarshipDeleteConfirm'
 import { useEditing } from '../../context/EditingContext'
 import { ScholarshipData } from '../../context/WhiteboardContext'
-import { extractScholarshipInfo } from '../../lib/claudeApi'
+import { fetchAdaptiveWeights } from '../../lib/fetch-adaptive-weights'
 
 export type { ScholarshipData }
 
@@ -49,17 +49,32 @@ export default function ScholarshipBlock({
         prompt: editedData.prompt,
       })
 
-      const result = await extractScholarshipInfo(content)
-      if (result && result.ScholarshipName) {
-        onUpdate({
-          ...editedData,
-          title: result.ScholarshipName || editedData.title,
-          description: result.ScholarshipDescription || editedData.description,
-          prompt: result.EssayPrompt || editedData.prompt,
-        })
-      } else {
-        onUpdate(editedData)
-      }
+      const result = await response.json()
+
+      const finalTitle = result.success && result.data
+        ? (result.data.ScholarshipName || editedData.title)
+        : editedData.title
+      const finalDescription = result.success && result.data
+        ? (result.data.ScholarshipDescription || editedData.description)
+        : editedData.description
+      const finalPrompt = result.success && result.data
+        ? (result.data.EssayPrompt || editedData.prompt)
+        : editedData.prompt
+
+      // Re-fetch adaptive weights with updated content
+      const adaptiveWeights = await fetchAdaptiveWeights(
+        finalTitle,
+        finalDescription,
+        finalPrompt
+      )
+
+      onUpdate({
+        ...editedData,
+        title: finalTitle,
+        description: finalDescription,
+        prompt: finalPrompt,
+        adaptiveWeights,
+      })
     } catch (error) {
       console.error('Failed to update scholarship:', error)
       onUpdate(editedData)

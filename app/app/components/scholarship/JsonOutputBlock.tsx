@@ -10,6 +10,7 @@ interface JsonOutputBlockProps {
     ScholarshipDescription: string
     EssayPrompt: string
     HiddenRequirements?: string[]
+    AdaptiveWeights?: any // Complete adaptive weighting analysis
   }
   onDelete: () => void
 }

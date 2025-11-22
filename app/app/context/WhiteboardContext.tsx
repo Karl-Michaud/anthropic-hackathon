@@ -1,15 +1,13 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 'use client'
 
+import { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from 'react'
+import { FeedbackData } from '../components/DynamicFeedback/types'
 import {
-  createContext,
-  useContext,
-  useState,
-  useCallback,
-  useEffect,
-  useRef,
-  ReactNode,
-} from 'react'
+  saveFeedbackDraft,
+  loadFeedbackDraft,
+  clearFeedbackDraft,
+} from '../components/DynamicFeedback/utils/feedbackApi'
 
 const STORAGE_KEY = 'whiteboard-data'
 const DEBOUNCE_MS = 500
@@ -29,6 +27,7 @@ export interface ScholarshipData {
   description: string
   prompt: string
   hiddenRequirements: string[]
+  adaptiveWeights?: any // Adaptive weighting output from /api/adaptive-weighting
 }
 
 export interface EssayData {
@@ -52,6 +51,7 @@ export interface JsonOutputData {
     ScholarshipDescription: string
     EssayPrompt: string
     HiddenRequirements?: string[]
+    AdaptiveWeights?: any // Complete adaptive weighting analysis from the pipeline
   }
 }
 
@@ -69,6 +69,7 @@ interface WhiteboardContextType {
   scholarships: ScholarshipData[]
   essays: EssayData[]
   jsonOutputs: JsonOutputData[]
+  feedbackPanels: FeedbackData[]
   blockPositions: BlockPosition[]
 
   // Cell actions
@@ -89,6 +90,11 @@ interface WhiteboardContextType {
   // JSON output actions
   addJsonOutput: (scholarshipId: string, data: JsonOutputData['data']) => string
   deleteJsonOutput: (jsonOutputId: string) => void
+
+  // Feedback panel actions
+  addFeedbackPanel: (feedbackData: FeedbackData) => void
+  updateFeedbackPanel: (feedbackId: string, updates: Partial<FeedbackData>) => void
+  deleteFeedbackPanel: (feedbackId: string) => void
 
   // Position actions
   updateBlockPosition: (id: string, x: number, y: number) => void
@@ -131,17 +137,36 @@ function saveToStorage(state: WhiteboardState) {
 }
 
 export function WhiteboardProvider({ children }: { children: ReactNode }) {
-  // Initialize with default state (for server-side rendering)
-  const [state, setState] = useState<WhiteboardState>(defaultState)
-  const [isHydrated, setIsHydrated] = useState(false)
+  const [cells, setCells] = useState<CellData[]>([])
+  const [scholarships, setScholarships] = useState<ScholarshipData[]>([])
+  const [essays, setEssays] = useState<EssayData[]>([])
+  const [jsonOutputs, setJsonOutputs] = useState<JsonOutputData[]>([])
+  const [feedbackPanels, setFeedbackPanels] = useState<FeedbackData[]>([])
+  const [blockPositions, setBlockPositions] = useState<BlockPosition[]>([])
+  const [isLoaded, setIsLoaded] = useState(false)
 
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Load from localStorage after hydration (client-side only)
   useEffect(() => {
     const stored = loadFromStorage()
-    setState(stored)
-    setIsHydrated(true)
+    setCells(stored.cells)
+    setScholarships(stored.scholarships)
+    setEssays(stored.essays)
+    setJsonOutputs(stored.jsonOutputs)
+    setBlockPositions(stored.blockPositions)
+
+    // Load feedback panel drafts separately
+    const feedbackDrafts: FeedbackData[] = []
+    stored.essays.forEach((essay) => {
+      const draft = loadFeedbackDraft(essay.id)
+      if (draft) {
+        feedbackDrafts.push(draft)
+      }
+    })
+    setFeedbackPanels(feedbackDrafts)
+
+    setIsLoaded(true)
   }, [])
 
   // Convenience getters
@@ -276,6 +301,7 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
                 ScholarshipDescription: scholarship.description,
                 EssayPrompt: scholarship.prompt,
                 HiddenRequirements: scholarship.hiddenRequirements,
+                AdaptiveWeights: scholarship.adaptiveWeights,
               },
             }
           : output,
@@ -344,12 +370,46 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
     [blockPositions],
   )
 
+  // Feedback panel actions
+  const addFeedbackPanel = useCallback((feedbackData: FeedbackData) => {
+    setFeedbackPanels((prev) => [...prev, feedbackData])
+    saveFeedbackDraft(feedbackData) // Auto-save to localStorage
+  }, [])
+
+  const updateFeedbackPanel = useCallback((feedbackId: string, updates: Partial<FeedbackData>) => {
+    setFeedbackPanels((prev) =>
+      prev.map((panel) =>
+        panel.id === feedbackId ? { ...panel, ...updates } : panel
+      )
+    )
+    // Auto-save updated panel
+    setFeedbackPanels((prev) => {
+      const updatedPanel = prev.find((p) => p.id === feedbackId)
+      if (updatedPanel) {
+        saveFeedbackDraft({ ...updatedPanel, ...updates })
+      }
+      return prev
+    })
+  }, [])
+
+  const deleteFeedbackPanel = useCallback((feedbackId: string) => {
+    setFeedbackPanels((prev) => {
+      const panel = prev.find((p) => p.id === feedbackId)
+      if (panel) {
+        clearFeedbackDraft(panel.essayId)
+      }
+      return prev.filter((p) => p.id !== feedbackId)
+    })
+    setBlockPositions((prev) => prev.filter((p) => p.id !== feedbackId))
+  }, [])
+
   // Clear all
   const clearAll = useCallback(() => {
     setCells([])
     setScholarships([])
     setEssays([])
     setJsonOutputs([])
+    setFeedbackPanels([])
     setBlockPositions([])
   }, [])
 
@@ -360,6 +420,7 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
         scholarships,
         essays,
         jsonOutputs,
+        feedbackPanels,
         blockPositions,
         addCell,
         updateCell,
@@ -372,6 +433,9 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
         deleteEssay,
         addJsonOutput,
         deleteJsonOutput,
+        addFeedbackPanel,
+        updateFeedbackPanel,
+        deleteFeedbackPanel,
         updateBlockPosition,
         getBlockPosition,
         clearAll,

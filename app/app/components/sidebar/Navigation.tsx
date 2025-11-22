@@ -22,14 +22,16 @@ export default function Navigation() {
       description: data.description,
       prompt: data.prompts?.[0] || '',
       hiddenRequirements: data.hiddenRequirements,
+      adaptiveWeights: data.adaptiveWeights,
     })
 
-    // Also add the JSON output block
+    // Also add the JSON output block with ALL pipeline data
     addJsonOutput(scholarshipId, {
       ScholarshipName: data.title,
       ScholarshipDescription: data.description,
       EssayPrompt: data.prompts?.[0] || '',
       HiddenRequirements: data.hiddenRequirements,
+      AdaptiveWeights: data.adaptiveWeights,
     })
   }
 

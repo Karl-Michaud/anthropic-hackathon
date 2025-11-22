@@ -5,14 +5,14 @@ import { useState } from 'react'
 import FileUploadArea from './FileUploadArea'
 import ManualEntryForm from './ManualEntryForm'
 import UploadModeToggle from './UploadModeToggle'
-import { saveScholarshipToDB } from '@/app/lib/dbUtils'
-import { extractScholarshipInfo } from '@/app/lib/claudeApi'
+import { fetchAdaptiveWeights } from '../../lib/fetch-adaptive-weights'
 
 export interface ScholarshipUploadResult {
   title: string
   description: string
   prompts: string[]
   hiddenRequirements: string[]
+  adaptiveWeights?: any // Adaptive weighting output from /api/adaptive-weighting
 }
 
 interface ScholarshipUploadPopupProps {
@@ -45,25 +45,19 @@ export default function ScholarshipUploadPopup({
         const getValue = (extracted: string, fallback: string) =>
           extracted && extracted !== 'Missing' ? extracted : fallback
 
-        const extractPrompts = (extracted: unknown): string[] => {
-          if (!extracted || extracted === 'Missing') return []
-          if (Array.isArray(extracted)) return extracted as string[]
-          if (typeof extracted === 'string') return [extracted]
-          return []
-        }
+        const title = getValue(result.data.ScholarshipName, 'Untitled Scholarship')
+        const description = getValue(result.data.ScholarshipDescription, '')
+        const prompt = getValue(result.data.EssayPrompt, '')
 
-        // Save to Supabase
-        await saveScholarshipToDB(
-          getValue(result.ScholarshipName, 'Untitled Scholarship'),
-          getValue(result.ScholarshipDescription, ''),
-          extractPrompts(result.EssayPrompt),
-        )
+        // Fetch adaptive weights
+        const adaptiveWeights = await fetchAdaptiveWeights(title, description, prompt)
 
         onScholarshipCreated({
-          title: getValue(result.ScholarshipName, 'Untitled Scholarship'),
-          description: getValue(result.ScholarshipDescription, ''),
-          prompts: extractPrompts(result.EssayPrompt),
-          hiddenRequirements: result.HiddenRequirements || [],
+          title,
+          description,
+          prompt,
+          hiddenRequirements: result.data.HiddenRequirements || [],
+          adaptiveWeights,
         })
         onClose()
       } else {
@@ -88,11 +82,44 @@ export default function ScholarshipUploadPopup({
     try {
       await saveScholarshipToDB(title, description, prompts)
 
+        const finalTitle = getName(result.data.ScholarshipName, title)
+        const finalDescription = getName(result.data.ScholarshipDescription, description)
+        const finalPrompt = getName(result.data.EssayPrompt, prompt)
+
+        // Fetch adaptive weights
+        const adaptiveWeights = await fetchAdaptiveWeights(finalTitle, finalDescription, finalPrompt)
+
+        onScholarshipCreated({
+          title: finalTitle,
+          description: finalDescription,
+          prompt: finalPrompt,
+          hiddenRequirements: result.data.HiddenRequirements || [],
+          adaptiveWeights,
+        })
+        onClose()
+      } else {
+        // Fetch adaptive weights even if extraction failed
+        const adaptiveWeights = await fetchAdaptiveWeights(title, description, prompt)
+
+        onScholarshipCreated({
+          title,
+          description,
+          prompt,
+          hiddenRequirements: [],
+          adaptiveWeights,
+        })
+        onClose()
+      }
+    } catch (err) {
+      console.error('Creation error:', err)
+      // Still try to fetch adaptive weights on error
+      const adaptiveWeights = await fetchAdaptiveWeights(title, description, prompt)
       onScholarshipCreated({
         title: title,
         description: description,
         prompts: prompts,
         hiddenRequirements: [],
+        adaptiveWeights,
       })
 
       onClose()

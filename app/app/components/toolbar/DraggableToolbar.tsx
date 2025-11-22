@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
-import { StickyNote, GripHorizontal, Hand, MousePointer } from 'lucide-react'
+import { StickyNote, GripHorizontal, Hand, MousePointer, MessageSquare } from 'lucide-react'
 import ToolButton from './ToolButton'
 
 type ToolbarPosition = 'top' | 'right' | 'bottom'
@@ -9,6 +9,7 @@ export type Tool = 'select' | 'hand'
 
 interface DraggableToolbarProps {
   onAddCell: () => void
+  onAddTestFeedback?: () => void
   activeTool: Tool
   onToolChange: (tool: Tool) => void
 }
@@ -27,6 +28,7 @@ const POSITIONS: Record<ToolbarPosition, { className: string }> = {
 
 export default function DraggableToolbar({
   onAddCell,
+  onAddTestFeedback,
   activeTool,
   onToolChange,
 }: DraggableToolbarProps) {
@@ -144,6 +146,20 @@ export default function DraggableToolbar({
       >
         <StickyNote size={20} className="text-gray-700" />
       </button>
+
+      {/* Add Test Feedback Button (only if handler provided) */}
+      {onAddTestFeedback && (
+        <>
+          <div className={dividerClassName} />
+          <button
+            onClick={onAddTestFeedback}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            title="Add Test Feedback Panel"
+          >
+            <MessageSquare size={20} className="text-blue-600" />
+          </button>
+        </>
+      )}
     </div>
   )
 }
