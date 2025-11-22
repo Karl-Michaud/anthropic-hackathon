@@ -1387,10 +1387,29 @@ export default function Whiteboard() {
                 onSubmitToAI={async () => {
                   try {
                     // Find the associated essay
-                    const essay = essays.find((e) => e.id === feedbackData.essayId)
+                    let essay = essays.find(
+                      (e) => e.id === feedbackData.essayId,
+                    )
+
+                    // If no essay found by essayId, try to find by scholarshipId
                     if (!essay) {
-                      console.error('Essay not found:', feedbackData.essayId)
-                      return
+                      essay = essays.find(
+                        (e) => e.scholarshipId === feedbackData.scholarshipId,
+                      )
+                    }
+
+                    // If still no essay, create a new one
+                    if (!essay) {
+                      const essayId = addEssay({
+                        scholarshipId: feedbackData.scholarshipId,
+                        content: '',
+                        lastEditedAt: Date.now(),
+                      })
+                      essay = essays.find((e) => e.id === essayId)
+                      if (!essay) {
+                        console.error('Failed to create essay')
+                        return
+                      }
                     }
 
                     // Submit feedback and get updated essay

@@ -121,7 +121,8 @@ Return 2-3 sections based on the essay quality and length.`
       // Type assert section to have the expected structure
       const sectionData = section as Record<string, unknown>
       // Validate section data
-      const title = (sectionData.title as string) || `Improvement Area ${index + 1}`
+      const title =
+        (sectionData.title as string) || `Improvement Area ${index + 1}`
       const description = (sectionData.description as string) || ''
       const rawQuestions = (sectionData.questions as unknown[]) || []
 

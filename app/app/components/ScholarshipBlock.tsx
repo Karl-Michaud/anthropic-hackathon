@@ -24,9 +24,7 @@ const getDarkModeClasses = (isDarkMode: boolean) => ({
   input: isDarkMode
     ? 'bg-gray-700 text-white border-gray-600'
     : 'bg-blue-50 text-gray-900 border-blue-500',
-  menu: isDarkMode
-    ? 'bg-gray-800 border-gray-700'
-    : 'bg-white border-gray-200',
+  menu: isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200',
   menuText: isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700',
 })
 
@@ -197,9 +195,7 @@ function PrioritiesDisplay({
               <p className={`font-semibold mb-1 ${classes.heading}`}>
                 Selection Signals:
               </p>
-              <ul
-                className={`list-disc list-inside space-y-1 ${classes.text}`}
-              >
+              <ul className={`list-disc list-inside space-y-1 ${classes.text}`}>
                 {selectionSignals.map((signal: string, idx: number) => (
                   <li key={idx}>{signal}</li>
                 ))}
@@ -297,9 +293,7 @@ function ValuesDisplay({
               <p className={`font-semibold mb-1 ${classes.heading}`}>
                 Evidence Phrases:
               </p>
-              <ul
-                className={`list-disc list-inside space-y-1 ${classes.text}`}
-              >
+              <ul className={`list-disc list-inside space-y-1 ${classes.text}`}>
                 {evidencePhrases.map((phrase: string, idx: number) => (
                   <li key={idx}>{phrase}</li>
                 ))}
@@ -356,7 +350,9 @@ function WeightsDisplay({
                 | undefined
               return (
                 <div key={category}>
-                  <p className={`font-semibold mb-2 capitalize ${classes.heading}`}>
+                  <p
+                    className={`font-semibold mb-2 capitalize ${classes.heading}`}
+                  >
                     {category}
                   </p>
                   <div className="ml-2 space-y-1">
@@ -377,9 +373,7 @@ function WeightsDisplay({
                       .length > 0 ? (
                       <div
                         className={`mt-2 ml-2 space-y-1 border-l-2 pl-2 ${
-                          isDarkMode
-                            ? 'border-gray-600'
-                            : 'border-gray-300'
+                          isDarkMode ? 'border-gray-600' : 'border-gray-300'
                         }`}
                       >
                         {Object.entries(
@@ -387,7 +381,9 @@ function WeightsDisplay({
                         ).map(([subkey, subvalue]: [string, unknown]) => (
                           <div key={subkey} className="flex justify-between">
                             <span className={classes.text}>{subkey}:</span>
-                            <span className={`font-semibold ${classes.heading}`}>
+                            <span
+                              className={`font-semibold ${classes.heading}`}
+                            >
                               {typeof subvalue === 'number'
                                 ? `${(subvalue * 100).toFixed(1)}%`
                                 : String(subvalue)}
@@ -464,9 +460,7 @@ function EditableField({
         placeholder={placeholder}
         rows={4}
         className={`w-full border-2 border-blue-500 rounded-lg p-3 outline-none resize-none leading-relaxed transition-all ${
-          isDarkMode
-            ? 'bg-blue-900 text-blue-100'
-            : 'bg-blue-50 text-gray-900'
+          isDarkMode ? 'bg-blue-900 text-blue-100' : 'bg-blue-50 text-gray-900'
         } ${className}`}
       />
     )

@@ -74,7 +74,10 @@ function renderHighlightedText(
     elements.push(
       <mark
         key={`highlight-${section.id}`}
-        onClick={() => onSectionClick(section)}
+        onClick={(e) => {
+          e.stopPropagation()
+          onSectionClick(section)
+        }}
         className={`${colorConfig.bg} ${colorConfig.text} cursor-pointer px-1 rounded transition-all hover:ring-2 ${colorConfig.ring}`}
         title={section.title}
       >
@@ -482,7 +485,9 @@ export default function EssayBlock({
         {isGenerating ? (
           <div className="flex items-center justify-center p-12 py-0">
             <Loader2 size={32} className="animate-spin text-primary-500" />
-            <span className={`ml-3 ${isDarkMode ? 'text-gray-400' : 'text-neutral-600'}`}>
+            <span
+              className={`ml-3 ${isDarkMode ? 'text-gray-400' : 'text-neutral-600'}`}
+            >
               Generating essay...
             </span>
           </div>
@@ -497,19 +502,24 @@ export default function EssayBlock({
             onBlur={() => setEditing(false)}
             onWheel={(e) => e.stopPropagation()}
             placeholder="Start writing your essay here..."
-            className={`w-full min-h-[200px] resize-none outline-none text-sm leading-relaxed border-0 p-0 transition-colors ${
+            className={`w-full resize-none outline-none text-sm leading-relaxed border-0 p-0 transition-colors ${
               isDarkMode
                 ? 'bg-gray-800 text-gray-100 placeholder-gray-500'
                 : 'bg-white text-neutral-800 placeholder-gray-400'
             }`}
+            style={{
+              minHeight: '100px',
+              height: textareaRef.current?.scrollHeight || 'auto',
+            }}
           />
         ) : (
           <div
-            className={`w-full min-h-[200px] border-0 p-0 text-sm leading-relaxed cursor-pointer transition-colors ${
+            className={`w-full border-0 p-0 text-sm leading-relaxed transition-colors cursor-pointer opacity-75 ${
               isDarkMode ? 'text-gray-100' : 'text-neutral-800'
             }`}
-            onClick={() => setIsEditMode(true)}
+            onDoubleClick={() => setIsEditMode(true)}
             onWheel={(e) => e.stopPropagation()}
+            title="Double-click to edit"
           >
             {renderHighlightedText(
               data.content,

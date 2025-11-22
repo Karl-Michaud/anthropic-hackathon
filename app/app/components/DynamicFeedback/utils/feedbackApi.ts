@@ -5,8 +5,14 @@ import {
   HighlightedSection,
   SocraticQuestion,
 } from '../../../context/WhiteboardContext'
-import { analyzeSocratic, submitSocraticAnswers as submitSocraticLib } from '../../../lib/socratic'
-import { analyzeFeedback as analyzeFeedbackLib, submitFeedback as submitFeedbackLib } from '../../../lib/feedback'
+import {
+  analyzeSocratic,
+  submitSocraticAnswers as submitSocraticLib,
+} from '../../../lib/socratic'
+import {
+  analyzeFeedback as analyzeFeedbackLib,
+  submitFeedback as submitFeedbackLib,
+} from '../../../lib/feedback'
 
 interface SocraticAnalysisResult {
   highlightedSections: HighlightedSection[]
