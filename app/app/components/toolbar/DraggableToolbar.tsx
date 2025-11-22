@@ -85,6 +85,8 @@ export default function DraggableToolbar({
   }, [isDragging, dragPos])
 
   const positionConfig = POSITIONS[position]
+  const isVertical = position === 'right'
+  const dividerClassName = isVertical ? 'h-px w-6 bg-gray-300' : 'w-px h-6 bg-gray-300'
 
   return (
     <div
@@ -110,7 +112,7 @@ export default function DraggableToolbar({
       </div>
 
       {/* Divider */}
-      <div className="w-px h-6 bg-gray-300" />
+      <div className={dividerClassName} />
 
       {/* Select Tool */}
       <ToolButton
@@ -129,7 +131,7 @@ export default function DraggableToolbar({
       />
 
       {/* Divider */}
-      <div className="w-px h-6 bg-gray-300" />
+      <div className={dividerClassName} />
 
       {/* Add Cell Button */}
       <button
