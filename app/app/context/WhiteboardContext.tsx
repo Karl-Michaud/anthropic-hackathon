@@ -20,6 +20,7 @@ export interface ScholarshipData {
   description: string
   prompt: string
   hiddenRequirements: string[]
+  adaptiveWeights?: any // Adaptive weighting output from /api/adaptive-weighting
 }
 
 export interface EssayData {
@@ -43,6 +44,7 @@ export interface JsonOutputData {
     ScholarshipDescription: string
     EssayPrompt: string
     HiddenRequirements?: string[]
+    AdaptiveWeights?: any // Complete adaptive weighting analysis from the pipeline
   }
 }
 
@@ -197,6 +199,7 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
                 ScholarshipDescription: scholarship.description,
                 EssayPrompt: scholarship.prompt,
                 HiddenRequirements: scholarship.hiddenRequirements,
+                AdaptiveWeights: scholarship.adaptiveWeights,
               },
             }
           : output

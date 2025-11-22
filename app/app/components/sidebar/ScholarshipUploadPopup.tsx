@@ -5,12 +5,14 @@ import { useState } from 'react'
 import FileUploadArea from './FileUploadArea'
 import ManualEntryForm from './ManualEntryForm'
 import UploadModeToggle from './UploadModeToggle'
+import { fetchAdaptiveWeights } from '../../lib/fetch-adaptive-weights'
 
 export interface ScholarshipUploadResult {
   title: string
   description: string
   prompt: string
   hiddenRequirements: string[]
+  adaptiveWeights?: any // Adaptive weighting output from /api/adaptive-weighting
 }
 
 interface ScholarshipUploadPopupProps {
@@ -55,11 +57,19 @@ export default function ScholarshipUploadPopup({
         const getValue = (extracted: string, fallback: string) =>
           extracted && extracted !== 'Missing' ? extracted : fallback
 
+        const title = getValue(result.data.ScholarshipName, 'Untitled Scholarship')
+        const description = getValue(result.data.ScholarshipDescription, '')
+        const prompt = getValue(result.data.EssayPrompt, '')
+
+        // Fetch adaptive weights
+        const adaptiveWeights = await fetchAdaptiveWeights(title, description, prompt)
+
         onScholarshipCreated({
-          title: getValue(result.data.ScholarshipName, 'Untitled Scholarship'),
-          description: getValue(result.data.ScholarshipDescription, ''),
-          prompt: getValue(result.data.EssayPrompt, ''),
+          title,
+          description,
+          prompt,
           hiddenRequirements: result.data.HiddenRequirements || [],
+          adaptiveWeights,
         })
         onClose()
       } else {
@@ -101,29 +111,44 @@ export default function ScholarshipUploadPopup({
         const getName = (extracted: string, fallback: string) =>
           extracted && extracted !== 'Missing' ? extracted : fallback
 
+        const finalTitle = getName(result.data.ScholarshipName, title)
+        const finalDescription = getName(result.data.ScholarshipDescription, description)
+        const finalPrompt = getName(result.data.EssayPrompt, prompt)
+
+        // Fetch adaptive weights
+        const adaptiveWeights = await fetchAdaptiveWeights(finalTitle, finalDescription, finalPrompt)
+
         onScholarshipCreated({
-          title: getName(result.data.ScholarshipName, title),
-          description: getName(result.data.ScholarshipDescription, description),
-          prompt: getName(result.data.EssayPrompt, prompt),
+          title: finalTitle,
+          description: finalDescription,
+          prompt: finalPrompt,
           hiddenRequirements: result.data.HiddenRequirements || [],
+          adaptiveWeights,
         })
         onClose()
       } else {
+        // Fetch adaptive weights even if extraction failed
+        const adaptiveWeights = await fetchAdaptiveWeights(title, description, prompt)
+
         onScholarshipCreated({
           title,
           description,
           prompt,
           hiddenRequirements: [],
+          adaptiveWeights,
         })
         onClose()
       }
     } catch (err) {
       console.error('Creation error:', err)
+      // Still try to fetch adaptive weights on error
+      const adaptiveWeights = await fetchAdaptiveWeights(title, description, prompt)
       onScholarshipCreated({
         title,
         description,
         prompt,
         hiddenRequirements: [],
+        adaptiveWeights,
       })
       onClose()
     } finally {

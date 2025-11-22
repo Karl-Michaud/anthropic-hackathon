@@ -580,6 +580,7 @@ export default function Whiteboard() {
           description: item.data.description,
           prompt: item.data.prompt,
           hiddenRequirements: item.data.hiddenRequirements,
+          adaptiveWeights: item.data.adaptiveWeights,
         })
         const pos = getBlockPosition(item.data.id)
         updateBlockPosition(newId, pos.x + 50, pos.y + 50)
