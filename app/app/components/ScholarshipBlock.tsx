@@ -463,7 +463,9 @@ function EditableField({
         placeholder={placeholder}
         rows={4}
         className={`w-full border-2 rounded-lg p-3 outline-none resize-none leading-relaxed transition-all ${
-          isDarkMode ? 'bg-blue-900 text-blue-100 border-blue-500' : 'text-gray-900 border-[#C15F3C]'
+          isDarkMode
+            ? 'bg-blue-900 text-blue-100 border-blue-500'
+            : 'text-gray-900 border-[#C15F3C]'
         } ${className}`}
         style={{
           backgroundColor: isDarkMode ? undefined : '#FDFBF9',

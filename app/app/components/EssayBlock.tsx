@@ -1,7 +1,15 @@
 'use client'
 
 import { useState, useMemo, useRef, useEffect } from 'react'
-import { Loader2, MoreVertical, Trash2, Download, FileText, FileType, File } from 'lucide-react'
+import {
+  Loader2,
+  MoreVertical,
+  Trash2,
+  Download,
+  FileText,
+  FileType,
+  File,
+} from 'lucide-react'
 import { exportEssay, ExportFormat } from '../lib/exportUtils'
 import { useEditing } from '../context/EditingContext'
 import { useDarkMode } from '../context/DarkModeContext'
@@ -553,8 +561,12 @@ export default function EssayBlock({
           <WordCounter currentCount={wordCount} maxCount={data.maxWordCount} />
           <ExportMenu
             content={data.content}
-            filename={scholarshipTitle ? `essay_${scholarshipTitle}` : 'essay_draft'}
-            title={scholarshipTitle ? `Draft for ${scholarshipTitle}` : 'Essay Draft'}
+            filename={
+              scholarshipTitle ? `essay_${scholarshipTitle}` : 'essay_draft'
+            }
+            title={
+              scholarshipTitle ? `Draft for ${scholarshipTitle}` : 'Essay Draft'
+            }
             disabled={isGenerating}
           />
           <EssayMenu

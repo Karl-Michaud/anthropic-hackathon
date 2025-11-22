@@ -24,12 +24,8 @@ import type {
   EssayData,
   JsonOutputData,
 } from '../context/WhiteboardContext'
-<<<<<<< Updated upstream
-import type { FeedbackData } from '../lib/dynamicFeedback/types'
-=======
 import type { FeedbackData } from '../lib/dynamicFeedback'
 import { brandColors } from '../styles/design-system'
->>>>>>> Stashed changes
 
 const ZOOM_MIN = 0.06
 const ZOOM_MAX = 1.0
@@ -1186,14 +1182,7 @@ export default function Whiteboard() {
   return (
     <div
       ref={containerRef}
-<<<<<<< Updated upstream
-      suppressHydrationWarning
-      className={`fixed inset-0 overflow-hidden select-none transition-colors duration-200 ${
-        isDarkMode ? 'bg-gray-900' : 'bg-neutral-50'
-      }`}
-=======
       className="fixed inset-0 overflow-hidden select-none transition-colors duration-200"
->>>>>>> Stashed changes
       onMouseDown={handleCanvasMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}

@@ -6,7 +6,10 @@ import { saveAs } from 'file-saver'
  * Sanitize filename by removing invalid characters
  */
 function sanitizeFilename(name: string): string {
-  return name.replace(/[^a-z0-9]/gi, '_').replace(/_+/g, '_').toLowerCase()
+  return name
+    .replace(/[^a-z0-9]/gi, '_')
+    .replace(/_+/g, '_')
+    .toLowerCase()
 }
 
 /**
@@ -24,7 +27,7 @@ export function exportAsTxt(content: string, filename: string): void {
 export function exportAsPdf(
   content: string,
   filename: string,
-  title?: string
+  title?: string,
 ): void {
   const sanitizedName = sanitizeFilename(filename)
   const doc = new jsPDF()
@@ -73,7 +76,7 @@ export function exportAsPdf(
 export async function exportAsDocx(
   content: string,
   filename: string,
-  title?: string
+  title?: string,
 ): Promise<void> {
   const sanitizedName = sanitizeFilename(filename)
 
@@ -94,7 +97,7 @@ export async function exportAsDocx(
           }),
         ],
         spacing: { after: 400 },
-      })
+      }),
     )
   }
 
@@ -109,7 +112,7 @@ export async function exportAsDocx(
         new TextRun({
           text: line,
           size: 24, // 12pt
-        })
+        }),
       )
       if (index < lines.length - 1) {
         textRuns.push(new TextRun({ break: 1 }))
@@ -120,7 +123,7 @@ export async function exportAsDocx(
       new Paragraph({
         children: textRuns,
         spacing: { after: 200 },
-      })
+      }),
     )
   }
 
@@ -146,7 +149,7 @@ export async function exportEssay(
   content: string,
   filename: string,
   format: ExportFormat,
-  title?: string
+  title?: string,
 ): Promise<void> {
   switch (format) {
     case 'txt':

@@ -388,7 +388,9 @@ function ScholarshipUploadPopup({
         )
 
         // Fetch the analysis data from the database
-        const dbScholarship = (await getScholarshipFromDB(scholarship.id)) as any
+        const dbScholarship = (await getScholarshipFromDB(
+          scholarship.id,
+        )) as any
 
         const weights = await requestClaude<IPromptWeights>(
           'promptWeights',
@@ -617,21 +619,12 @@ export default function Navigation() {
   return (
     <>
       <div
-<<<<<<< Updated upstream
         suppressHydrationWarning
         className={`fixed left-6 top-6 bottom-6 z-50 rounded-2xl backdrop-blur-md shadow-lg p-2 flex flex-col items-center transition-colors duration-200 ${
           isDarkMode
             ? 'bg-gray-700/80 border border-gray-600/80'
             : 'bg-white/80 border border-white/80'
         }`}
-=======
-        className="fixed left-6 top-6 bottom-6 z-50 rounded-2xl backdrop-blur-md shadow-lg p-2 flex flex-col items-center transition-colors duration-200 border"
-        style={{
-          backgroundColor: isDarkMode ? '#262624' : '#FDFBF9e6',
-          borderColor: isDarkMode ? '#004D4D' : '#B1ADA1',
-        }}
-        suppressHydrationWarning
->>>>>>> Stashed changes
       >
         {/* Top navigation items */}
         <nav className="flex flex-col gap-4 items-center py-4">

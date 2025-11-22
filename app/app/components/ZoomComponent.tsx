@@ -26,14 +26,7 @@ export default function ZoomComponent({
 
   return (
     <div
-<<<<<<< Updated upstream
-      suppressHydrationWarning
-      className={`flex items-center gap-1 backdrop-blur-lg active:scale-95 rounded-lg shadow-lg border p-2 ${
-        isDarkMode ? 'border-gray-700' : 'border-neutral-200'
-      }`}
-=======
       className="flex items-center gap-1 backdrop-blur-lg active:scale-95 rounded-lg shadow-lg border p-2"
->>>>>>> Stashed changes
       style={{
         backgroundColor: isDarkMode ? '#262624' : 'rgba(255, 255, 255, 0.95)',
         borderColor: isDarkMode ? '#004D4D' : '#B1ADA1',

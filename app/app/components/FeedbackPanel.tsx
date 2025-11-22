@@ -234,9 +234,7 @@ export default function FeedbackPanel({
   return (
     <div
       className={`w-[600px] rounded-2xl shadow-lg flex flex-col max-h-[800px] transition-colors border ${
-        isDarkMode
-          ? 'bg-gray-800 border-gray-700'
-          : 'border-[#B1ADA1]'
+        isDarkMode ? 'bg-gray-800 border-gray-700' : 'border-[#B1ADA1]'
       }`}
       style={{
         backgroundColor: isDarkMode ? undefined : '#FDFBF9',
@@ -318,7 +316,8 @@ export default function FeedbackPanel({
           disabled={!allSectionsComplete || isSubmitting}
           className="w-full text-white px-6 py-3 rounded-lg font-medium disabled:bg-neutral-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
           style={{
-            backgroundColor: allSectionsComplete && !isSubmitting ? '#C15F3C' : undefined,
+            backgroundColor:
+              allSectionsComplete && !isSubmitting ? '#C15F3C' : undefined,
           }}
         >
           {isSubmitting ? (

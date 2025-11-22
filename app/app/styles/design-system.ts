@@ -36,7 +36,7 @@ export const colorsLight = {
     200: '#80dddb',
     300: '#4dcecf',
     400: '#26c3c7',
-    500: '#00b9c1', 
+    500: '#00b9c1',
     600: '#00a9af',
     700: '#009497',
     800: '#008080', // Main primary
