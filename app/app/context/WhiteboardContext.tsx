@@ -163,7 +163,7 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
 
   // Cell actions
   const addCell = useCallback((cell: Omit<CellData, 'id'>) => {
-    const id = `cell-${Date.now()}`
+    const id = `cell-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
     setCells((prev) => [...prev, { ...cell, id }])
     return id
   }, [])
@@ -178,7 +178,7 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
 
   // Scholarship actions
   const addScholarship = useCallback((scholarship: Omit<ScholarshipData, 'id'>) => {
-    const id = `scholarship-${Date.now()}`
+    const id = `scholarship-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
     setScholarships((prev) => [...prev, { ...scholarship, id }])
     return id
   }, [])
@@ -213,7 +213,7 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
 
   // Essay actions
   const addEssay = useCallback((essay: Omit<EssayData, 'id'>) => {
-    const id = `essay-${Date.now()}`
+    const id = `essay-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
     setEssays((prev) => [...prev, { ...essay, id }])
     return id
   }, [])
@@ -229,7 +229,7 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
 
   // JSON output actions
   const addJsonOutput = useCallback((scholarshipId: string, data: JsonOutputData['data']) => {
-    const id = `json-${Date.now()}`
+    const id = `json-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
     setJsonOutputs((prev) => [...prev, { id, scholarshipId, data }])
     return id
   }, [])

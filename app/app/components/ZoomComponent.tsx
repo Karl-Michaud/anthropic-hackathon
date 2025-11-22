@@ -14,7 +14,7 @@ export default function ZoomComponent({
   const percentage = Math.round(zoom * 100)
 
   return (
-    <div className="flex items-center gap-2 bg-white/90 backdrop-blur-sm px-3 py-2 rounded-lg shadow-md border border-gray-200">
+    <div className="flex items-center gap-2 bg-white/90 backdrop-blur-sm px-3 py-2 rounded-lg shadow-md border border-gray-200 select-none">
       {/* Zoom Out Button */}
       <button
         onClick={onZoomOut}

@@ -10,12 +10,14 @@ export type { CellData }
 interface CellProps {
   cell: CellData
   isDragging: boolean
+  isSelected?: boolean
   onMouseDown: (
     e: MouseEvent<HTMLDivElement>,
     cellId: string,
     x: number,
     y: number,
   ) => void
+  onContextMenu?: (e: MouseEvent<HTMLDivElement>, cellId: string) => void
   onTextChange: (cellId: string, newText: string) => void
   onDelete: (cellId: string) => void
 }
@@ -23,7 +25,9 @@ interface CellProps {
 export default function Cell({
   cell,
   isDragging,
+  isSelected = false,
   onMouseDown,
+  onContextMenu,
   onTextChange,
   onDelete,
 }: CellProps) {
@@ -86,8 +90,11 @@ export default function Cell({
         left: `${cell.x}px`,
         transform: `rotate(${cell.rotation}deg)`,
         cursor: isDragging ? 'grabbing' : isEditingLocal ? 'text' : 'grab',
+        outline: isSelected ? '2px solid #3b82f6' : 'none',
+        outlineOffset: '2px',
       }}
       onMouseDown={(e) => !isEditingLocal && onMouseDown(e, cell.id, cell.x, cell.y)}
+      onContextMenu={(e) => onContextMenu && onContextMenu(e, cell.id)}
       onDoubleClick={handleDoubleClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
