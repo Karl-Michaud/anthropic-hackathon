@@ -33,12 +33,6 @@ export default function Whiteboard() {
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
   const [syncingData, setSyncingData] = useState(false)
 
-  // Mouse position for zoom-to-cursor
-  const [mousePosition, setMousePosition] = useState<{
-    x: number
-    y: number
-  } | null>(null)
-
   // Tool state
   const [activeTool, setActiveTool] = useState<Tool>('select')
   const [contextMenu, setContextMenu] = useState<{
@@ -59,6 +53,7 @@ export default function Whiteboard() {
     currentX: number
     currentY: number
   } | null>(null)
+  const [zIndexStack, setZIndexStack] = useState<string[]>([])
 
   const {
     cells,
@@ -88,6 +83,27 @@ export default function Whiteboard() {
       y: Math.max(-CANVAS_LIMIT, Math.min(CANVAS_LIMIT, y)),
     }
   }, [])
+
+  // Helper function to update z-index stack when component is interacted with
+  const bringToFront = useCallback((id: string) => {
+    setZIndexStack((prevStack) => {
+      // Remove id if it exists, then add to end
+      const filtered = prevStack.filter((stackId) => stackId !== id)
+      return [...filtered, id]
+    })
+  }, [])
+
+  // Helper function to get z-index for a component based on stack position
+  const getZIndex = useCallback(
+    (id: string): number => {
+      const index = zIndexStack.indexOf(id)
+      if (index === -1) {
+        return 1 // Base z-index for items not in stack
+      }
+      return index + 2 // Start at 2 so the lowest is always above base
+    },
+    [zIndexStack],
+  )
 
   // Initialize positions for new scholarships
   useEffect(() => {
@@ -213,6 +229,9 @@ export default function Whiteboard() {
       })
       setMomentum({ x: 0, y: 0 }) // Stop momentum when dragging
 
+      // Bring this block to front
+      bringToFront(blockId)
+
       // Populate dragStartPositions with current positions
       const newDragStartPositions = new Map<string, { x: number; y: number }>()
       selectedIds.forEach((id) => {
@@ -224,7 +243,7 @@ export default function Whiteboard() {
       }
       setDragStartPositions(newDragStartPositions)
     },
-    [position, zoom, selectedIds, getBlockPosition],
+    [position, zoom, selectedIds, getBlockPosition, bringToFront],
   )
 
   const handleCreateDraft = useCallback(
@@ -331,9 +350,6 @@ export default function Whiteboard() {
 
   const handleMouseMove = useCallback(
     (e: MouseEvent<HTMLDivElement>) => {
-      // Track mouse position for zoom-to-cursor
-      setMousePosition({ x: e.clientX, y: e.clientY })
-
       if (isPanning && !draggingCellId) {
         const newX = e.clientX - startPos.x
         const newY = e.clientY - startPos.y
@@ -526,6 +542,9 @@ export default function Whiteboard() {
         y: e.clientY - position.y - cellY * zoom,
       })
 
+      // Bring this cell to front
+      bringToFront(cellId)
+
       // Populate dragStartPositions with current positions
       const newDragStartPositions = new Map<string, { x: number; y: number }>()
       selectedIds.forEach((id) => {
@@ -544,7 +563,7 @@ export default function Whiteboard() {
       }
       setDragStartPositions(newDragStartPositions)
     },
-    [position, zoom, selectedIds, cells, getBlockPosition],
+    [position, zoom, selectedIds, cells, getBlockPosition, bringToFront],
   )
 
   const handleTextChange = useCallback(
@@ -557,25 +576,15 @@ export default function Whiteboard() {
     [cells, updateCell],
   )
 
-  // Helper function to zoom towards a specific point (zoom-to-cursor)
+  // Helper function to zoom towards a specific point (default: screen center)
   const zoomToPoint = useCallback(
     (newZoom: number, pointX?: number, pointY?: number) => {
       const clampedZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, newZoom))
 
-      // If no point provided, use mouse position or viewport center
-      let zoomPointX = pointX
-      let zoomPointY = pointY
-
-      if (zoomPointX === undefined || zoomPointY === undefined) {
-        if (mousePosition) {
-          zoomPointX = mousePosition.x
-          zoomPointY = mousePosition.y
-        } else {
-          // Fallback to viewport center if no mouse position tracked
-          zoomPointX = window.innerWidth / 2
-          zoomPointY = window.innerHeight / 2
-        }
-      }
+      // Always use provided point, or default to viewport center
+      // This ensures consistent, predictable zoom behavior pivoting at screen center
+      const zoomPointX = pointX ?? window.innerWidth / 2
+      const zoomPointY = pointY ?? window.innerHeight / 2
 
       // Calculate what point on the canvas is currently at the zoom point
       const canvasX = (zoomPointX - position.x) / zoom
@@ -588,7 +597,7 @@ export default function Whiteboard() {
       setZoom(clampedZoom)
       setPosition({ x: newX, y: newY })
     },
-    [zoom, position, mousePosition],
+    [zoom, position],
   )
 
   const handleZoomIn = useCallback(() => {
@@ -921,6 +930,7 @@ export default function Whiteboard() {
 
   const dotOpacity = zoom
   const dotColor = `rgba(208, 201, 184, ${dotOpacity})`
+  const dotSize = 24 * zoom
 
   return (
     <div
@@ -933,7 +943,8 @@ export default function Whiteboard() {
       onContextMenu={(e) => handleContextMenu(e)}
       style={{
         backgroundImage: `radial-gradient(circle, ${dotColor} 1px, transparent 1px)`,
-        backgroundSize: `${24 * zoom}px ${24 * zoom}px`,
+        backgroundSize: `${dotSize}px ${dotSize}px`,
+        backgroundPosition: `${position.x % dotSize}px ${position.y % dotSize}px`,
         cursor: isPanning
           ? 'grabbing'
           : activeTool === 'hand'
@@ -982,6 +993,7 @@ export default function Whiteboard() {
             isDragging={draggingCellId === cell.id}
             isSelected={selectedIds.has(cell.id)}
             zoom={zoom}
+            zIndex={getZIndex(cell.id)}
             onMouseDown={handleCellMouseDown}
             onContextMenu={(e, cellId) => handleContextMenu(e, cellId)}
             onTextChange={handleTextChange}
@@ -1001,6 +1013,7 @@ export default function Whiteboard() {
               isDragging={draggingCellId === scholarship.id}
               isSelected={selectedIds.has(scholarship.id)}
               zoom={zoom}
+              zIndex={getZIndex(scholarship.id)}
               onMouseDown={handleBlockMouseDown}
               onContextMenu={(e, blockId) => handleContextMenu(e, blockId)}
             >
@@ -1029,6 +1042,7 @@ export default function Whiteboard() {
               isDragging={draggingCellId === essay.id}
               isSelected={selectedIds.has(essay.id)}
               zoom={zoom}
+              zIndex={getZIndex(essay.id)}
               onMouseDown={handleBlockMouseDown}
               onContextMenu={(e, blockId) => handleContextMenu(e, blockId)}
             >
@@ -1055,6 +1069,7 @@ export default function Whiteboard() {
               isDragging={draggingCellId === jsonOutput.id}
               isSelected={selectedIds.has(jsonOutput.id)}
               zoom={zoom}
+              zIndex={getZIndex(jsonOutput.id)}
               onMouseDown={handleBlockMouseDown}
               onContextMenu={(e, blockId) => handleContextMenu(e, blockId)}
             >

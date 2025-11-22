@@ -12,6 +12,7 @@ interface CellProps {
   isDragging: boolean
   isSelected?: boolean
   zoom: number
+  zIndex?: number
   onMouseDown: (
     e: MouseEvent<HTMLDivElement>,
     cellId: string,
@@ -28,6 +29,7 @@ export default function Cell({
   isDragging,
   isSelected = false,
   zoom,
+  zIndex = 1,
   onMouseDown,
   onContextMenu,
   onTextChange,
@@ -102,6 +104,7 @@ export default function Cell({
         cursor: isDragging ? 'grabbing' : isEditingLocal ? 'text' : 'grab',
         outline: isSelected ? `${outlineWidth}px solid #3b82f6` : 'none',
         outlineOffset: `${outlineOffset}px`,
+        zIndex,
       }}
       onMouseDown={(e) =>
         !isEditingLocal && onMouseDown(e, cell.id, cell.x, cell.y)
