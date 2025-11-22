@@ -17,6 +17,8 @@ export {
   loadFeedbackDraft,
   clearFeedbackDraft,
   generateFeedbackId,
+  analyzeSocraticQuestions,
+  submitSocraticAnswers,
 } from './utils/feedbackApi'
 
 export { createDummyFeedbackData } from './utils/dummyData'

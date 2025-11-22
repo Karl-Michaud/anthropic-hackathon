@@ -15,32 +15,26 @@ export enum PrimaryFocus {
 }
 
 export interface IScholarship {
+  id?: string
   title: string
   description: string
-  prompts?: IPrompt[]
+  prompt: string
+
+  promptPersonality?: IPromptPersonality
+  promptPriorities?: IPromptPriorities
+  promptValues?: IPromptValues
+  promptWeights?: IPromptWeights
+  generateDraft?: IGenerateDraft
 }
 
 export interface IPrompt {
   text: string
   scholarship?: IScholarship
 
-  promptHiddenCriteria?: IPromptHiddenCriteria
   promptPersonality?: IPromptPersonality
   promptPriorities?: IPromptPriorities
   promptValues?: IPromptValues
   generateDraft?: IGenerateDraft
-}
-
-export interface IPromptHiddenCriteria {
-  implicit_criteria: Array<{
-    trait: string
-    rationale: string
-    evidence_phrases: string[]
-    importance: string
-  }>
-  overall_pattern: string
-  summary: string
-  confidence_score: number
 }
 
 export interface IPromptPersonality {

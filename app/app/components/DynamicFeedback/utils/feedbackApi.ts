@@ -1,4 +1,81 @@
 import { FeedbackData } from '../types'
+import {
+  HighlightedSection,
+  SocraticQuestion,
+} from '../../../context/WhiteboardContext'
+
+interface SocraticAnalysisResult {
+  highlightedSections: HighlightedSection[]
+  socraticData: Record<string, SocraticQuestion[]>
+}
+
+const HIGHLIGHT_COLORS = ['amber', 'cyan', 'pink', 'lime', 'purple'] as const
+
+/**
+ * Analyze essay and return highlighted sections with Socratic questions
+ */
+export async function analyzeSocraticQuestions(
+  essayContent: string,
+  scholarshipTitle?: string,
+): Promise<SocraticAnalysisResult> {
+  try {
+    const response = await fetch('/api/socratic', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        essayContent,
+        scholarshipTitle,
+      }),
+    })
+
+    if (!response.ok) {
+      throw new Error('Failed to analyze essay for Socratic questions')
+    }
+
+    const result = await response.json()
+    return {
+      highlightedSections: result.highlightedSections || [],
+      socraticData: result.socraticData || {},
+    }
+  } catch (error) {
+    console.error('Error analyzing Socratic questions:', error)
+    return {
+      highlightedSections: [],
+      socraticData: {},
+    }
+  }
+}
+
+/**
+ * Submit Socratic answers to update essay
+ */
+export async function submitSocraticAnswers(
+  essayContent: string,
+  sectionId: string,
+  answers: Record<string, string>,
+): Promise<string> {
+  try {
+    const response = await fetch('/api/socratic/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        essayContent,
+        sectionId,
+        answers,
+      }),
+    })
+
+    if (!response.ok) {
+      throw new Error('Failed to submit Socratic answers')
+    }
+
+    const result = await response.json()
+    return result.updatedEssay || essayContent
+  } catch (error) {
+    console.error('Error submitting Socratic answers:', error)
+    return essayContent
+  }
+}
 
 /**
  * Analyze essay and return feedback data

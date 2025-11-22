@@ -15,6 +15,7 @@ import { useWhiteboard } from '../context/WhiteboardContext'
 import {
   saveScholarshipToDB,
   generateAndSavePromptAnalysis,
+  getScholarshipFromDB,
 } from '../lib/dbUtils'
 import { extractScholarshipInfo } from '../lib/claudeApi'
 import { requestClaude } from '../lib/request'
@@ -176,8 +177,12 @@ function ManualEntryForm({
   const [scholarshipPrompt, setScholarshipPrompt] = useState('')
 
   const handleSubmit = () => {
-    if (!scholarshipTitle.trim() || !scholarshipDescription.trim()) {
-      alert('Please fill in title and description')
+    if (
+      !scholarshipTitle.trim() ||
+      !scholarshipDescription.trim() ||
+      !scholarshipPrompt.trim()
+    ) {
+      alert('Please fill in title, description, and prompt')
       return
     }
     onSubmit(scholarshipTitle, scholarshipDescription, [scholarshipPrompt])
@@ -218,7 +223,7 @@ function ManualEntryForm({
         <textarea
           value={scholarshipPrompt}
           onChange={(e) => setScholarshipPrompt(e.target.value)}
-          placeholder="Enter essay prompt (optional)"
+          placeholder="Enter essay prompt"
           rows={3}
           className="w-full py-2 px-3 border border-gray-200 rounded-md text-gray-900 transition-all text-sm bg-white resize-none focus:border-blue-500 focus:ring-3 focus:ring-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
           disabled={isSubmitting}
@@ -271,11 +276,16 @@ function UploadModeToggle({
 
 // ScholarshipUploadPopup component
 export interface ScholarshipUploadResult {
+  id: string
   title: string
   description: string
   prompts: string[]
   hiddenRequirements: string[]
   adaptiveWeights?: AdaptiveWeights
+  weights?: AdaptiveWeights
+  personality?: Record<string, any>
+  priorities?: Record<string, any>
+  values?: Record<string, any>
 }
 
 function ScholarshipUploadPopup({
@@ -323,7 +333,10 @@ function ScholarshipUploadPopup({
           [prompt],
         )
 
-        const adaptiveWeights = await requestClaude<IPromptWeights>(
+        // Fetch the analysis data from the database
+        const dbScholarship = await getScholarshipFromDB(scholarship.id)
+
+        const weights = await requestClaude<IPromptWeights>(
           'promptWeights',
           title,
           description,
@@ -331,11 +344,15 @@ function ScholarshipUploadPopup({
         )
 
         onScholarshipCreated({
+          id: scholarship.id,
           title,
           description,
           prompts: [prompt],
           hiddenRequirements: result.HiddenRequirements || [],
-          adaptiveWeights: adaptiveWeights as any,
+          weights: weights as any,
+          personality: dbScholarship?.promptPersonality || undefined,
+          priorities: dbScholarship?.promptPriorities || undefined,
+          values: dbScholarship?.promptValues || undefined,
         })
         onClose()
       } else {
@@ -368,8 +385,11 @@ function ScholarshipUploadPopup({
         prompts,
       )
 
+      // Fetch the analysis data from the database
+      const dbScholarship = await getScholarshipFromDB(scholarship.id)
+
       const prompt = prompts[0] || ''
-      const adaptiveWeights = await requestClaude<IPromptWeights>(
+      const weights = await requestClaude<IPromptWeights>(
         'promptWeights',
         title,
         description,
@@ -377,11 +397,15 @@ function ScholarshipUploadPopup({
       )
 
       onScholarshipCreated({
+        id: scholarship.id,
         title,
         description,
         prompts,
         hiddenRequirements: [],
-        adaptiveWeights: adaptiveWeights as any,
+        weights: weights as any,
+        personality: dbScholarship?.promptPersonality || undefined,
+        priorities: dbScholarship?.promptPriorities || undefined,
+        values: dbScholarship?.promptValues || undefined,
       })
       onClose()
     } catch (err) {
@@ -479,12 +503,20 @@ export default function Navigation() {
   const { addScholarship, addJsonOutput, addFeedbackPanel } = useWhiteboard()
 
   const handleScholarshipCreated = (data: ScholarshipUploadResult) => {
-    const scholarshipId = addScholarship({
+    // Use the database ID directly instead of generating a new local ID
+    const scholarshipId = data.id
+    // Update the local context with the scholarship data using the database ID
+    addScholarship({
+      id: scholarshipId,
       title: data.title,
       description: data.description,
       prompt: data.prompts?.[0] || '',
       hiddenRequirements: data.hiddenRequirements,
-      adaptiveWeights: data.adaptiveWeights,
+      adaptiveWeights: data.adaptiveWeights || data.weights,
+      weights: data.weights || data.adaptiveWeights,
+      personality: data.personality,
+      priorities: data.priorities,
+      values: data.values,
     })
 
     // Also add the JSON output block with ALL pipeline data
@@ -493,7 +525,10 @@ export default function Navigation() {
       ScholarshipDescription: data.description,
       EssayPrompt: data.prompts?.[0] || '',
       HiddenRequirements: data.hiddenRequirements,
-      AdaptiveWeights: data.adaptiveWeights,
+      AdaptiveWeights: data.weights,
+      Personality: data.personality,
+      Priorities: data.priorities,
+      Values: data.values,
     })
 
     // Create feedback panel for dynamic prompting
