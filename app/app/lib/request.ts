@@ -8,6 +8,30 @@ import {
   IPromptWeights,
   IGenerateDraft,
 } from '@/app/types/interfaces'
+import { prisma } from './prisma'
+
+// Interface for analysis data used in draft generation
+export interface IDraftAnalysisData {
+  personality?: {
+    spirit: string
+    toneStyle: string
+    valuesEmphasized: string[]
+    recommendedEssayFocus: string
+  }
+  priorities?: {
+    primaryFocus: string
+    priorityWeights: Record<string, number>
+  }
+  values?: {
+    valuesEmphasized: string[]
+    valueDefinitions: Record<string, string>
+    evidencePhrases: string[]
+  }
+  weights?: Record<string, {
+    weight: number
+    subweights: Record<string, number>
+  }>
+}
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY!,
@@ -368,25 +392,102 @@ function generateDraftPrompt(
   title: string,
   desc: string,
   prompt: string,
+  analysisData?: IDraftAnalysisData,
 ): string {
-  return `Analyze this scholarship's **selection priorities**—what it rewards and values most when selecting recipients.
+  // Build analysis sections if data is available
+  let analysisSection = ''
+
+  if (analysisData) {
+    if (analysisData.personality) {
+      analysisSection += `
+### SCHOLARSHIP PERSONALITY PROFILE
+- **Core Identity/Spirit**: ${analysisData.personality.spirit}
+- **Tone & Style**: ${analysisData.personality.toneStyle}
+- **Values Emphasized**: ${analysisData.personality.valuesEmphasized.join(', ')}
+- **Recommended Essay Focus**: ${analysisData.personality.recommendedEssayFocus}
+`
+    }
+
+    if (analysisData.priorities) {
+      const weightsStr = Object.entries(analysisData.priorities.priorityWeights)
+        .map(([key, value]) => `  - ${key}: ${value}%`)
+        .join('\n')
+      analysisSection += `
+### SCHOLARSHIP PRIORITIES
+- **Primary Focus**: ${analysisData.priorities.primaryFocus}
+- **Priority Weights**:
+${weightsStr}
+`
+    }
+
+    if (analysisData.values) {
+      const valueDefsStr = Object.entries(analysisData.values.valueDefinitions)
+        .map(([key, value]) => `  - **${key}**: ${value}`)
+        .join('\n')
+      analysisSection += `
+### SCHOLARSHIP VALUES
+- **Values Emphasized**: ${analysisData.values.valuesEmphasized.join(', ')}
+- **Value Definitions**:
+${valueDefsStr}
+- **Evidence Phrases from Description**: ${analysisData.values.evidencePhrases.join('; ')}
+`
+    }
+
+    if (analysisData.weights) {
+      const weightsStr = Object.entries(analysisData.weights)
+        .map(([category, data]) => {
+          const subweightsStr = Object.entries(data.subweights)
+            .map(([sub, weight]) => `    - ${sub}: ${(weight * 100).toFixed(0)}%`)
+            .join('\n')
+          return `  - **${category}** (${(data.weight * 100).toFixed(0)}%):\n${subweightsStr}`
+        })
+        .join('\n')
+      analysisSection += `
+### HIDDEN CRITERIA WEIGHTS
+These weights indicate how much emphasis each criterion should receive in the essay:
+${weightsStr}
+`
+    }
+  }
+
+  return `You are an expert scholarship essay writer. Your task is to write a compelling, personalized essay that maximizes the applicant's chances of winning this scholarship.
 
 ---
 
-SCHOLARSHIP INPUT:
-Title: ${title}
-Description: ${desc}
-Essay Prompt: ${prompt}
+## SCHOLARSHIP INFORMATION
+
+**Title**: ${title}
+
+**Description**: ${desc}
+
+**Essay Prompt**: ${prompt}
 
 ---
+${analysisSection ? `
+## SCHOLARSHIP ANALYSIS
 
-TASK:
-Based on the information above, write a draft essay in response to the prompt to the very best of your abilities.
+The following analysis reveals what this scholarship truly values and how the essay should be crafted:
+${analysisSection}
+---
+` : ''}
+## TASK
+
+Write a draft essay that:
+1. Directly addresses the essay prompt
+2. ${analysisData?.personality ? `Matches the ${analysisData.personality.toneStyle} tone and style expected by this scholarship` : 'Uses an appropriate tone for the scholarship'}
+3. ${analysisData?.priorities ? `Emphasizes ${analysisData.priorities.primaryFocus} as the primary focus, allocating essay space proportional to the priority weights` : 'Emphasizes the key priorities of the scholarship'}
+4. ${analysisData?.values ? `Demonstrates the values of ${analysisData.values.valuesEmphasized.slice(0, 3).join(', ')}` : 'Demonstrates relevant values'}
+5. ${analysisData?.weights ? 'Addresses the hidden criteria according to their weights' : 'Addresses potential hidden criteria'}
+6. ${analysisData?.personality ? `Follows the recommended essay focus: ${analysisData.personality.recommendedEssayFocus}` : 'Has a clear narrative focus'}
+
+The essay should be approximately 500-750 words, well-structured with clear paragraphs, and compelling throughout.
+
+CRITICAL: Return ONLY valid JSON. Do NOT use markdown code blocks. Do NOT add explanatory text.
 
 Return JSON only:
 
 {
-  "essay": "the essay goes here",
+  "essay": "the complete essay goes here"
 }`
 }
 
@@ -475,5 +576,97 @@ export async function generateAllPromptAnalysis(
   } catch (error) {
     console.error('Error generating prompt analysis:', error)
     throw error
+  }
+}
+
+// Generate draft essay with analysis data from database
+export async function generateDraftWithAnalysis(
+  scholarshipId: string,
+): Promise<IGenerateDraft> {
+  try {
+    // Retrieve scholarship with all analysis data from database
+    const scholarship = await prisma.scholarship.findUnique({
+      where: { id: scholarshipId },
+      include: {
+        promptPersonality: true,
+        promptPriorities: true,
+        promptValues: true,
+        promptWeights: true,
+      },
+    })
+
+    if (!scholarship) {
+      throw new Error(`Scholarship not found: ${scholarshipId}`)
+    }
+
+    // Build analysis data from database records
+    const analysisData: IDraftAnalysisData = {}
+
+    if (scholarship.promptPersonality) {
+      analysisData.personality = {
+        spirit: scholarship.promptPersonality.spirit,
+        toneStyle: scholarship.promptPersonality.toneStyle,
+        valuesEmphasized: scholarship.promptPersonality.valuesEmphasized,
+        recommendedEssayFocus: scholarship.promptPersonality.recommendedEssayFocus,
+      }
+    }
+
+    if (scholarship.promptPriorities) {
+      analysisData.priorities = {
+        primaryFocus: scholarship.promptPriorities.primaryFocus,
+        priorityWeights: scholarship.promptPriorities.priorityWeights as Record<string, number>,
+      }
+    }
+
+    if (scholarship.promptValues) {
+      analysisData.values = {
+        valuesEmphasized: scholarship.promptValues.valuesEmphasized,
+        valueDefinitions: scholarship.promptValues.valueDefinitions as Record<string, string>,
+        evidencePhrases: scholarship.promptValues.evidencePhrases,
+      }
+    }
+
+    if (scholarship.promptWeights) {
+      analysisData.weights = scholarship.promptWeights.weights as Record<string, {
+        weight: number
+        subweights: Record<string, number>
+      }>
+    }
+
+    // Generate the prompt with analysis data
+    const llmPrompt = generateDraftPrompt(
+      scholarship.title,
+      scholarship.description,
+      scholarship.prompt,
+      analysisData,
+    )
+
+    // Call Claude to generate the draft
+    const message = await anthropic.messages.create({
+      model: 'claude-sonnet-4-5',
+      max_tokens: 2048, // Increased for longer essays
+      messages: [{ role: 'user', content: llmPrompt }],
+    })
+
+    const responseText = (message.content[0] as Anthropic.TextBlock).text
+
+    // Parse response
+    let jsonText = responseText.trim()
+    if (jsonText.startsWith('```json')) {
+      jsonText = jsonText.slice(7)
+    } else if (jsonText.startsWith('```')) {
+      jsonText = jsonText.slice(3)
+    }
+    if (jsonText.endsWith('```')) {
+      jsonText = jsonText.slice(0, -3)
+    }
+    jsonText = jsonText.trim()
+
+    return JSON.parse(jsonText) as IGenerateDraft
+  } catch (error) {
+    console.error('Error generating draft with analysis:', error)
+    throw new Error(
+      `Failed to generate draft with analysis: ${(error as Error).message}`,
+    )
   }
 }
