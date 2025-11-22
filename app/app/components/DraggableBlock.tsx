@@ -9,6 +9,7 @@ interface DraggableBlockProps {
   isDragging: boolean
   isSelected?: boolean
   zoom: number
+  zIndex?: number
   onMouseDown: (
     e: MouseEvent<HTMLDivElement>,
     id: string,
@@ -26,6 +27,7 @@ export default function DraggableBlock({
   isDragging,
   isSelected = false,
   zoom,
+  zIndex = 1,
   onMouseDown,
   onContextMenu,
   children,
@@ -60,7 +62,7 @@ export default function DraggableBlock({
 
   return (
     <div
-      className={`absolute select-none ${isDragging ? 'cursor-grabbing z-50' : 'cursor-grab'}`}
+      className={`absolute select-none ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
       style={{
         left: x,
         top: y,
@@ -70,6 +72,7 @@ export default function DraggableBlock({
           : undefined,
         outline: isSelected ? `${outlineWidth}px solid #3b82f6` : 'none',
         outlineOffset: `${outlineOffset}px`,
+        zIndex,
       }}
       onMouseDown={handleMouseDown}
       onContextMenu={handleContextMenu}
