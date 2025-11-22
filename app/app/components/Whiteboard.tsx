@@ -7,7 +7,6 @@ import DraggableToolbar, { Tool } from './toolbar/DraggableToolbar'
 import DraggableBlock from './DraggableBlock'
 import ScholarshipWithActions from './scholarship/ScholarshipWithActions'
 import EssayBlock from './essay/EssayBlock'
-import JsonOutputBlock from './scholarship/JsonOutputBlock'
 import { useWhiteboard } from '../context/WhiteboardContext'
 import { useEditing } from '../context/EditingContext'
 import { saveEssayDraftToDB } from '../lib/dbUtils'
@@ -44,7 +43,7 @@ export default function Whiteboard() {
     new Map<string, { x: number; y: number }>(),
   )
   const [clipboard, setClipboard] = useState<Array<{
-    type: 'cell' | 'scholarship' | 'essay' | 'jsonOutput'
+    type: 'cell' | 'scholarship' | 'essay'
     data: unknown
   }> | null>(null)
   const [selectionBox, setSelectionBox] = useState<{
@@ -70,6 +69,7 @@ export default function Whiteboard() {
     addEssay,
     updateEssay,
     deleteEssay,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     deleteJsonOutput,
     updateBlockPosition,
     getBlockPosition,
@@ -244,20 +244,6 @@ export default function Whiteboard() {
       setDragStartPositions(newDragStartPositions)
     },
     [position, zoom, selectedIds, getBlockPosition, bringToFront],
-  )
-
-  const handleCreateDraft = useCallback(
-    (scholarshipId: string) => {
-      const scholarship = scholarships.find((s) => s.id === scholarshipId)
-      if (!scholarship) return
-
-      addEssay({
-        scholarshipId,
-        content: '',
-        maxWordCount: undefined,
-      })
-    },
-    [scholarships, addEssay],
   )
 
   // Essay generation currently pending workflow implementation
@@ -494,24 +480,6 @@ export default function Whiteboard() {
         }
       })
 
-      // Check JSON outputs
-      jsonOutputs.forEach((jsonOutput) => {
-        const pos = getBlockPosition(jsonOutput.id)
-        const blockLeft = pos.x
-        const blockRight = pos.x + 400
-        const blockTop = pos.y
-        const blockBottom = pos.y + 300
-
-        if (
-          blockRight > canvasBoxLeft &&
-          blockLeft < canvasBoxRight &&
-          blockBottom > canvasBoxTop &&
-          blockTop < canvasBoxBottom
-        ) {
-          newSelectedIds.add(jsonOutput.id)
-        }
-      })
-
       setSelectedIds(newSelectedIds)
       setSelectionBox(null)
     }
@@ -522,7 +490,6 @@ export default function Whiteboard() {
     cells,
     scholarships,
     essays,
-    jsonOutputs,
     selectedIds,
     getBlockPosition,
   ])
@@ -639,13 +606,6 @@ export default function Whiteboard() {
       allObjectIds.add(essay.id)
     })
 
-    // Add JSON outputs
-    jsonOutputs.forEach((jsonOutput) => {
-      const pos = getBlockPosition(jsonOutput.id)
-      objects.push({ x: pos.x, y: pos.y, width: 400, height: 300 })
-      allObjectIds.add(jsonOutput.id)
-    })
-
     // If no objects, do nothing
     if (objects.length === 0) {
       return
@@ -698,7 +658,7 @@ export default function Whiteboard() {
 
     // Select all objects to show their borders
     setSelectedIds(allObjectIds)
-  }, [cells, scholarships, essays, jsonOutputs, getBlockPosition])
+  }, [cells, scholarships, essays, getBlockPosition])
 
   // Context menu handlers
   const handleContextMenu = useCallback(
@@ -732,21 +692,16 @@ export default function Whiteboard() {
         } else if (id.startsWith('essay-')) {
           const essay = essays.find((e) => e.id === id)
           return essay ? { type: 'essay' as const, data: essay } : null
-        } else if (id.startsWith('json-')) {
-          const jsonOutput = jsonOutputs.find((j) => j.id === id)
-          return jsonOutput
-            ? { type: 'jsonOutput' as const, data: jsonOutput }
-            : null
         }
         return null
       })
       .filter(Boolean) as Array<{
-      type: 'cell' | 'scholarship' | 'essay' | 'jsonOutput'
+      type: 'cell' | 'scholarship' | 'essay'
       data: unknown
     }>
 
     setClipboard(itemsToCopy)
-  }, [selectedIds, cells, scholarships, essays, jsonOutputs])
+  }, [selectedIds, cells, scholarships, essays])
 
   const handlePaste = useCallback(() => {
     if (!clipboard || clipboard.length === 0) return
@@ -813,18 +768,10 @@ export default function Whiteboard() {
         deleteScholarship(id)
       } else if (id.startsWith('essay-')) {
         deleteEssay(id)
-      } else if (id.startsWith('json-')) {
-        deleteJsonOutput(id)
       }
     })
     setSelectedIds(new Set())
-  }, [
-    selectedIds,
-    deleteCell,
-    deleteScholarship,
-    deleteEssay,
-    deleteJsonOutput,
-  ])
+  }, [selectedIds, deleteCell, deleteScholarship, deleteEssay])
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -1021,7 +968,6 @@ export default function Whiteboard() {
                 data={scholarship}
                 onUpdate={updateScholarship}
                 onDelete={deleteScholarship}
-                onCreateDraft={handleCreateDraft}
               />
             </DraggableBlock>
           )
@@ -1052,30 +998,6 @@ export default function Whiteboard() {
                 onUpdate={updateEssay}
                 onDelete={deleteEssay}
                 isGenerating={false}
-              />
-            </DraggableBlock>
-          )
-        })}
-
-        {/* Render JSON output blocks */}
-        {jsonOutputs.map((jsonOutput) => {
-          const pos = getBlockPosition(jsonOutput.id)
-          return (
-            <DraggableBlock
-              key={jsonOutput.id}
-              id={jsonOutput.id}
-              x={pos.x}
-              y={pos.y}
-              isDragging={draggingCellId === jsonOutput.id}
-              isSelected={selectedIds.has(jsonOutput.id)}
-              zoom={zoom}
-              zIndex={getZIndex(jsonOutput.id)}
-              onMouseDown={handleBlockMouseDown}
-              onContextMenu={(e, blockId) => handleContextMenu(e, blockId)}
-            >
-              <JsonOutputBlock
-                data={jsonOutput.data}
-                onDelete={() => deleteJsonOutput(jsonOutput.id)}
               />
             </DraggableBlock>
           )

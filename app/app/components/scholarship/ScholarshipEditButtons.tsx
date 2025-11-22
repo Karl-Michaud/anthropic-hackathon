@@ -25,7 +25,11 @@ export default function ScholarshipEditButtons({
       <button
         onClick={onSave}
         disabled={isLoading}
-        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-all ${
+          isLoading
+            ? 'bg-primary-500 text-white cursor-not-allowed'
+            : 'bg-primary-500 hover:bg-primary-600 text-white cursor-pointer'
+        }`}
       >
         {isLoading && <Loader2 size={14} className="animate-spin" />}
         {isLoading ? 'Saving...' : 'Save'}

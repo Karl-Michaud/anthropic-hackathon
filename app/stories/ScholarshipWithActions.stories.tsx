@@ -26,7 +26,6 @@ export const Default: Story = {
     data: mockScholarship,
     onUpdate: (data) => console.log('Updated:', data),
     onDelete: (id) => console.log('Deleted:', id),
-    onCreateDraft: (id) => console.log('Creating draft for:', id),
   },
 }
 
@@ -38,7 +37,6 @@ export const WithoutHiddenRequirements: Story = {
     },
     onUpdate: (data) => console.log('Updated:', data),
     onDelete: (id) => console.log('Deleted:', id),
-    onCreateDraft: (id) => console.log('Creating draft for:', id),
   },
 }
 
@@ -68,6 +66,5 @@ export const LongDescription: Story = {
     },
     onUpdate: (data) => console.log('Updated:', data),
     onDelete: (id) => console.log('Deleted:', id),
-    onCreateDraft: (id) => console.log('Creating draft for:', id),
   },
 }

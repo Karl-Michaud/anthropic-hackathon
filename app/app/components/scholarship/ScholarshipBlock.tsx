@@ -49,20 +49,28 @@ export default function ScholarshipBlock({
         prompt: editedData.prompt,
       })
 
-      const result = await extractScholarshipInfo(content)
-      if (result && result.ScholarshipName) {
-        onUpdate({
-          ...editedData,
-          title: result.ScholarshipName || editedData.title,
-          description: result.ScholarshipDescription || editedData.description,
-          prompt: result.EssayPrompt || editedData.prompt,
-        })
-      } else {
+      try {
+        const result = await extractScholarshipInfo(content)
+        if (
+          result &&
+          result.ScholarshipName &&
+          result.ScholarshipName !== 'Missing'
+        ) {
+          onUpdate({
+            ...editedData,
+            title: result.ScholarshipName || editedData.title,
+            description:
+              result.ScholarshipDescription || editedData.description,
+            prompt: result.EssayPrompt || editedData.prompt,
+          })
+        } else {
+          onUpdate(editedData)
+        }
+      } catch {
+        // API extraction failed, but still save the edited data
+        // This can happen if API key is missing or invalid
         onUpdate(editedData)
       }
-    } catch (error) {
-      console.error('Failed to update scholarship:', error)
-      onUpdate(editedData)
     } finally {
       setIsLoading(false)
       setIsEditing(false)
