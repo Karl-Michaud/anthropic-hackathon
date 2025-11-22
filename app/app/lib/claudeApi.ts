@@ -95,7 +95,6 @@ function parseExtractionResponse(response: string): ScholarshipExtraction {
       ScholarshipName: parsed.ScholarshipName || 'Missing',
       ScholarshipDescription: parsed.ScholarshipDescription || 'Missing',
       EssayPrompt: parsed.EssayPrompt || 'Missing',
-      HiddenRequirements: parsed.HiddenRequirements || [],
     }
 
     return extraction

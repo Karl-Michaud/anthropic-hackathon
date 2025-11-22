@@ -24,8 +24,6 @@ export interface AdaptiveWeightCategory {
   subweights: Record<string, number>
 }
 
-export type AdaptiveWeights = Record<string, AdaptiveWeightCategory>
-
 export interface CellData {
   id: string
   x: number
@@ -40,12 +38,10 @@ export interface ScholarshipData {
   title: string
   description: string
   prompt: string
-  hiddenRequirements: string[]
-  adaptiveWeights?: AdaptiveWeights
-  weights?: AdaptiveWeights
-  personality?: Record<string, any>
-  priorities?: Record<string, any>
-  values?: Record<string, any>
+  personality?: Record<string, unknown>
+  priorities?: Record<string, unknown>
+  values?: Record<string, unknown>
+  weights?: Record<string, unknown>
 }
 
 export interface HighlightedSection {
@@ -86,11 +82,9 @@ export interface JsonOutputData {
     ScholarshipName: string
     ScholarshipDescription: string
     EssayPrompt: string
-    HiddenRequirements?: string[]
-    AdaptiveWeights?: AdaptiveWeights
-    Personality?: Record<string, any>
-    Priorities?: Record<string, any>
-    Values?: Record<string, any>
+    Personality?: Record<string, unknown>
+    Priorities?: Record<string, unknown>
+    Values?: Record<string, unknown>
   }
 }
 
@@ -276,8 +270,6 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
                 ScholarshipName: scholarship.title,
                 ScholarshipDescription: scholarship.description,
                 EssayPrompt: scholarship.prompt,
-                HiddenRequirements: scholarship.hiddenRequirements,
-                AdaptiveWeights: scholarship.weights,
               },
             }
           : output,

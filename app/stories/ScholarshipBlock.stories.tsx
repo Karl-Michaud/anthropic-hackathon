@@ -16,25 +16,15 @@ type Story = StoryObj<typeof ScholarshipBlock>
 const mockScholarship = {
   id: 'scholarship-1',
   title: 'Tech Innovation Scholarship',
-  description: 'Awarded to students demonstrating innovation in technology and creative problem-solving.',
-  prompt: 'Describe a time when you used technology to solve a real-world problem.',
-  hiddenRequirements: ['Innovation', 'Leadership', 'Technical Skills'],
+  description:
+    'Awarded to students demonstrating innovation in technology and creative problem-solving.',
+  prompt:
+    'Describe a time when you used technology to solve a real-world problem.',
 }
 
 export const Default: Story = {
   args: {
     data: mockScholarship,
-    onUpdate: () => {},
-    onDelete: () => {},
-  },
-}
-
-export const WithoutHiddenRequirements: Story = {
-  args: {
-    data: {
-      ...mockScholarship,
-      hiddenRequirements: [],
-    },
     onUpdate: () => {},
     onDelete: () => {},
   },
@@ -52,17 +42,6 @@ export const LongDescription: Story = {
       - Commitment to making a positive impact
 
       The scholarship covers full tuition and provides mentorship opportunities.`,
-    },
-    onUpdate: () => {},
-    onDelete: () => {},
-  },
-}
-
-export const MultipleHiddenRequirements: Story = {
-  args: {
-    data: {
-      ...mockScholarship,
-      hiddenRequirements: ['Innovation', 'Leadership', 'Technical Skills', 'Communication', 'Entrepreneurship'],
     },
     onUpdate: () => {},
     onDelete: () => {},

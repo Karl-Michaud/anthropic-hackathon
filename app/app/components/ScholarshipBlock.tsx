@@ -1,38 +1,38 @@
 'use client'
 
 import { useState, useCallback, useRef, useEffect } from 'react'
-import {
-  MoreVertical,
-  Pencil,
-  Trash2,
-  Plus,
-  Loader2,
-  Copy,
-  Check,
-} from 'lucide-react'
+import { MoreVertical, Pencil, Trash2, Plus, Loader2 } from 'lucide-react'
 import { useEditing } from '../context/EditingContext'
-import { ScholarshipData, AdaptiveWeights } from '../context/WhiteboardContext'
+import { ScholarshipData } from '../context/WhiteboardContext'
 import { requestClaude } from '../lib/request'
 import { IPromptWeights } from '../types/interfaces'
 
 export type { ScholarshipData }
 
-// HiddenRequirementTag component
-function HiddenRequirementTag({ text }: { text: string }) {
-  return (
-    <span className="inline-flex items-center px-3 py-1 text-xs font-semibold text-white bg-linear-to-r from-sky-500 to-teal-500 rounded-full shadow-lg hover:scale-105 transition-all">
-      {text}
-    </span>
-  )
-}
-
 // Personality Display
-function PersonalityDisplay({ data }: { data?: Record<string, any> }) {
+function PersonalityDisplay({ data }: { data?: Record<string, unknown> }) {
   const [isExpanded, setIsExpanded] = useState(false)
 
-  if (!data || !data.personality_profile) return null
+  if (!data) return null
 
-  const profile = data.personality_profile
+  // Extract personality_profile if it exists, otherwise use data directly
+  const profile = (
+    typeof data.personality_profile === 'object' && data.personality_profile
+      ? (data.personality_profile as Record<string, unknown>)
+      : data
+  ) as Record<string, unknown>
+
+  const spirit = (profile.spirit || profile.core_identity) as string | undefined
+  const toneStyle = (profile.toneStyle || profile.tone_style) as
+    | string
+    | undefined
+  const valuesEmphasized = (profile.valuesEmphasized ||
+    profile.values_emphasized) as string[] | undefined
+  const recommendedEssayFocus = (profile.recommendedEssayFocus ||
+    profile.recommended_essay_focus) as string | undefined
+
+  if (!spirit && !toneStyle && !valuesEmphasized && !recommendedEssayFocus)
+    return null
 
   return (
     <div className="mt-4 border-t border-gray-200 pt-4">
@@ -45,44 +45,41 @@ function PersonalityDisplay({ data }: { data?: Record<string, any> }) {
       </button>
       {isExpanded && (
         <div className="mt-2 p-3 bg-gray-50 rounded text-xs text-gray-600 space-y-3">
-          {profile.core_identity && (
+          {spirit && (
             <div>
               <p className="font-semibold text-gray-700 mb-1">Core Identity:</p>
-              <p className="text-gray-600">{profile.core_identity}</p>
+              <p className="text-gray-600">{spirit}</p>
             </div>
           )}
-          {profile.tone_style && (
+          {toneStyle && (
             <div>
               <p className="font-semibold text-gray-700 mb-1">Tone & Style:</p>
-              <p className="text-gray-600">{profile.tone_style}</p>
+              <p className="text-gray-600">{toneStyle}</p>
             </div>
           )}
-          {profile.values_emphasized &&
-            profile.values_emphasized.length > 0 && (
-              <div>
-                <p className="font-semibold text-gray-700 mb-1">
-                  Values Emphasized:
-                </p>
-                <div className="flex flex-wrap gap-1">
-                  {profile.values_emphasized.map(
-                    (value: string, idx: number) => (
-                      <span
-                        key={idx}
-                        className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs"
-                      >
-                        {value}
-                      </span>
-                    ),
-                  )}
-                </div>
+          {valuesEmphasized && valuesEmphasized.length > 0 && (
+            <div>
+              <p className="font-semibold text-gray-700 mb-1">
+                Values Emphasized:
+              </p>
+              <div className="flex flex-wrap gap-1">
+                {valuesEmphasized.map((value: string, idx: number) => (
+                  <span
+                    key={idx}
+                    className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs"
+                  >
+                    {value}
+                  </span>
+                ))}
               </div>
-            )}
-          {profile.recommended_essay_focus && (
+            </div>
+          )}
+          {recommendedEssayFocus && (
             <div>
               <p className="font-semibold text-gray-700 mb-1">
                 Recommended Essay Focus:
               </p>
-              <p className="text-gray-600">{profile.recommended_essay_focus}</p>
+              <p className="text-gray-600">{recommendedEssayFocus}</p>
             </div>
           )}
         </div>
@@ -92,10 +89,22 @@ function PersonalityDisplay({ data }: { data?: Record<string, any> }) {
 }
 
 // Priorities Display
-function PrioritiesDisplay({ data }: { data?: Record<string, any> }) {
+function PrioritiesDisplay({ data }: { data?: Record<string, unknown> }) {
   const [isExpanded, setIsExpanded] = useState(false)
 
   if (!data) return null
+
+  const primaryFocus = (data.primaryFocus || data.primary_focus) as
+    | string
+    | undefined
+  const selectionSignals = (data.selectionSignals || data.selection_signals) as
+    | string[]
+    | undefined
+  const successProfile = (data.successProfile || data.success_profile) as
+    | string
+    | undefined
+
+  if (!primaryFocus && !selectionSignals && !successProfile) return null
 
   return (
     <div className="mt-4 border-t border-gray-200 pt-4">
@@ -108,37 +117,30 @@ function PrioritiesDisplay({ data }: { data?: Record<string, any> }) {
       </button>
       {isExpanded && (
         <div className="mt-2 p-3 bg-gray-50 rounded text-xs text-gray-600 space-y-3">
-          {data.primary_focus && (
+          {primaryFocus && (
             <div>
               <p className="font-semibold text-gray-700 mb-1">Primary Focus:</p>
-              <p className="text-gray-600">{data.primary_focus}</p>
+              <p className="text-gray-600">{primaryFocus}</p>
             </div>
           )}
-          {data.priority_weights && (
+          {successProfile && (
             <div>
-              <p className="font-semibold text-gray-700 mb-2">
-                Priority Weights:
+              <p className="font-semibold text-gray-700 mb-1">
+                Success Profile:
               </p>
-              <div className="space-y-1 ml-2">
-                {Object.entries(data.priority_weights).map(
-                  ([key, value]: [string, any]) => (
-                    <div key={key} className="flex justify-between">
-                      <span className="text-gray-600">{key}:</span>
-                      <span className="font-semibold text-gray-700">
-                        {typeof value === 'number'
-                          ? `${(value * 100).toFixed(1)}%`
-                          : String(value)}
-                      </span>
-                    </div>
-                  ),
-                )}
-              </div>
+              <p className="text-gray-600">{successProfile}</p>
             </div>
           )}
-          {data.summary && (
+          {selectionSignals && selectionSignals.length > 0 && (
             <div>
-              <p className="font-semibold text-gray-700 mb-1">Summary:</p>
-              <p className="text-gray-600">{data.summary}</p>
+              <p className="font-semibold text-gray-700 mb-1">
+                Selection Signals:
+              </p>
+              <ul className="list-disc list-inside text-gray-600 space-y-1">
+                {selectionSignals.map((signal: string, idx: number) => (
+                  <li key={idx}>{signal}</li>
+                ))}
+              </ul>
             </div>
           )}
         </div>
@@ -148,10 +150,22 @@ function PrioritiesDisplay({ data }: { data?: Record<string, any> }) {
 }
 
 // Values Display
-function ValuesDisplay({ data }: { data?: Record<string, any> }) {
+function ValuesDisplay({ data }: { data?: Record<string, unknown> }) {
   const [isExpanded, setIsExpanded] = useState(false)
 
   if (!data) return null
+
+  const valuesEmphasized = (data.valuesEmphasized || data.values_emphasized) as
+    | string[]
+    | undefined
+  const valueDefinitions = (data.valueDefinitions || data.value_definitions) as
+    | Record<string, unknown>
+    | undefined
+  const evidencePhrases = (data.evidencePhrases || data.evidence_phrases) as
+    | string[]
+    | undefined
+
+  if (!valuesEmphasized && !valueDefinitions && !evidencePhrases) return null
 
   return (
     <div className="mt-4 border-t border-gray-200 pt-4">
@@ -164,13 +178,13 @@ function ValuesDisplay({ data }: { data?: Record<string, any> }) {
       </button>
       {isExpanded && (
         <div className="mt-2 p-3 bg-gray-50 rounded text-xs text-gray-600 space-y-3">
-          {data.values_emphasized && data.values_emphasized.length > 0 && (
+          {valuesEmphasized && valuesEmphasized.length > 0 && (
             <div>
               <p className="font-semibold text-gray-700 mb-1">
                 Values Emphasized:
               </p>
               <div className="flex flex-wrap gap-1">
-                {data.values_emphasized.map((value: string, idx: number) => (
+                {valuesEmphasized.map((value: string, idx: number) => (
                   <span
                     key={idx}
                     className="bg-purple-100 text-purple-700 px-2 py-1 rounded text-xs"
@@ -181,31 +195,30 @@ function ValuesDisplay({ data }: { data?: Record<string, any> }) {
               </div>
             </div>
           )}
-          {data.value_definitions &&
-            Object.keys(data.value_definitions).length > 0 && (
-              <div>
-                <p className="font-semibold text-gray-700 mb-2">
-                  Value Definitions:
-                </p>
-                <div className="space-y-2 ml-2">
-                  {Object.entries(data.value_definitions).map(
-                    ([key, value]: [string, any]) => (
-                      <div key={key}>
-                        <p className="font-medium text-gray-700">{key}:</p>
-                        <p className="text-gray-600 ml-2">{String(value)}</p>
-                      </div>
-                    ),
-                  )}
-                </div>
+          {valueDefinitions && Object.keys(valueDefinitions).length > 0 && (
+            <div>
+              <p className="font-semibold text-gray-700 mb-2">
+                Value Definitions:
+              </p>
+              <div className="space-y-2 ml-2">
+                {Object.entries(valueDefinitions).map(
+                  ([key, value]: [string, unknown]) => (
+                    <div key={key}>
+                      <p className="font-medium text-gray-700">{key}:</p>
+                      <p className="text-gray-600 ml-2">{String(value)}</p>
+                    </div>
+                  ),
+                )}
               </div>
-            )}
-          {data.evidence_phrases && data.evidence_phrases.length > 0 && (
+            </div>
+          )}
+          {evidencePhrases && evidencePhrases.length > 0 && (
             <div>
               <p className="font-semibold text-gray-700 mb-1">
                 Evidence Phrases:
               </p>
               <ul className="list-disc list-inside text-gray-600 space-y-1">
-                {data.evidence_phrases.map((phrase: string, idx: number) => (
+                {evidencePhrases.map((phrase: string, idx: number) => (
                   <li key={idx}>{phrase}</li>
                 ))}
               </ul>
@@ -218,11 +231,14 @@ function ValuesDisplay({ data }: { data?: Record<string, any> }) {
 }
 
 // Weights Display
-function WeightsDisplay({ data }: { data?: Record<string, any> }) {
+function WeightsDisplay({ data }: { data?: Record<string, unknown> }) {
   const [isExpanded, setIsExpanded] = useState(false)
 
-  // Handle both 'weights' and 'adaptiveWeights' field names
-  const weightsData = data || {}
+  if (!data) return null
+
+  // Use the data directly as it's already the weights object
+  const weightsData = data
+
   if (!weightsData || Object.keys(weightsData).length === 0) return null
 
   return (
@@ -231,79 +247,59 @@ function WeightsDisplay({ data }: { data?: Record<string, any> }) {
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full text-left flex items-center justify-between hover:bg-gray-50 px-2 py-1 rounded transition-colors cursor-pointer"
       >
-        <h4 className="text-sm font-semibold text-gray-700">Weights</h4>
+        <h4 className="text-sm font-semibold text-gray-700">
+          Hidden Criteria and Weights
+        </h4>
         <span className="text-xs text-gray-400">{isExpanded ? '▼' : '▶'}</span>
       </button>
       {isExpanded && (
         <div className="mt-2 p-3 bg-gray-50 rounded text-xs text-gray-600 space-y-3">
-          {Object.entries(data).map(
-            ([category, categoryData]: [string, any]) => (
-              <div key={category}>
-                <p className="font-semibold text-gray-700 mb-2 capitalize">
-                  {category}
-                </p>
-                <div className="ml-2 space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Main Weight:</span>
-                    <span className="font-semibold text-gray-700">
-                      {typeof categoryData.weight === 'number'
-                        ? `${(categoryData.weight * 100).toFixed(1)}%`
-                        : String(categoryData.weight)}
-                    </span>
-                  </div>
-                  {categoryData.subweights &&
-                    Object.keys(categoryData.subweights).length > 0 && (
-                      <div className="mt-2 ml-2 space-y-1 border-l-2 border-gray-300 pl-2">
-                        {Object.entries(categoryData.subweights).map(
-                          ([subkey, subvalue]: [string, any]) => (
-                            <div key={subkey} className="flex justify-between">
-                              <span className="text-gray-600">{subkey}:</span>
-                              <span className="font-semibold text-gray-700">
-                                {typeof subvalue === 'number'
-                                  ? `${(subvalue * 100).toFixed(1)}%`
-                                  : String(subvalue)}
-                              </span>
-                            </div>
-                          ),
-                        )}
+          {Object.entries(weightsData).map(
+            ([category, categoryData]: [string, unknown]) => {
+              const catData = categoryData as
+                | Record<string, unknown>
+                | undefined
+              return (
+                <div key={category}>
+                  <p className="font-semibold text-gray-700 mb-2 capitalize">
+                    {category}
+                  </p>
+                  <div className="ml-2 space-y-1">
+                    {catData && typeof catData.weight !== 'undefined' && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Main Weight:</span>
+                        <span className="font-semibold text-gray-700">
+                          {typeof catData.weight === 'number'
+                            ? `${(catData.weight * 100).toFixed(1)}%`
+                            : String(catData.weight)}
+                        </span>
                       </div>
                     )}
+                    {catData &&
+                    catData.subweights &&
+                    typeof catData.subweights === 'object' &&
+                    Object.keys(catData.subweights as Record<string, unknown>)
+                      .length > 0 ? (
+                      <div className="mt-2 ml-2 space-y-1 border-l-2 border-gray-300 pl-2">
+                        {Object.entries(
+                          catData.subweights as Record<string, unknown>,
+                        ).map(([subkey, subvalue]: [string, unknown]) => (
+                          <div key={subkey} className="flex justify-between">
+                            <span className="text-gray-600">{subkey}:</span>
+                            <span className="font-semibold text-gray-700">
+                              {typeof subvalue === 'number'
+                                ? `${(subvalue * 100).toFixed(1)}%`
+                                : String(subvalue)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
-              </div>
-            ),
+              )
+            },
           )}
-        </div>
-      )}
-    </div>
-  )
-}
-
-// AIAnalysisSection component (fallback for unknown data types)
-function AIAnalysisSection({
-  title,
-  data,
-}: {
-  title: string
-  data?: Record<string, any>
-}) {
-  const [isExpanded, setIsExpanded] = useState(false)
-
-  if (!data) return null
-
-  return (
-    <div className="mt-4 border-t border-gray-200 pt-4">
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full text-left flex items-center justify-between hover:bg-gray-50 px-2 py-1 rounded transition-colors cursor-pointer"
-      >
-        <h4 className="text-sm font-semibold text-gray-700">{title}</h4>
-        <span className="text-xs text-gray-400">{isExpanded ? '▼' : '▶'}</span>
-      </button>
-      {isExpanded && (
-        <div className="mt-2 p-3 bg-gray-50 rounded text-xs text-gray-600 max-h-40 overflow-y-auto font-mono">
-          <pre className="whitespace-pre-wrap wrap-break-word">
-            {JSON.stringify(data, null, 2)}
-          </pre>
         </div>
       )}
     </div>
@@ -508,7 +504,7 @@ function ScholarshipEditButtons({
 }
 
 // ScholarshipActions component
-function ScholarshipActions({
+export function ScholarshipActions({
   onDraft,
   isGenerating = false,
 }: {
@@ -538,79 +534,6 @@ function ScholarshipActions({
   )
 }
 
-// JsonOutputBlock component
-function JsonOutputBlock({
-  data,
-  onDelete,
-}: {
-  data: {
-    ScholarshipName: string
-    ScholarshipDescription: string
-    EssayPrompt: string
-    HiddenRequirements?: string[]
-    AdaptiveWeights?: AdaptiveWeights
-    Personality?: Record<string, any>
-    Priorities?: Record<string, any>
-    Values?: Record<string, any>
-  }
-  onDelete: () => void
-}) {
-  const [copied, setCopied] = useState(false)
-  const [isHovered, setIsHovered] = useState(false)
-
-  const jsonString = JSON.stringify(data, null, 2)
-
-  const handleCopy = async () => {
-    await navigator.clipboard.writeText(jsonString)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
-
-  return (
-    <div
-      className="w-[450px] bg-gray-900 rounded-xl shadow-lg border border-gray-700 overflow-hidden relative"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      {/* Delete button */}
-      {isHovered && (
-        <div className="absolute -top-2 -right-2 z-10">
-          <button
-            onClick={onDelete}
-            className="w-8 h-8 bg-red-600 hover:bg-red-700 rounded-full flex items-center justify-center cursor-pointer transition-all shadow-md"
-            title="Delete"
-          >
-            <Trash2 size={16} className="text-white" />
-          </button>
-        </div>
-      )}
-
-      {/* Header */}
-      <div className="flex items-center justify-between py-2 px-4 bg-gray-800 border-b border-gray-700">
-        <span className="text-xs font-medium text-gray-400">
-          AI Pipeline Output
-        </span>
-        <button
-          onClick={handleCopy}
-          className="p-1 border-0 bg-transparent cursor-pointer rounded-sm transition-all hover:bg-gray-700"
-          title="Copy JSON"
-        >
-          {copied ? (
-            <Check size={14} className="text-sky-400" />
-          ) : (
-            <Copy size={14} className="text-gray-400" />
-          )}
-        </button>
-      </div>
-
-      {/* JSON Content */}
-      <pre className="p-4 text-xs text-gray-300 overflow-x-auto font-mono leading-relaxed m-0">
-        {jsonString}
-      </pre>
-    </div>
-  )
-}
-
 // Main ScholarshipBlock component
 interface ScholarshipBlockProps {
   data: ScholarshipData
@@ -620,7 +543,7 @@ interface ScholarshipBlockProps {
   isGeneratingEssay?: boolean
 }
 
-export default function ScholarshipBlock({
+export function ScholarshipBlock({
   data,
   onUpdate,
   onDelete,
@@ -656,7 +579,7 @@ export default function ScholarshipBlock({
 
       onUpdate({
         ...editedData,
-        weights: weights as any,
+        weights: weights,
       })
     } catch (error) {
       console.error('Failed to update scholarship:', error)
@@ -706,15 +629,6 @@ export default function ScholarshipBlock({
         />
       )}
 
-      {/* Hidden Requirements */}
-      {data.hiddenRequirements.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-4">
-          {data.hiddenRequirements.map((req, index) => (
-            <HiddenRequirementTag key={index} text={req} />
-          ))}
-        </div>
-      )}
-
       {/* Title */}
       <EditableField
         value={currentData.title}
@@ -757,7 +671,16 @@ export default function ScholarshipBlock({
           <PersonalityDisplay data={data.personality} />
           <PrioritiesDisplay data={data.priorities} />
           <ValuesDisplay data={data.values} />
-          <WeightsDisplay data={data.weights || data.adaptiveWeights} />
+          <WeightsDisplay data={data.weights} />
+          {!data.personality &&
+            !data.priorities &&
+            !data.values &&
+            !data.weights && (
+              <div className="mt-4 p-3 bg-gray-50 rounded text-sm text-gray-500 italic">
+                No AI analysis available. Generate analysis to see personality,
+                priorities, values, and weights.
+              </div>
+            )}
         </>
       )}
 
@@ -780,10 +703,3 @@ export default function ScholarshipBlock({
     </div>
   )
 }
-
-// Export wrapper for backward compatibility
-export function ScholarshipWithActions(props: ScholarshipBlockProps) {
-  return <ScholarshipBlock {...props} />
-}
-
-export { ScholarshipActions, JsonOutputBlock }

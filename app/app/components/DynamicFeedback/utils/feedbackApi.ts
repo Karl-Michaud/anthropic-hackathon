@@ -9,8 +9,6 @@ interface SocraticAnalysisResult {
   socraticData: Record<string, SocraticQuestion[]>
 }
 
-const HIGHLIGHT_COLORS = ['amber', 'cyan', 'pink', 'lime', 'purple'] as const
-
 /**
  * Analyze essay and return highlighted sections with Socratic questions
  */

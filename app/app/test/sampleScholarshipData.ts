@@ -13,7 +13,6 @@ export const sampleScholarship: ScholarshipData = {
     'Description of Scholarship. Lorem ipsum dolor sit amet consectetur. Viverra adipiscing duis in malesuada elementum dignissim elit. Felis dictumst aliquet vitae elit et aliquam. Rutrum pellentesque tristique mattis duis et nisi facilisis luctus. Imperdiet scelerisque erat ultricies nisl luctus justo. Justo non fames at faucibus aliquam sodales. Odio id lorem arcu viverra. Luctus sed suscipit sed feugiat suspendisse ut penatibus. Malesuada sagittis fames nunc dui phasellus mauris nibh dis.',
   prompt:
     'Description of Prompt. Lorem ipsum dolor sit amet consectetur. Viverra adipiscing duis in malesuada elementum dignissim elit.',
-  hiddenRequirements: ['Hidden Requirement', 'Hidden Requirement'],
 }
 
 export const sampleScholarship2: ScholarshipData = {
@@ -23,7 +22,6 @@ export const sampleScholarship2: ScholarshipData = {
     'This scholarship is awarded to students who demonstrate exceptional innovation and technical skills. Candidates should show a track record of building projects, learning from failure, and making real-world impact through technology.',
   prompt:
     'Describe a technical project you have built and how it has impacted your community or solved a real problem.',
-  hiddenRequirements: ['Innovation', 'Technical Skills', 'Problem Solving'],
 }
 
 export const sampleEssay: EssayData = {
@@ -56,6 +54,5 @@ export const sampleApiResponse = {
       'This prestigious scholarship recognizes students who have demonstrated outstanding community leadership. Award amount: $10,000. Eligibility: Canadian citizens or permanent residents enrolled in post-secondary education. Deadline: March 15, 2025.',
     EssayPrompt:
       'Describe a community initiative you have led and its lasting impact on the people it served.',
-    HiddenRequirements: ['Community Service', 'Leadership', 'Social Impact'],
   },
 }

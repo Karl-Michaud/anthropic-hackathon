@@ -8,7 +8,6 @@ import type {
   IPromptValues,
   IPromptWeights,
 } from '../types/interfaces'
-import { ImportanceLevel } from '../types/interfaces'
 
 export interface ScholarshipRecord {
   id: string
@@ -120,10 +119,21 @@ export async function updateScholarshipInSupabase(
 
 export async function saveEssayDraftToDB(
   scholarshipId: string,
-  promptIndex: number,
   content: string,
 ): Promise<void> {
   try {
+    // Verify scholarship exists
+    const scholarship = await prisma.scholarship.findUnique({
+      where: { id: scholarshipId },
+    })
+
+    if (!scholarship) {
+      console.warn(
+        `Scholarship ${scholarshipId} not found in database. Skipping draft save.`,
+      )
+      return
+    }
+
     // Check if draft exists for this scholarship
     const existingDraft = await prisma.generateDraft.findUnique({
       where: {
@@ -154,7 +164,6 @@ export async function saveEssayDraftToDB(
 
 export async function getEssayDraftFromDB(
   scholarshipId: string,
-  promptIndex: number,
 ): Promise<string | null> {
   try {
     const draft = await prisma.generateDraft.findUnique({
@@ -232,7 +241,7 @@ export async function savePromptPrioritiesToDB(
     }
 
     const primaryFocusValue = (primaryFocusMap[data.primary_focus] ||
-      'OTHER') as any
+      'OTHER') as unknown
 
     const existingPriorities = await prisma.promptPriorities.findUnique({
       where: { scholarshipId },

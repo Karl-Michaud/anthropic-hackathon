@@ -93,7 +93,7 @@ IMPORTANT:
     let analysisData
     try {
       analysisData = JSON.parse(textContent.text)
-    } catch (e) {
+    } catch {
       console.error('Failed to parse Claude response:', textContent.text)
       throw new Error('Failed to parse analysis response')
     }

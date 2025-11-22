@@ -3,17 +3,10 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { Loader2, MoreVertical, Trash2 } from 'lucide-react'
 import { useEditing } from '../context/EditingContext'
-import {
-  EssayData,
-  HighlightedSection,
-  SocraticQuestion,
-} from '../context/WhiteboardContext'
+import { EssayData, HighlightedSection } from '../context/WhiteboardContext'
 import { colors, typography, transitions } from '../styles/design-system'
 import SocraticPanel, { SocraticPanelData } from './SocraticPanel'
-import {
-  analyzeSocraticQuestions,
-  submitSocraticAnswers,
-} from './DynamicFeedback'
+import { submitSocraticAnswers } from './DynamicFeedback'
 
 export type { EssayData }
 

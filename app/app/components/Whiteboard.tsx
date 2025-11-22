@@ -5,7 +5,7 @@ import Cell from './Cell'
 import ZoomComponent from './ZoomComponent'
 import DraggableToolbar, { Tool } from './DraggableToolbar'
 import DraggableBlock from './DraggableBlock'
-import { ScholarshipWithActions, JsonOutputBlock } from './ScholarshipBlock'
+import { ScholarshipBlock } from './ScholarshipBlock'
 import EssayBlock from './EssayBlock'
 import { submitFeedbackAnswers } from './DynamicFeedback/utils/feedbackApi'
 import FeedbackPanel from './FeedbackPanel'
@@ -274,7 +274,7 @@ export default function Whiteboard() {
         try {
           for (const essay of essays) {
             if (essay.scholarshipId && essay.content) {
-              await saveEssayDraftToDB(essay.scholarshipId, 0, essay.content)
+              await saveEssayDraftToDB(essay.scholarshipId, essay.content)
             }
           }
         } catch (error) {
@@ -371,7 +371,7 @@ export default function Whiteboard() {
 
         // Save to database
         if (scholarship.id) {
-          await saveEssayDraftToDB(scholarship.id, 0, essayContent)
+          await saveEssayDraftToDB(scholarship.id, essayContent)
         }
       } catch (error) {
         console.error('Failed to generate essay:', error)
@@ -888,7 +888,6 @@ export default function Whiteboard() {
           title: item.data.title,
           description: item.data.description,
           prompt: item.data.prompt,
-          hiddenRequirements: item.data.hiddenRequirements,
           weights: item.data.weights,
         })
         const pos = getBlockPosition(scholarshipData.id)
@@ -1138,7 +1137,7 @@ export default function Whiteboard() {
               onMouseDown={handleBlockMouseDown}
               onContextMenu={(e, blockId) => handleContextMenu(e, blockId)}
             >
-              <ScholarshipWithActions
+              <ScholarshipBlock
                 data={scholarship}
                 onUpdate={updateScholarship}
                 onDelete={deleteScholarship}
@@ -1174,30 +1173,6 @@ export default function Whiteboard() {
                 onUpdate={updateEssay}
                 onDelete={deleteEssay}
                 isGenerating={generatingEssayFor === essay.scholarshipId}
-              />
-            </DraggableBlock>
-          )
-        })}
-
-        {/* Render JSON output blocks */}
-        {jsonOutputs.map((jsonOutput) => {
-          const pos = getBlockPosition(jsonOutput.id)
-          return (
-            <DraggableBlock
-              key={jsonOutput.id}
-              id={jsonOutput.id}
-              x={pos.x}
-              y={pos.y}
-              isDragging={draggingCellId === jsonOutput.id}
-              isSelected={selectedIds.has(jsonOutput.id)}
-              zoom={zoom}
-              zIndex={getZIndex(jsonOutput.id)}
-              onMouseDown={handleBlockMouseDown}
-              onContextMenu={(e, blockId) => handleContextMenu(e, blockId)}
-            >
-              <JsonOutputBlock
-                data={jsonOutput.data}
-                onDelete={() => deleteJsonOutput(jsonOutput.id)}
               />
             </DraggableBlock>
           )

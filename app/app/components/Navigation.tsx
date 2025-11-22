@@ -20,7 +20,6 @@ import {
 import { extractScholarshipInfo } from '../lib/claudeApi'
 import { requestClaude } from '../lib/request'
 import type { FeedbackData } from './DynamicFeedback/types'
-import type { AdaptiveWeights } from '../context/WhiteboardContext'
 import { IPromptWeights } from '../types/interfaces'
 
 const navItems = [{ href: '/', icon: Home, label: 'Home' }]
@@ -280,12 +279,9 @@ export interface ScholarshipUploadResult {
   title: string
   description: string
   prompts: string[]
-  hiddenRequirements: string[]
-  adaptiveWeights?: AdaptiveWeights
-  weights?: AdaptiveWeights
-  personality?: Record<string, any>
-  priorities?: Record<string, any>
-  values?: Record<string, any>
+  personality?: Record<string, unknown>
+  priorities?: Record<string, unknown>
+  values?: Record<string, unknown>
 }
 
 function ScholarshipUploadPopup({
@@ -348,8 +344,7 @@ function ScholarshipUploadPopup({
           title,
           description,
           prompts: [prompt],
-          hiddenRequirements: result.HiddenRequirements || [],
-          weights: weights as any,
+          weights: weights as unknown,
           personality: dbScholarship?.promptPersonality || undefined,
           priorities: dbScholarship?.promptPriorities || undefined,
           values: dbScholarship?.promptValues || undefined,
@@ -401,8 +396,7 @@ function ScholarshipUploadPopup({
         title,
         description,
         prompts,
-        hiddenRequirements: [],
-        weights: weights as any,
+        weights: weights as unknown,
         personality: dbScholarship?.promptPersonality || undefined,
         priorities: dbScholarship?.promptPriorities || undefined,
         values: dbScholarship?.promptValues || undefined,
@@ -511,9 +505,7 @@ export default function Navigation() {
       title: data.title,
       description: data.description,
       prompt: data.prompts?.[0] || '',
-      hiddenRequirements: data.hiddenRequirements,
-      adaptiveWeights: data.adaptiveWeights || data.weights,
-      weights: data.weights || data.adaptiveWeights,
+      weights: data.weights,
       personality: data.personality,
       priorities: data.priorities,
       values: data.values,
@@ -524,8 +516,6 @@ export default function Navigation() {
       ScholarshipName: data.title,
       ScholarshipDescription: data.description,
       EssayPrompt: data.prompts?.[0] || '',
-      HiddenRequirements: data.hiddenRequirements,
-      AdaptiveWeights: data.weights,
       Personality: data.personality,
       Priorities: data.priorities,
       Values: data.values,
