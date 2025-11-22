@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 'use client'
 
 import {
@@ -10,9 +9,22 @@ import {
   useRef,
   ReactNode,
 } from 'react'
+import { FeedbackData } from '../components/DynamicFeedback/types'
+import {
+  saveFeedbackDraft,
+  loadFeedbackDraft,
+  clearFeedbackDraft,
+} from '../components/DynamicFeedback/utils/feedbackApi'
 
 const STORAGE_KEY = 'whiteboard-data'
 const DEBOUNCE_MS = 500
+
+export interface AdaptiveWeightCategory {
+  weight: number
+  subweights: Record<string, number>
+}
+
+export type AdaptiveWeights = Record<string, AdaptiveWeightCategory>
 
 export interface CellData {
   id: string
@@ -29,6 +41,7 @@ export interface ScholarshipData {
   description: string
   prompt: string
   hiddenRequirements: string[]
+  adaptiveWeights?: AdaptiveWeights
 }
 
 export interface EssayData {
@@ -52,6 +65,7 @@ export interface JsonOutputData {
     ScholarshipDescription: string
     EssayPrompt: string
     HiddenRequirements?: string[]
+    AdaptiveWeights?: AdaptiveWeights
   }
 }
 
@@ -69,6 +83,7 @@ interface WhiteboardContextType {
   scholarships: ScholarshipData[]
   essays: EssayData[]
   jsonOutputs: JsonOutputData[]
+  feedbackPanels: FeedbackData[]
   blockPositions: BlockPosition[]
 
   // Cell actions
@@ -89,6 +104,14 @@ interface WhiteboardContextType {
   // JSON output actions
   addJsonOutput: (scholarshipId: string, data: JsonOutputData['data']) => string
   deleteJsonOutput: (jsonOutputId: string) => void
+
+  // Feedback panel actions
+  addFeedbackPanel: (feedbackData: FeedbackData) => void
+  updateFeedbackPanel: (
+    feedbackId: string,
+    updates: Partial<FeedbackData>,
+  ) => void
+  deleteFeedbackPanel: (feedbackId: string) => void
 
   // Position actions
   updateBlockPosition: (id: string, x: number, y: number) => void
@@ -131,91 +154,42 @@ function saveToStorage(state: WhiteboardState) {
 }
 
 export function WhiteboardProvider({ children }: { children: ReactNode }) {
-  // Initialize with default state (for server-side rendering)
-  const [state, setState] = useState<WhiteboardState>(defaultState)
-  const [isHydrated, setIsHydrated] = useState(false)
+  const [cells, setCells] = useState<CellData[]>([])
+  const [scholarships, setScholarships] = useState<ScholarshipData[]>([])
+  const [essays, setEssays] = useState<EssayData[]>([])
+  const [jsonOutputs, setJsonOutputs] = useState<JsonOutputData[]>([])
+  const [feedbackPanels, setFeedbackPanels] = useState<FeedbackData[]>([])
+  const [blockPositions, setBlockPositions] = useState<BlockPosition[]>([])
+  const [isLoaded, setIsLoaded] = useState(false)
 
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Load from localStorage after hydration (client-side only)
   useEffect(() => {
     const stored = loadFromStorage()
-    setState(stored)
-    setIsHydrated(true)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCells(stored.cells)
+    setScholarships(stored.scholarships)
+    setEssays(stored.essays)
+    setJsonOutputs(stored.jsonOutputs)
+    setBlockPositions(stored.blockPositions)
+
+    // Load feedback panel drafts separately
+    const feedbackDrafts: FeedbackData[] = []
+    stored.essays.forEach((essay) => {
+      const draft = loadFeedbackDraft(essay.id)
+      if (draft) {
+        feedbackDrafts.push(draft)
+      }
+    })
+    setFeedbackPanels(feedbackDrafts)
+
+    setIsLoaded(true)
   }, [])
-
-  // Convenience getters
-  const { cells, scholarships, essays, jsonOutputs, blockPositions } = state
-
-  // Helper setters to maintain the same API
-  const setCells = useCallback(
-    (updater: CellData[] | ((prev: CellData[]) => CellData[])) => {
-      setState((prev) => ({
-        ...prev,
-        cells: typeof updater === 'function' ? updater(prev.cells) : updater,
-      }))
-    },
-    [],
-  )
-
-  const setScholarships = useCallback(
-    (
-      updater:
-        | ScholarshipData[]
-        | ((prev: ScholarshipData[]) => ScholarshipData[]),
-    ) => {
-      setState((prev) => ({
-        ...prev,
-        scholarships:
-          typeof updater === 'function' ? updater(prev.scholarships) : updater,
-      }))
-    },
-    [],
-  )
-
-  const setEssays = useCallback(
-    (updater: EssayData[] | ((prev: EssayData[]) => EssayData[])) => {
-      setState((prev) => ({
-        ...prev,
-        essays: typeof updater === 'function' ? updater(prev.essays) : updater,
-      }))
-    },
-    [],
-  )
-
-  const setJsonOutputs = useCallback(
-    (
-      updater:
-        | JsonOutputData[]
-        | ((prev: JsonOutputData[]) => JsonOutputData[]),
-    ) => {
-      setState((prev) => ({
-        ...prev,
-        jsonOutputs:
-          typeof updater === 'function' ? updater(prev.jsonOutputs) : updater,
-      }))
-    },
-    [],
-  )
-
-  const setBlockPositions = useCallback(
-    (
-      updater: BlockPosition[] | ((prev: BlockPosition[]) => BlockPosition[]),
-    ) => {
-      setState((prev) => ({
-        ...prev,
-        blockPositions:
-          typeof updater === 'function'
-            ? updater(prev.blockPositions)
-            : updater,
-      }))
-    },
-    [],
-  )
 
   // Debounced save to localStorage (only after hydration)
   useEffect(() => {
-    if (!isHydrated) return
+    if (!isLoaded) return
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current)
     }
@@ -235,7 +209,7 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
         clearTimeout(saveTimeoutRef.current)
       }
     }
-  }, [cells, scholarships, essays, jsonOutputs, blockPositions, isHydrated])
+  }, [cells, scholarships, essays, jsonOutputs, blockPositions, isLoaded])
 
   // Cell actions
   const addCell = useCallback((cell: Omit<CellData, 'id'>) => {
@@ -276,6 +250,7 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
                 ScholarshipDescription: scholarship.description,
                 EssayPrompt: scholarship.prompt,
                 HiddenRequirements: scholarship.hiddenRequirements,
+                AdaptiveWeights: scholarship.adaptiveWeights,
               },
             }
           : output,
@@ -344,12 +319,49 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
     [blockPositions],
   )
 
+  // Feedback panel actions
+  const addFeedbackPanel = useCallback((feedbackData: FeedbackData) => {
+    setFeedbackPanels((prev) => [...prev, feedbackData])
+    saveFeedbackDraft(feedbackData) // Auto-save to localStorage
+  }, [])
+
+  const updateFeedbackPanel = useCallback(
+    (feedbackId: string, updates: Partial<FeedbackData>) => {
+      setFeedbackPanels((prev) =>
+        prev.map((panel) =>
+          panel.id === feedbackId ? { ...panel, ...updates } : panel,
+        ),
+      )
+      // Auto-save updated panel
+      setFeedbackPanels((prev) => {
+        const updatedPanel = prev.find((p) => p.id === feedbackId)
+        if (updatedPanel) {
+          saveFeedbackDraft({ ...updatedPanel, ...updates })
+        }
+        return prev
+      })
+    },
+    [],
+  )
+
+  const deleteFeedbackPanel = useCallback((feedbackId: string) => {
+    setFeedbackPanels((prev) => {
+      const panel = prev.find((p) => p.id === feedbackId)
+      if (panel) {
+        clearFeedbackDraft(panel.essayId)
+      }
+      return prev.filter((p) => p.id !== feedbackId)
+    })
+    setBlockPositions((prev) => prev.filter((p) => p.id !== feedbackId))
+  }, [])
+
   // Clear all
   const clearAll = useCallback(() => {
     setCells([])
     setScholarships([])
     setEssays([])
     setJsonOutputs([])
+    setFeedbackPanels([])
     setBlockPositions([])
   }, [])
 
@@ -360,6 +372,7 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
         scholarships,
         essays,
         jsonOutputs,
+        feedbackPanels,
         blockPositions,
         addCell,
         updateCell,
@@ -372,6 +385,9 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
         deleteEssay,
         addJsonOutput,
         deleteJsonOutput,
+        addFeedbackPanel,
+        updateFeedbackPanel,
+        deleteFeedbackPanel,
         updateBlockPosition,
         getBlockPosition,
         clearAll,

@@ -133,7 +133,7 @@ export default function Cell({
           onMouseDown={(e) => e.stopPropagation()}
         />
       ) : (
-        <p className="text-sm text-neutral-700 whitespace-pre-wrap break-words m-0">
+        <p className="text-sm text-neutral-700 whitespace-pre-wrap wrap-break-word m-0">
           {cell.text}
         </p>
       )}
