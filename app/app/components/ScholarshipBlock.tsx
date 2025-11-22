@@ -20,9 +20,293 @@ export type { ScholarshipData }
 // HiddenRequirementTag component
 function HiddenRequirementTag({ text }: { text: string }) {
   return (
-    <span className="inline-flex items-center px-3 py-1 text-xs font-semibold text-white bg-gradient-to-r from-sky-500 to-teal-500 rounded-full shadow-lg hover:scale-105 transition-all">
+    <span className="inline-flex items-center px-3 py-1 text-xs font-semibold text-white bg-linear-to-r from-sky-500 to-teal-500 rounded-full shadow-lg hover:scale-105 transition-all">
       {text}
     </span>
+  )
+}
+
+// Personality Display
+function PersonalityDisplay({ data }: { data?: Record<string, any> }) {
+  const [isExpanded, setIsExpanded] = useState(false)
+
+  if (!data || !data.personality_profile) return null
+
+  const profile = data.personality_profile
+
+  return (
+    <div className="mt-4 border-t border-gray-200 pt-4">
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full text-left flex items-center justify-between hover:bg-gray-50 px-2 py-1 rounded transition-colors cursor-pointer"
+      >
+        <h4 className="text-sm font-semibold text-gray-700">Personality</h4>
+        <span className="text-xs text-gray-400">{isExpanded ? '▼' : '▶'}</span>
+      </button>
+      {isExpanded && (
+        <div className="mt-2 p-3 bg-gray-50 rounded text-xs text-gray-600 space-y-3">
+          {profile.core_identity && (
+            <div>
+              <p className="font-semibold text-gray-700 mb-1">Core Identity:</p>
+              <p className="text-gray-600">{profile.core_identity}</p>
+            </div>
+          )}
+          {profile.tone_style && (
+            <div>
+              <p className="font-semibold text-gray-700 mb-1">Tone & Style:</p>
+              <p className="text-gray-600">{profile.tone_style}</p>
+            </div>
+          )}
+          {profile.values_emphasized &&
+            profile.values_emphasized.length > 0 && (
+              <div>
+                <p className="font-semibold text-gray-700 mb-1">
+                  Values Emphasized:
+                </p>
+                <div className="flex flex-wrap gap-1">
+                  {profile.values_emphasized.map(
+                    (value: string, idx: number) => (
+                      <span
+                        key={idx}
+                        className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs"
+                      >
+                        {value}
+                      </span>
+                    ),
+                  )}
+                </div>
+              </div>
+            )}
+          {profile.recommended_essay_focus && (
+            <div>
+              <p className="font-semibold text-gray-700 mb-1">
+                Recommended Essay Focus:
+              </p>
+              <p className="text-gray-600">{profile.recommended_essay_focus}</p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Priorities Display
+function PrioritiesDisplay({ data }: { data?: Record<string, any> }) {
+  const [isExpanded, setIsExpanded] = useState(false)
+
+  if (!data) return null
+
+  return (
+    <div className="mt-4 border-t border-gray-200 pt-4">
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full text-left flex items-center justify-between hover:bg-gray-50 px-2 py-1 rounded transition-colors cursor-pointer"
+      >
+        <h4 className="text-sm font-semibold text-gray-700">Priorities</h4>
+        <span className="text-xs text-gray-400">{isExpanded ? '▼' : '▶'}</span>
+      </button>
+      {isExpanded && (
+        <div className="mt-2 p-3 bg-gray-50 rounded text-xs text-gray-600 space-y-3">
+          {data.primary_focus && (
+            <div>
+              <p className="font-semibold text-gray-700 mb-1">Primary Focus:</p>
+              <p className="text-gray-600">{data.primary_focus}</p>
+            </div>
+          )}
+          {data.priority_weights && (
+            <div>
+              <p className="font-semibold text-gray-700 mb-2">
+                Priority Weights:
+              </p>
+              <div className="space-y-1 ml-2">
+                {Object.entries(data.priority_weights).map(
+                  ([key, value]: [string, any]) => (
+                    <div key={key} className="flex justify-between">
+                      <span className="text-gray-600">{key}:</span>
+                      <span className="font-semibold text-gray-700">
+                        {typeof value === 'number'
+                          ? `${(value * 100).toFixed(1)}%`
+                          : String(value)}
+                      </span>
+                    </div>
+                  ),
+                )}
+              </div>
+            </div>
+          )}
+          {data.summary && (
+            <div>
+              <p className="font-semibold text-gray-700 mb-1">Summary:</p>
+              <p className="text-gray-600">{data.summary}</p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Values Display
+function ValuesDisplay({ data }: { data?: Record<string, any> }) {
+  const [isExpanded, setIsExpanded] = useState(false)
+
+  if (!data) return null
+
+  return (
+    <div className="mt-4 border-t border-gray-200 pt-4">
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full text-left flex items-center justify-between hover:bg-gray-50 px-2 py-1 rounded transition-colors cursor-pointer"
+      >
+        <h4 className="text-sm font-semibold text-gray-700">Values</h4>
+        <span className="text-xs text-gray-400">{isExpanded ? '▼' : '▶'}</span>
+      </button>
+      {isExpanded && (
+        <div className="mt-2 p-3 bg-gray-50 rounded text-xs text-gray-600 space-y-3">
+          {data.values_emphasized && data.values_emphasized.length > 0 && (
+            <div>
+              <p className="font-semibold text-gray-700 mb-1">
+                Values Emphasized:
+              </p>
+              <div className="flex flex-wrap gap-1">
+                {data.values_emphasized.map((value: string, idx: number) => (
+                  <span
+                    key={idx}
+                    className="bg-purple-100 text-purple-700 px-2 py-1 rounded text-xs"
+                  >
+                    {value}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+          {data.value_definitions &&
+            Object.keys(data.value_definitions).length > 0 && (
+              <div>
+                <p className="font-semibold text-gray-700 mb-2">
+                  Value Definitions:
+                </p>
+                <div className="space-y-2 ml-2">
+                  {Object.entries(data.value_definitions).map(
+                    ([key, value]: [string, any]) => (
+                      <div key={key}>
+                        <p className="font-medium text-gray-700">{key}:</p>
+                        <p className="text-gray-600 ml-2">{String(value)}</p>
+                      </div>
+                    ),
+                  )}
+                </div>
+              </div>
+            )}
+          {data.evidence_phrases && data.evidence_phrases.length > 0 && (
+            <div>
+              <p className="font-semibold text-gray-700 mb-1">
+                Evidence Phrases:
+              </p>
+              <ul className="list-disc list-inside text-gray-600 space-y-1">
+                {data.evidence_phrases.map((phrase: string, idx: number) => (
+                  <li key={idx}>{phrase}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Weights Display
+function WeightsDisplay({ data }: { data?: Record<string, any> }) {
+  const [isExpanded, setIsExpanded] = useState(false)
+
+  // Handle both 'weights' and 'adaptiveWeights' field names
+  const weightsData = data || {}
+  if (!weightsData || Object.keys(weightsData).length === 0) return null
+
+  return (
+    <div className="mt-4 border-t border-gray-200 pt-4">
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full text-left flex items-center justify-between hover:bg-gray-50 px-2 py-1 rounded transition-colors cursor-pointer"
+      >
+        <h4 className="text-sm font-semibold text-gray-700">Weights</h4>
+        <span className="text-xs text-gray-400">{isExpanded ? '▼' : '▶'}</span>
+      </button>
+      {isExpanded && (
+        <div className="mt-2 p-3 bg-gray-50 rounded text-xs text-gray-600 space-y-3">
+          {Object.entries(data).map(
+            ([category, categoryData]: [string, any]) => (
+              <div key={category}>
+                <p className="font-semibold text-gray-700 mb-2 capitalize">
+                  {category}
+                </p>
+                <div className="ml-2 space-y-1">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Main Weight:</span>
+                    <span className="font-semibold text-gray-700">
+                      {typeof categoryData.weight === 'number'
+                        ? `${(categoryData.weight * 100).toFixed(1)}%`
+                        : String(categoryData.weight)}
+                    </span>
+                  </div>
+                  {categoryData.subweights &&
+                    Object.keys(categoryData.subweights).length > 0 && (
+                      <div className="mt-2 ml-2 space-y-1 border-l-2 border-gray-300 pl-2">
+                        {Object.entries(categoryData.subweights).map(
+                          ([subkey, subvalue]: [string, any]) => (
+                            <div key={subkey} className="flex justify-between">
+                              <span className="text-gray-600">{subkey}:</span>
+                              <span className="font-semibold text-gray-700">
+                                {typeof subvalue === 'number'
+                                  ? `${(subvalue * 100).toFixed(1)}%`
+                                  : String(subvalue)}
+                              </span>
+                            </div>
+                          ),
+                        )}
+                      </div>
+                    )}
+                </div>
+              </div>
+            ),
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// AIAnalysisSection component (fallback for unknown data types)
+function AIAnalysisSection({
+  title,
+  data,
+}: {
+  title: string
+  data?: Record<string, any>
+}) {
+  const [isExpanded, setIsExpanded] = useState(false)
+
+  if (!data) return null
+
+  return (
+    <div className="mt-4 border-t border-gray-200 pt-4">
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full text-left flex items-center justify-between hover:bg-gray-50 px-2 py-1 rounded transition-colors cursor-pointer"
+      >
+        <h4 className="text-sm font-semibold text-gray-700">{title}</h4>
+        <span className="text-xs text-gray-400">{isExpanded ? '▼' : '▶'}</span>
+      </button>
+      {isExpanded && (
+        <div className="mt-2 p-3 bg-gray-50 rounded text-xs text-gray-600 max-h-40 overflow-y-auto font-mono">
+          <pre className="whitespace-pre-wrap wrap-break-word">
+            {JSON.stringify(data, null, 2)}
+          </pre>
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -265,6 +549,9 @@ function JsonOutputBlock({
     EssayPrompt: string
     HiddenRequirements?: string[]
     AdaptiveWeights?: AdaptiveWeights
+    Personality?: Record<string, any>
+    Priorities?: Record<string, any>
+    Values?: Record<string, any>
   }
   onDelete: () => void
 }) {
@@ -360,7 +647,7 @@ export default function ScholarshipBlock({
     setIsLoading(true)
 
     try {
-      const adaptiveWeights = await requestClaude<IPromptWeights>(
+      const weights = await requestClaude<IPromptWeights>(
         'promptWeights',
         editedData.title,
         editedData.description,
@@ -369,7 +656,7 @@ export default function ScholarshipBlock({
 
       onUpdate({
         ...editedData,
-        adaptiveWeights: adaptiveWeights as any,
+        weights: weights as any,
       })
     } catch (error) {
       console.error('Failed to update scholarship:', error)
@@ -463,6 +750,16 @@ export default function ScholarshipBlock({
           placeholder="Enter essay prompt..."
         />
       </div>
+
+      {/* AI Analysis Sections */}
+      {!isEditing && (
+        <>
+          <PersonalityDisplay data={data.personality} />
+          <PrioritiesDisplay data={data.priorities} />
+          <ValuesDisplay data={data.values} />
+          <WeightsDisplay data={data.weights || data.adaptiveWeights} />
+        </>
+      )}
 
       {/* Save/Cancel buttons */}
       {isEditing && (

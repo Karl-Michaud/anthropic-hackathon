@@ -889,7 +889,7 @@ export default function Whiteboard() {
           description: item.data.description,
           prompt: item.data.prompt,
           hiddenRequirements: item.data.hiddenRequirements,
-          adaptiveWeights: item.data.adaptiveWeights,
+          weights: item.data.weights,
         })
         const pos = getBlockPosition(scholarshipData.id)
         const clamped = clampToCanvas(pos.x + 50, pos.y + 50)

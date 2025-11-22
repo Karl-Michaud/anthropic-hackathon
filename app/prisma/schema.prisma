@@ -16,42 +16,17 @@ datasource db {
 }
 
 model Scholarship {
-  id          String   @unique @default(uuid())
-  title       String // the title of the scholarship 
-  description String // the description of the scholarship
-  prompts     Prompt[]
+  id                String             @id @unique @default(uuid())
+  title             String // the title of the scholarship 
+  description       String // the description of the scholarship
+  prompt            String
+  promptPersonality PromptPersonality?
+  promptPriorities  PromptPriorities?
+  promptValues      PromptValues?
+  promptWeights     PromptWeights?
+  generateDraft     GenerateDraft?
 
   @@map("scholarships")
-}
-
-model Prompt {
-  id                   String                @id @default(cuid())
-  text                 String // The essay question or prompt text
-  promptHiddenCriteria PromptHiddenCriteria?
-  promptPersonality    PromptPersonality?
-  promptPriorities     PromptPriorities?
-  promptValues         PromptValues?
-  generateDraft        GenerateDraft?
-
-  scholarshipId String         @map("scholarship_id")
-  scholarship   Scholarship    @relation(fields: [scholarshipId], references: [id])
-  promptWeights PromptWeights?
-
-  @@map("prompts")
-}
-
-model PromptHiddenCriteria {
-  id                          String          @id @default(cuid())
-  scholarshipHiddenCriteriaId String?         @map("scholarship_hidden_criteria_id")
-  trait                       String
-  rationale                   String
-  evidencePhrases             String[]        @map("evidence_phrases")
-  importance                  ImportanceLevel
-
-  promptId String @unique @map("prompt_id")
-  prompt   Prompt @relation(fields: [promptId], references: [id])
-
-  @@map("prompt_hidden_criteria")
 }
 
 enum ImportanceLevel {
@@ -67,8 +42,8 @@ model PromptPersonality {
   valuesEmphasized      String[] @map("values_emphasized") // academic, service, etc
   recommendedEssayFocus String   @map("recommended_essay_focus") // what the essay should talk about (with regards to what the user has entered)
 
-  promptId String @unique @map("prompt_id")
-  prompt   Prompt @relation(fields: [promptId], references: [id])
+  scholarshipId String      @unique @map("scholarship_id")
+  scholarship   Scholarship @relation(fields: [scholarshipId], references: [id])
 
   @@map("prompt_personalities")
 }
@@ -78,8 +53,8 @@ model PromptPriorities {
   primaryFocus    PrimaryFocus @map("primary_focus") // a list of possible focuses for the scholarship
   priorityWeights Json         @map("priority_weights") // Record<string, number>; matches each focus with a weight (percentage)
 
-  promptId String @unique @map("prompt_id")
-  prompt   Prompt @relation(fields: [promptId], references: [id])
+  scholarshipId String      @unique @map("scholarship_id")
+  scholarship   Scholarship @relation(fields: [scholarshipId], references: [id])
 
   @@map("prompt_priorities")
 }
@@ -100,8 +75,8 @@ model PromptValues {
   valueDefinitions Json     @map("value_definitions") // Record<string, string>; match each value with an elaboration of what that value means, particularly with regards to the specifics of the scholarship
   evidencePhrases  String[] @map("evidence_phrases") // provide important phrases in the prompt and/or scholarship description that is relevant to the values of the scholarship
 
-  promptId String @unique @map("prompt_id")
-  prompt   Prompt @relation(fields: [promptId], references: [id])
+  scholarshipId String      @unique @map("scholarship_id")
+  scholarship   Scholarship @relation(fields: [scholarshipId], references: [id])
 
   @@map("prompt_values")
 }
@@ -111,8 +86,8 @@ model PromptWeights {
 
   weights Json @map("weights")
 
-  promptId String @unique @map("prompt_id")
-  prompt   Prompt @relation(fields: [promptId], references: [id])
+  scholarshipId String      @unique @map("scholarship_id")
+  scholarship   Scholarship @relation(fields: [scholarshipId], references: [id])
 
   @@map("prompt_weights")
 }
@@ -121,8 +96,8 @@ model GenerateDraft {
   id    String @id @default(cuid())
   essay String
 
-  promptId String @unique @map("prompt_id")
-  prompt   Prompt @relation(fields: [promptId], references: [id])
+  scholarshipId String      @unique @map("scholarship_id")
+  scholarship   Scholarship @relation(fields: [scholarshipId], references: [id])
 
   @@map("drafts")
 }

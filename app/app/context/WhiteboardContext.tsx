@@ -42,6 +42,25 @@ export interface ScholarshipData {
   prompt: string
   hiddenRequirements: string[]
   adaptiveWeights?: AdaptiveWeights
+  weights?: AdaptiveWeights
+  personality?: Record<string, any>
+  priorities?: Record<string, any>
+  values?: Record<string, any>
+}
+
+export interface HighlightedSection {
+  id: string
+  startIndex: number
+  endIndex: number
+  color: string
+  title: string
+  colorName: 'amber' | 'cyan' | 'pink' | 'lime' | 'purple'
+}
+
+export interface SocraticQuestion {
+  id: string
+  text: string
+  answer: string
 }
 
 export interface EssayData {
@@ -49,6 +68,9 @@ export interface EssayData {
   scholarshipId: string
   content: string
   maxWordCount?: number
+  highlightedSections?: HighlightedSection[]
+  socraticData?: Record<string, SocraticQuestion[]>
+  lastEditedAt?: number
 }
 
 export interface BlockPosition {
@@ -66,6 +88,9 @@ export interface JsonOutputData {
     EssayPrompt: string
     HiddenRequirements?: string[]
     AdaptiveWeights?: AdaptiveWeights
+    Personality?: Record<string, any>
+    Priorities?: Record<string, any>
+    Values?: Record<string, any>
   }
 }
 
@@ -92,7 +117,9 @@ interface WhiteboardContextType {
   deleteCell: (cellId: string) => void
 
   // Scholarship actions
-  addScholarship: (scholarship: Omit<ScholarshipData, 'id'>) => string
+  addScholarship: (
+    scholarship: Omit<ScholarshipData, 'id'> & { id?: string },
+  ) => string
   updateScholarship: (scholarship: ScholarshipData) => void
   deleteScholarship: (scholarshipId: string) => void
 
@@ -228,8 +255,8 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
 
   // Scholarship actions
   const addScholarship = useCallback(
-    (scholarship: Omit<ScholarshipData, 'id'>) => {
-      const id = `scholarship-${Date.now()}`
+    (scholarship: Omit<ScholarshipData, 'id'> & { id?: string }) => {
+      const id = scholarship.id || `scholarship-${Date.now()}`
       setScholarships((prev) => [...prev, { ...scholarship, id }])
       return id
     },
@@ -250,7 +277,7 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
                 ScholarshipDescription: scholarship.description,
                 EssayPrompt: scholarship.prompt,
                 HiddenRequirements: scholarship.hiddenRequirements,
-                AdaptiveWeights: scholarship.adaptiveWeights,
+                AdaptiveWeights: scholarship.weights,
               },
             }
           : output,

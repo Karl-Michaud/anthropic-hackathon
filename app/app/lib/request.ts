@@ -2,7 +2,6 @@
 
 import Anthropic from '@anthropic-ai/sdk'
 import {
-  IPromptHiddenCriteria,
   IPromptPersonality,
   IPromptPriorities,
   IPromptValues,
@@ -15,7 +14,6 @@ const anthropic = new Anthropic({
 })
 
 export type ClaudeRequestType =
-  | 'promptHiddenCriteria'
   | 'promptPersonality'
   | 'promptPriorities'
   | 'promptValues'
@@ -23,7 +21,6 @@ export type ClaudeRequestType =
   | 'generateDraft'
 
 export type ClaudeResponse =
-  | IPromptHiddenCriteria
   | IPromptPersonality
   | IPromptPriorities
   | IPromptValues
@@ -76,46 +73,6 @@ export async function requestClaude<T extends ClaudeResponse>(
 // # PROMPTS #
 // ###########
 
-function generateHiddenCriteriaPrompt(
-  title: string,
-  desc: string,
-  prompt: string,
-): string {
-  return `You are an expert in linguistic inference and selection pattern recognition.
-Your job is to detect **hidden criteria**—traits or preferences not explicitly stated in the scholarship description.
-
----
-
-SCHOLARSHIP INPUT:
-Title: ${title}
-Description: ${desc}
-Essay Prompt: ${prompt}
-
----
-
-TASK:
-Infer what qualities this scholarship secretly values, based on tone, emphasis, and phrasing.
-Explain the rationale briefly and provide text evidence.
-
-CRITICAL: Return ONLY valid JSON. Do NOT use markdown code blocks. Do NOT add explanatory text before or after the JSON.
-
-Response must be valid JSON only:
-
-{
-  "implicit_criteria": [
-    {
-      "trait": "Resilience through failure",
-      "rationale": "Mentions of 'overcoming obstacles' and 'learning experiences'.",
-      "evidence_phrases": ["'adversity'", "'growth mindset'"],
-      "importance": "high"
-    }
-  ],
-  "overall_pattern": "Prefers applicants who grow from challenges and show perseverance.",
-  "summary": "Strong hidden bias toward resilience and learning from hardship.",
-  "confidence_score": 87
-}`
-}
-
 function generatePersonalityPrompt(
   title: string,
   desc: string,
@@ -143,9 +100,8 @@ Analyze the scholarship carefully and produce a **personality profile** that cap
 2. **Tone & Style Preference:** How essays should sound to appeal to this scholarship (formal, energetic, heartfelt, technical, visionary, etc.).
 3. **Communication Strategy:** What storytelling approach works best — e.g., start with a failure, highlight measurable impact, show curiosity beyond grades.
 4. **Values Emphasized:** List 4-6 values or traits the scholarship implicitly rewards (e.g., creativity, resilience, empathy, impact, leadership, academic excellence).
-5. **Hidden Criteria:** Identify unspoken expectations or traits inferred from language (e.g., “Resilience through failure,” “Hands-on experimentation,” “Long-term commitment to service”).
-6. **Recommended Essay Focus:** Describe how the essay should be reframed or structured to match this personality — what kind of story hook, tone, or emphasis to use.
-7. **Contrast Examples:** Briefly explain how this personality differs from at least two other common scholarship types (e.g., “vs. Merit Academic” and “vs. Community Service”).
+5. **Recommended Essay Focus:** Describe how the essay should be reframed or structured to match this personality — what kind of story hook, tone, or emphasis to use.
+6. **Contrast Examples:** Briefly explain how this personality differs from at least two other common scholarship types (e.g., “vs. Merit Academic” and “vs. Community Service”).
 
 ---
 
@@ -442,12 +398,6 @@ function getPromptForType(
   prompt: string,
 ): string {
   switch (type) {
-    case 'promptHiddenCriteria':
-      return generateHiddenCriteriaPrompt(
-        scholarshipTitle,
-        scholarshipDescription,
-        prompt,
-      )
     case 'promptPersonality':
       return generatePersonalityPrompt(
         scholarshipTitle,
@@ -490,42 +440,34 @@ export async function generateAllPromptAnalysis(
   prompt: string,
 ) {
   try {
-    const [hiddenCriteria, personality, priorities, values, weights] =
-      await Promise.all([
-        requestClaude<IPromptHiddenCriteria>(
-          'promptHiddenCriteria',
-          scholarshipTitle,
-          scholarshipDescription,
-          prompt,
-        ),
-        requestClaude<IPromptPersonality>(
-          'promptPersonality',
-          scholarshipTitle,
-          scholarshipDescription,
-          prompt,
-        ),
-        requestClaude<IPromptPriorities>(
-          'promptPriorities',
-          scholarshipTitle,
-          scholarshipDescription,
-          prompt,
-        ),
-        requestClaude<IPromptValues>(
-          'promptValues',
-          scholarshipTitle,
-          scholarshipDescription,
-          prompt,
-        ),
-        requestClaude<IPromptWeights>(
-          'promptWeights',
-          scholarshipTitle,
-          scholarshipDescription,
-          prompt,
-        ),
-      ])
+    const [personality, priorities, values, weights] = await Promise.all([
+      requestClaude<IPromptPersonality>(
+        'promptPersonality',
+        scholarshipTitle,
+        scholarshipDescription,
+        prompt,
+      ),
+      requestClaude<IPromptPriorities>(
+        'promptPriorities',
+        scholarshipTitle,
+        scholarshipDescription,
+        prompt,
+      ),
+      requestClaude<IPromptValues>(
+        'promptValues',
+        scholarshipTitle,
+        scholarshipDescription,
+        prompt,
+      ),
+      requestClaude<IPromptWeights>(
+        'promptWeights',
+        scholarshipTitle,
+        scholarshipDescription,
+        prompt,
+      ),
+    ])
 
     return {
-      hiddenCriteria,
       personality,
       priorities,
       values,
