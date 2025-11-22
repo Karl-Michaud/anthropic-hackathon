@@ -1,4 +1,4 @@
-import { FeedbackData } from '../types'
+import { FeedbackData } from './types'
 
 export function createDummyFeedbackData(
   essayId: string,

@@ -1,18 +1,18 @@
 'use client'
 
-import { FeedbackData } from '../types'
+import { FeedbackData } from './types'
 import {
   HighlightedSection,
   SocraticQuestion,
-} from '../../../context/WhiteboardContext'
+} from '../../context/WhiteboardContext'
 import {
   analyzeSocratic,
   submitSocraticAnswers as submitSocraticLib,
-} from '../../../lib/socratic'
+} from '../socratic'
 import {
   analyzeFeedback as analyzeFeedbackLib,
   submitFeedback as submitFeedbackLib,
-} from '../../../lib/feedback'
+} from '../feedback'
 
 interface SocraticAnalysisResult {
   highlightedSections: HighlightedSection[]

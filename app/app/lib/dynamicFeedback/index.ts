@@ -19,6 +19,6 @@ export {
   generateFeedbackId,
   analyzeSocraticQuestions,
   submitSocraticAnswers,
-} from './utils/feedbackApi'
+} from './feedbackApi'
 
-export { createDummyFeedbackData } from './utils/dummyData'
+export { createDummyFeedbackData } from './dummyData'
