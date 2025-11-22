@@ -30,7 +30,9 @@ export default function ZoomComponent({
         isDarkMode ? 'border-gray-700' : 'border-neutral-200'
       }`}
       style={{
-        background: isDarkMode ? `rgba(31, 41, 55, 0.95)` : `rgba(255, 255, 255, 0.95)`,
+        background: isDarkMode
+          ? `rgba(31, 41, 55, 0.95)`
+          : `rgba(255, 255, 255, 0.95)`,
         transition: transitions.common.all,
       }}
     >

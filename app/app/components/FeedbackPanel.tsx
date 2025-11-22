@@ -12,11 +12,13 @@ function Question({
   value,
   onChange,
   placeholder = 'Type your answer here...',
+  isDarkMode,
 }: {
   question: string
   value: string
   onChange: (value: string) => void
   placeholder?: string
+  isDarkMode?: boolean
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [isSaving, setIsSaving] = useState(false)
@@ -51,7 +53,11 @@ function Question({
   return (
     <div className="mb-4">
       <div className="flex items-center justify-between mb-2">
-        <label className="block text-sm font-medium text-neutral-700">
+        <label
+          className={`block text-sm font-medium ${
+            isDarkMode ? 'text-gray-300' : 'text-neutral-700'
+          }`}
+        >
           {question}
         </label>
         {isSaving && (
@@ -66,13 +72,25 @@ function Question({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full p-3 bg-white border border-neutral-300 rounded-lg resize-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all min-h-20"
+        className={`w-full p-3 border rounded-lg resize-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all min-h-20 ${
+          isDarkMode
+            ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-500'
+            : 'bg-white border-neutral-300 text-neutral-900'
+        }`}
         rows={3}
       />
-      <div className="mt-1 text-xs text-neutral-500">
+      <div
+        className={`mt-1 text-xs ${
+          isDarkMode ? 'text-gray-400' : 'text-neutral-500'
+        }`}
+      >
         {value.length} characters
         {value.length > 0 && value.length < 20 && (
-          <span className="ml-2 text-neutral-400">(add more details...)</span>
+          <span
+            className={`ml-2 ${isDarkMode ? 'text-gray-500' : 'text-neutral-400'}`}
+          >
+            (add more details...)
+          </span>
         )}
       </div>
     </div>
@@ -87,6 +105,7 @@ function FeedbackSection({
   isComplete,
   onAnswerChange,
   onComplete,
+  isDarkMode,
 }: {
   title: string
   description?: string
@@ -94,6 +113,7 @@ function FeedbackSection({
   isComplete: boolean
   onAnswerChange: (questionId: string, answer: string) => void
   onComplete: () => void
+  isDarkMode?: boolean
 }) {
   const allQuestionsAnswered = questions.every(
     (q) => q.answer.trim().length > 0,
@@ -103,17 +123,31 @@ function FeedbackSection({
     <div
       className={`border rounded-lg p-5 mb-4 transition-all ${
         isComplete
-          ? 'border-primary-500 bg-primary-50'
-          : 'border-neutral-300 bg-white'
+          ? isDarkMode
+            ? 'border-primary-500 bg-gray-700'
+            : 'border-primary-500 bg-primary-50'
+          : isDarkMode
+            ? 'border-gray-600 bg-gray-800'
+            : 'border-neutral-300 bg-white'
       }`}
     >
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
-          <h3 className="text-lg font-semibold text-neutral-900 mb-1">
+          <h3
+            className={`text-lg font-semibold mb-1 ${
+              isDarkMode ? 'text-gray-100' : 'text-neutral-900'
+            }`}
+          >
             {title}
           </h3>
           {description && (
-            <p className="text-sm text-neutral-600">{description}</p>
+            <p
+              className={`text-sm ${
+                isDarkMode ? 'text-gray-400' : 'text-neutral-600'
+              }`}
+            >
+              {description}
+            </p>
           )}
         </div>
         {isComplete && (
@@ -132,6 +166,7 @@ function FeedbackSection({
             value={question.answer}
             onChange={(value) => onAnswerChange(question.id, value)}
             placeholder={question.placeholder}
+            isDarkMode={isDarkMode}
           />
         ))}
       </div>
@@ -210,10 +245,13 @@ export default function FeedbackPanel({
       >
         {/* Drag Handle */}
         <div
-          className="flex items-center gap-2 transition-opacity opacity-50 group-hover:opacity-100"
+          data-drag-handle
+          className="flex items-center justify-center shrink-0 p-1 rounded transition-all hover:opacity-75"
           style={{
-            color: isDarkMode ? colors.neutral[500] : colors.neutral[400],
+            color: isDarkMode ? colors.neutral[400] : colors.neutral[500],
+            cursor: 'grab',
           }}
+          title="Drag to move this panel"
         >
           <GripHorizontal size={18} />
         </div>
@@ -230,14 +268,22 @@ export default function FeedbackPanel({
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="shrink-0 text-neutral-400 hover:text-neutral-600 transition-colors"
+          className={`shrink-0 transition-colors ${
+            isDarkMode
+              ? 'text-gray-400 hover:text-gray-200'
+              : 'text-neutral-400 hover:text-neutral-600'
+          }`}
           aria-label="Close feedback panel"
         >
           <X size={24} />
         </button>
       </div>
 
-      <div className="p-6 overflow-y-auto flex-1 bg-white">
+      <div
+        className={`p-6 overflow-y-auto flex-1 transition-colors ${
+          isDarkMode ? 'bg-gray-800' : 'bg-white'
+        }`}
+      >
         {data.sections.map((section) => (
           <FeedbackSection
             key={section.id}
@@ -249,11 +295,18 @@ export default function FeedbackPanel({
               onSectionAnswerChange(section.id, questionId, answer)
             }
             onComplete={() => onSectionComplete(section.id)}
+            isDarkMode={isDarkMode}
           />
         ))}
       </div>
 
-      <div className="p-6 border-t border-neutral-200 shrink-0 bg-white space-y-2">
+      <div
+        className={`p-6 border-t shrink-0 space-y-2 transition-colors ${
+          isDarkMode
+            ? 'bg-gray-800 border-gray-700'
+            : 'bg-white border-neutral-200'
+        }`}
+      >
         <button
           onClick={handleSubmit}
           disabled={!allSectionsComplete || isSubmitting}

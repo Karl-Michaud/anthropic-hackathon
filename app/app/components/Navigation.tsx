@@ -12,7 +12,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import NextLink from 'next/link'
-import { useState, useRef, ChangeEvent, DragEvent } from 'react'
+import { useState, useRef, useEffect, ChangeEvent, DragEvent } from 'react'
 import { useWhiteboard } from '../context/WhiteboardContext'
 import { useDarkMode } from '../context/DarkModeContext'
 import {
@@ -30,10 +30,16 @@ const navItems = [{ href: '/', icon: Home, label: 'Home' }]
 // DarkModeToggle component
 function DarkModeToggle() {
   const { isDarkMode, toggleDarkMode } = useDarkMode()
+  const [isMounted, setIsMounted] = useState(false)
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   return (
     <button
       onClick={toggleDarkMode}
+      suppressHydrationWarning
       className={`group relative p-2 rounded-xl transition-all duration-200 hover:scale-105 cursor-pointer ${
         isDarkMode
           ? 'hover:bg-gray-600/40 text-yellow-300'
@@ -41,19 +47,22 @@ function DarkModeToggle() {
       }`}
       aria-label="Toggle dark mode"
     >
-      {isDarkMode ? (
-        <Sun size={28} />
+      {isMounted ? (
+        isDarkMode ? (
+          <Sun size={28} />
+        ) : (
+          <Moon size={28} />
+        )
       ) : (
         <Moon size={28} />
       )}
       <span
+        suppressHydrationWarning
         className={`absolute left-12 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 text-xs rounded-md px-2 py-1 transition-all duration-200 ${
-          isDarkMode
-            ? 'bg-gray-900 text-yellow-100'
-            : 'bg-gray-900 text-white'
+          isDarkMode ? 'bg-gray-900 text-yellow-100' : 'bg-gray-900 text-white'
         }`}
       >
-        {isDarkMode ? 'Light Mode' : 'Dark Mode'}
+        {isMounted ? (isDarkMode ? 'Light Mode' : 'Dark Mode') : 'Dark Mode'}
       </span>
     </button>
   )

@@ -46,8 +46,14 @@ export default function DraggableBlock({
   children,
 }: DraggableBlockProps) {
   const handleMouseDown = (e: MouseEvent<HTMLDivElement>) => {
-    // Only start drag if clicking on the block header area, not inside inputs
+    // Allow drag from drag handles
     const target = e.target as HTMLElement
+    if (target.closest('[data-drag-handle]')) {
+      onMouseDown(e, id, x, y)
+      return
+    }
+
+    // Prevent drag from inputs, buttons, textareas, and resize handles
     if (
       target.tagName === 'INPUT' ||
       target.tagName === 'TEXTAREA' ||

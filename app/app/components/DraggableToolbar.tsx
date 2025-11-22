@@ -279,7 +279,9 @@ export default function DraggableToolbar({
         isDragging ? 'cursor-grabbing' : ''
       } ${!isDragging ? `${positionConfig.className} transition-all duration-300` : ''}`}
       style={{
-        backgroundColor: isDarkMode ? `${colors.neutral[800]}e6` : `${colors.neutral[0]}e6`,
+        backgroundColor: isDarkMode
+          ? `${colors.neutral[800]}e6`
+          : `${colors.neutral[0]}e6`,
         borderColor: isDarkMode ? colors.neutral[700] : colors.neutral[200],
         ...(isDragging
           ? {
@@ -305,7 +307,9 @@ export default function DraggableToolbar({
       <div
         className={dividerClassName}
         style={{
-          backgroundColor: isDarkMode ? colors.neutral[700] : colors.neutral[300],
+          backgroundColor: isDarkMode
+            ? colors.neutral[700]
+            : colors.neutral[300],
         }}
       />
 
@@ -331,7 +335,9 @@ export default function DraggableToolbar({
       <div
         className={dividerClassName}
         style={{
-          backgroundColor: isDarkMode ? colors.neutral[700] : colors.neutral[300],
+          backgroundColor: isDarkMode
+            ? colors.neutral[700]
+            : colors.neutral[300],
         }}
       />
 
@@ -354,7 +360,9 @@ export default function DraggableToolbar({
       <div
         className={dividerClassName}
         style={{
-          backgroundColor: isDarkMode ? colors.neutral[700] : colors.neutral[300],
+          backgroundColor: isDarkMode
+            ? colors.neutral[700]
+            : colors.neutral[300],
         }}
       />
 

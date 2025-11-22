@@ -135,11 +135,7 @@ Rules:
   const socraticData: Record<string, SocraticQuestion[]> = {}
 
   const sections = analysisData.sections || []
-  for (
-    let i = 0;
-    i < Math.min(sections.length, HIGHLIGHT_COLORS.length);
-    i++
-  ) {
+  for (let i = 0; i < Math.min(sections.length, HIGHLIGHT_COLORS.length); i++) {
     const section = sections[i]
 
     // Validate section data
