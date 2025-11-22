@@ -7,7 +7,7 @@ import { useDarkMode } from '../context/DarkModeContext'
 import { EssayData, HighlightedSection } from '../context/WhiteboardContext'
 import { colors, typography, transitions } from '../styles/design-system'
 import SocraticPanel, { SocraticPanelData } from './SocraticPanel'
-import { submitSocraticAnswers } from './DynamicFeedback'
+import { submitSocraticAnswers } from '@/app/lib/dynamicFeedback'
 
 export type { EssayData }
 
