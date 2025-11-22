@@ -7,7 +7,8 @@ import type {
   IPromptPersonality,
   IPromptPriorities,
   IPromptValues,
-  IGenerateDraft,
+  IPromptWeights,
+  // IGenerateDraft,
 } from '../types/interfaces'
 
 export interface ScholarshipRecord {
@@ -337,6 +338,36 @@ export async function savePromptValuesToDB(
   }
 }
 
+export async function savePromptWeightsToDB(
+  promptId: string,
+  data: IPromptWeights,
+): Promise<void> {
+  try {
+    const existingWeights = await prisma.promptWeights.findUnique({
+      where: { promptId },
+    })
+
+    if (existingWeights) {
+      await prisma.promptWeights.update({
+        where: { promptId },
+        data: {
+          weights: data, // store the whole weight structure
+        },
+      })
+    } else {
+      await prisma.promptWeights.create({
+        data: {
+          promptId,
+          weights: data,
+        },
+      })
+    }
+  } catch (error) {
+    console.error('Error saving weights:', error)
+    throw new Error(`Failed to save weights: ${(error as Error).message}`)
+  }
+}
+
 export async function saveGenerateDraftToDB(
   promptId: string,
   essay: string,
@@ -394,6 +425,7 @@ export async function generateAndSavePromptAnalysis(
           savePromptPersonalityToDB(dbPrompt.id, analysis.personality),
           savePromptPrioritiesToDB(dbPrompt.id, analysis.priorities),
           savePromptValuesToDB(dbPrompt.id, analysis.values),
+          savePromptWeightsToDB(dbPrompt.id, analysis.weights),
         ])
       }),
     )
