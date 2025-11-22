@@ -10,6 +10,8 @@ export type { CellData }
 interface CellProps {
   cell: CellData
   isDragging: boolean
+  isSelected?: boolean
+  zoom: number
   onMouseDown: (
     e: MouseEvent<HTMLDivElement>,
     cellId: string,
@@ -24,6 +26,8 @@ interface CellProps {
 export default function Cell({
   cell,
   isDragging,
+  isSelected = false,
+  zoom,
   onMouseDown,
   onContextMenu,
   onTextChange,
@@ -80,7 +84,9 @@ export default function Cell({
     return colorMap[color] || { bg: '#f3f4f6', border: '#e5e7eb' }
   }
 
-  const colorStyles = getColorStyles(cell.color)
+  // Calculate inverse-scaled border width (Figma-style)
+  const outlineWidth = 2 / zoom
+  const outlineOffset = 2 / zoom
 
   return (
     <div
@@ -92,7 +98,8 @@ export default function Cell({
         left: `${cell.x}px`,
         transform: `rotate(${cell.rotation}deg)`,
         cursor: isDragging ? 'grabbing' : isEditingLocal ? 'text' : 'grab',
-        userSelect: isEditingLocal ? 'auto' : 'none',
+        outline: isSelected ? `${outlineWidth}px solid #3b82f6` : 'none',
+        outlineOffset: `${outlineOffset}px`,
       }}
       onMouseDown={(e) =>
         !isEditingLocal && onMouseDown(e, cell.id, cell.x, cell.y)

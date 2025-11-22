@@ -13,10 +13,10 @@ import { useWhiteboard } from '../context/WhiteboardContext'
 import { useEditing } from '../context/EditingContext'
 import { saveEssayDraftToDB } from '../lib/dbUtils'
 
-const ZOOM_MIN = 0.3
+const ZOOM_MIN = 0.06
 const ZOOM_MAX = 1.0
 const ZOOM_STEP = 0.1
-const MOMENTUM_DECAY = 0.92
+const CANVAS_LIMIT = 65000 // Figma-style canvas size limit in pixels
 
 export default function Whiteboard() {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -32,6 +32,10 @@ export default function Whiteboard() {
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
   const [syncingData, setSyncingData] = useState(false)
 
+  // Mouse position for zoom-to-cursor
+  const [mousePosition, setMousePosition] = useState<{ x: number; y: number } | null>(null)
+
+  // Tool state
   const [activeTool, setActiveTool] = useState<Tool>('select')
   const [contextMenu, setContextMenu] = useState<{
     x: number
@@ -73,40 +77,13 @@ export default function Whiteboard() {
   } = useWhiteboard()
   const { isEditing } = useEditing()
 
-  // Smooth momentum-based panning animation
-  useEffect(() => {
-    if (!isPanning && (momentum.x !== 0 || momentum.y !== 0)) {
-      const animate = () => {
-        setPosition((prev) => ({
-          x: prev.x + momentum.x,
-          y: prev.y + momentum.y,
-        }))
-
-        setMomentum((prev) => {
-          const newMomentum = {
-            x: prev.x * MOMENTUM_DECAY,
-            y: prev.y * MOMENTUM_DECAY,
-          }
-
-          if (Math.abs(newMomentum.x) > 0.1 || Math.abs(newMomentum.y) > 0.1) {
-            animationFrameRef.current = requestAnimationFrame(animate)
-          } else {
-            animationFrameRef.current = null
-          }
-
-          return newMomentum
-        })
-      }
-
-      animationFrameRef.current = requestAnimationFrame(animate)
+  // Helper function to clamp coordinates to canvas limits
+  const clampToCanvas = useCallback((x: number, y: number) => {
+    return {
+      x: Math.max(-CANVAS_LIMIT, Math.min(CANVAS_LIMIT, x)),
+      y: Math.max(-CANVAS_LIMIT, Math.min(CANVAS_LIMIT, y)),
     }
-
-    return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current)
-      }
-    }
-  }, [isPanning, momentum])
+  }, [])
 
   // Initialize positions for new scholarships
   useEffect(() => {
@@ -117,10 +94,11 @@ export default function Whiteboard() {
         const viewportCenterY = window.innerHeight / 2
         const canvasX = (viewportCenterX - position.x) / zoom - 275
         const canvasY = (viewportCenterY - position.y) / zoom - 200
-        updateBlockPosition(scholarship.id, canvasX, canvasY)
+        const clamped = clampToCanvas(canvasX, canvasY)
+        updateBlockPosition(scholarship.id, clamped.x, clamped.y)
       }
     })
-  }, [scholarships, blockPositions, position, zoom, updateBlockPosition])
+  }, [scholarships, blockPositions, position, zoom, updateBlockPosition, clampToCanvas])
 
   // Initialize positions for new essays
   useEffect(() => {
@@ -129,14 +107,13 @@ export default function Whiteboard() {
       if (!existing) {
         const viewportCenterX = window.innerWidth / 2
         const viewportCenterY = window.innerHeight / 2
-        const canvasX =
-          (viewportCenterX - position.x) / zoom - 250 + Math.random() * 100
-        const canvasY =
-          (viewportCenterY - position.y) / zoom - 150 + Math.random() * 100
-        updateBlockPosition(essay.id, canvasX, canvasY)
+        const canvasX = (viewportCenterX - position.x) / zoom - 250 + Math.random() * 100
+        const canvasY = (viewportCenterY - position.y) / zoom - 150 + Math.random() * 100
+        const clamped = clampToCanvas(canvasX, canvasY)
+        updateBlockPosition(essay.id, clamped.x, clamped.y)
       }
     })
-  }, [essays, blockPositions, position, zoom, updateBlockPosition])
+  }, [essays, blockPositions, position, zoom, updateBlockPosition, clampToCanvas])
 
   // Initialize positions for new JSON outputs
   useEffect(() => {
@@ -148,10 +125,11 @@ export default function Whiteboard() {
         )
         const canvasX = scholarshipPos ? scholarshipPos.x + 580 : 700
         const canvasY = scholarshipPos ? scholarshipPos.y : 100
-        updateBlockPosition(jsonOutput.id, canvasX, canvasY)
+        const clamped = clampToCanvas(canvasX, canvasY)
+        updateBlockPosition(jsonOutput.id, clamped.x, clamped.y)
       }
     })
-  }, [jsonOutputs, blockPositions, updateBlockPosition])
+  }, [jsonOutputs, blockPositions, updateBlockPosition, clampToCanvas])
 
   // Debounced sync to database for scholarship updates
   useEffect(() => {
@@ -297,14 +275,17 @@ export default function Whiteboard() {
     const canvasCenterX = (viewportCenterX - position.x) / zoom - cellWidth / 2
     const canvasCenterY = (viewportCenterY - position.y) / zoom - cellHeight / 2
 
+    // Clamp to canvas limits
+    const clamped = clampToCanvas(canvasCenterX, canvasCenterY)
+
     addCell({
-      x: canvasCenterX,
-      y: canvasCenterY,
+      x: clamped.x,
+      y: clamped.y,
       color: randomColor,
       text: 'Double click to edit...',
       rotation: randomRotation,
     })
-  }, [position, zoom, addCell])
+  }, [position, zoom, addCell, clampToCanvas])
 
   const handleCanvasMouseDown = useCallback(
     (e: MouseEvent<HTMLDivElement>) => {
@@ -330,6 +311,9 @@ export default function Whiteboard() {
 
   const handleMouseMove = useCallback(
     (e: MouseEvent<HTMLDivElement>) => {
+      // Track mouse position for zoom-to-cursor
+      setMousePosition({ x: e.clientX, y: e.clientY })
+
       if (isPanning && !draggingCellId) {
         const newX = e.clientX - startPos.x
         const newY = e.clientY - startPos.y
@@ -357,13 +341,16 @@ export default function Whiteboard() {
             const newItemX = originalPos.x + deltaX
             const newItemY = originalPos.y + deltaY
 
+            // Clamp to canvas limits
+            const clamped = clampToCanvas(newItemX, newItemY)
+
             if (id.startsWith('cell-')) {
               const cell = cells.find((c) => c.id === id)
               if (cell) {
-                updateCell({ ...cell, x: newItemX, y: newItemY })
+                updateCell({ ...cell, x: clamped.x, y: clamped.y })
               }
             } else {
-              updateBlockPosition(id, newItemX, newItemY)
+              updateBlockPosition(id, clamped.x, clamped.y)
             }
           })
         }
@@ -378,17 +365,7 @@ export default function Whiteboard() {
         })
       }
     },
-    [
-      isPanning,
-      draggingCellId,
-      startPos,
-      dragOffset,
-      position,
-      zoom,
-      cells,
-      updateCell,
-      updateBlockPosition,
-    ],
+    [isPanning, draggingCellId, startPos, dragOffset, position, zoom, cells, updateCell, updateBlockPosition, selectionBox, dragStartPositions, clampToCanvas],
   )
 
   const handleMouseUp = useCallback(() => {
@@ -547,13 +524,134 @@ export default function Whiteboard() {
     [cells, updateCell],
   )
 
+  // Helper function to zoom towards a specific point (zoom-to-cursor)
+  const zoomToPoint = useCallback(
+    (newZoom: number, pointX?: number, pointY?: number) => {
+      const clampedZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, newZoom))
+
+      // If no point provided, use mouse position or viewport center
+      let zoomPointX = pointX
+      let zoomPointY = pointY
+
+      if (zoomPointX === undefined || zoomPointY === undefined) {
+        if (mousePosition) {
+          zoomPointX = mousePosition.x
+          zoomPointY = mousePosition.y
+        } else {
+          // Fallback to viewport center if no mouse position tracked
+          zoomPointX = window.innerWidth / 2
+          zoomPointY = window.innerHeight / 2
+        }
+      }
+
+      // Calculate what point on the canvas is currently at the zoom point
+      const canvasX = (zoomPointX - position.x) / zoom
+      const canvasY = (zoomPointY - position.y) / zoom
+
+      // Calculate new position so the same canvas point stays under the zoom point
+      const newX = zoomPointX - canvasX * clampedZoom
+      const newY = zoomPointY - canvasY * clampedZoom
+
+      setZoom(clampedZoom)
+      setPosition({ x: newX, y: newY })
+    },
+    [zoom, position, mousePosition]
+  )
+
   const handleZoomIn = useCallback(() => {
-    setZoom((prevZoom) => Math.min(prevZoom + ZOOM_STEP, ZOOM_MAX))
-  }, [])
+    zoomToPoint(zoom + ZOOM_STEP)
+  }, [zoom, zoomToPoint])
 
   const handleZoomOut = useCallback(() => {
-    setZoom((prevZoom) => Math.max(prevZoom - ZOOM_STEP, ZOOM_MIN))
-  }, [])
+    zoomToPoint(zoom - ZOOM_STEP)
+  }, [zoom, zoomToPoint])
+
+  // Recenter viewport to show all objects (zoom to fit)
+  const recenterToObjects = useCallback(() => {
+    // Collect all object positions and dimensions
+    const objects: Array<{ x: number; y: number; width: number; height: number }> = []
+    const allObjectIds = new Set<string>()
+
+    // Add cells
+    cells.forEach((cell) => {
+      objects.push({ x: cell.x, y: cell.y, width: 192, height: 192 })
+      allObjectIds.add(cell.id)
+    })
+
+    // Add scholarships
+    scholarships.forEach((scholarship) => {
+      const pos = getBlockPosition(scholarship.id)
+      objects.push({ x: pos.x, y: pos.y, width: 550, height: 400 })
+      allObjectIds.add(scholarship.id)
+    })
+
+    // Add essays
+    essays.forEach((essay) => {
+      const pos = getBlockPosition(essay.id)
+      objects.push({ x: pos.x, y: pos.y, width: 500, height: 400 })
+      allObjectIds.add(essay.id)
+    })
+
+    // Add JSON outputs
+    jsonOutputs.forEach((jsonOutput) => {
+      const pos = getBlockPosition(jsonOutput.id)
+      objects.push({ x: pos.x, y: pos.y, width: 400, height: 300 })
+      allObjectIds.add(jsonOutput.id)
+    })
+
+    // If no objects, do nothing
+    if (objects.length === 0) {
+      return
+    }
+
+    // Calculate bounding box
+    let minX = Infinity
+    let minY = Infinity
+    let maxX = -Infinity
+    let maxY = -Infinity
+
+    objects.forEach((obj) => {
+      minX = Math.min(minX, obj.x)
+      minY = Math.min(minY, obj.y)
+      maxX = Math.max(maxX, obj.x + obj.width)
+      maxY = Math.max(maxY, obj.y + obj.height)
+    })
+
+    // Calculate bounds size
+    const boundsWidth = maxX - minX
+    const boundsHeight = maxY - minY
+
+    // Calculate center of all objects
+    const centerX = (minX + maxX) / 2
+    const centerY = (minY + maxY) / 2
+
+    // Calculate viewport dimensions
+    const viewportWidth = window.innerWidth
+    const viewportHeight = window.innerHeight
+
+    // Calculate zoom needed to fit all objects with 15% padding
+    const paddingFactor = 1.15 // 15% padding
+    const zoomToFitWidth = viewportWidth / (boundsWidth * paddingFactor)
+    const zoomToFitHeight = viewportHeight / (boundsHeight * paddingFactor)
+    const zoomToFit = Math.min(zoomToFitWidth, zoomToFitHeight)
+
+    // Clamp zoom to valid range [ZOOM_MIN, ZOOM_MAX]
+    const newZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, zoomToFit))
+
+    // Position viewport so the center of objects appears at viewport center
+    const viewportCenterX = viewportWidth / 2
+    const viewportCenterY = viewportHeight / 2
+
+    const newX = viewportCenterX - centerX * newZoom
+    const newY = viewportCenterY - centerY * newZoom
+
+    // Apply zoom and position
+    setZoom(newZoom)
+    setPosition({ x: newX, y: newY })
+
+    // Select all objects to show their borders
+    setSelectedIds(allObjectIds)
+  }, [cells, scholarships, essays, jsonOutputs, getBlockPosition])
 
   // Context menu handlers
   const handleContextMenu = useCallback(
@@ -610,14 +708,12 @@ export default function Whiteboard() {
 
     clipboard.forEach((item) => {
       if (item.type === 'cell') {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const cellData = item.data as any
+        const { id, ...cellData } = item.data
+        const clamped = clampToCanvas(cellData.x + 50, cellData.y + 50)
         const newId = addCell({
-          x: cellData.x + 50,
-          y: cellData.y + 50,
-          color: cellData.color,
-          text: cellData.text,
-          rotation: cellData.rotation,
+          ...cellData,
+          x: clamped.x,
+          y: clamped.y,
         })
         newIds.add(newId)
       } else if (item.type === 'scholarship') {
@@ -629,8 +725,9 @@ export default function Whiteboard() {
           prompt: scholarshipData.prompt,
           hiddenRequirements: scholarshipData.hiddenRequirements,
         })
-        const pos = getBlockPosition(scholarshipData.id)
-        updateBlockPosition(newId, pos.x + 50, pos.y + 50)
+        const pos = getBlockPosition(item.data.id)
+        const clamped = clampToCanvas(pos.x + 50, pos.y + 50)
+        updateBlockPosition(newId, clamped.x, clamped.y)
         newIds.add(newId)
       } else if (item.type === 'essay') {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -640,21 +737,15 @@ export default function Whiteboard() {
           content: essayData.content,
           maxWordCount: essayData.maxWordCount,
         })
-        const pos = getBlockPosition(essayData.id)
-        updateBlockPosition(newId, pos.x + 50, pos.y + 50)
+        const pos = getBlockPosition(item.data.id)
+        const clamped = clampToCanvas(pos.x + 50, pos.y + 50)
+        updateBlockPosition(newId, clamped.x, clamped.y)
         newIds.add(newId)
       }
     })
 
     setSelectedIds(newIds)
-  }, [
-    clipboard,
-    addCell,
-    addScholarship,
-    addEssay,
-    getBlockPosition,
-    updateBlockPosition,
-  ])
+  }, [clipboard, addCell, addScholarship, addEssay, getBlockPosition, updateBlockPosition, clampToCanvas])
 
   const handleDelete = useCallback(() => {
     if (selectedIds.size === 0) return
@@ -698,6 +789,13 @@ export default function Whiteboard() {
         return
       }
 
+      // Zoom to fit all objects (Shift+1, which may produce '!' on some keyboards)
+      if (e.shiftKey && (e.key === '1' || e.key === '!')) {
+        e.preventDefault()
+        recenterToObjects()
+        return
+      }
+
       // Copy (only when items are selected)
       if ((e.metaKey || e.ctrlKey) && e.key === 'c') {
         if (selectedIds.size > 0) {
@@ -738,28 +836,30 @@ export default function Whiteboard() {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [selectedIds, handleCopy, handlePaste, handleDelete])
+  }, [selectedIds, handleCopy, handlePaste, handleDelete, recenterToObjects])
 
-  const handleWheel = useCallback((e: WheelEvent) => {
-    if (e.metaKey || e.ctrlKey) {
-      // Zoom with cmd/ctrl + scroll
-      e.preventDefault()
+  const handleWheel = useCallback(
+    (e: WheelEvent) => {
+      if (e.metaKey || e.ctrlKey) {
+        // Zoom with cmd/ctrl + scroll - zoom towards cursor
+        e.preventDefault()
 
-      const delta = e.deltaY
-      if (delta < 0) {
-        setZoom((prevZoom) => Math.min(prevZoom + ZOOM_STEP, ZOOM_MAX))
-      } else if (delta > 0) {
-        setZoom((prevZoom) => Math.max(prevZoom - ZOOM_STEP, ZOOM_MIN))
+        const delta = e.deltaY
+        const newZoom = delta < 0 ? zoom + ZOOM_STEP : zoom - ZOOM_STEP
+
+        // Use the wheel event's mouse position for zoom-to-cursor
+        zoomToPoint(newZoom, e.clientX, e.clientY)
+      } else {
+        // Pan with trackpad/scroll wheel
+        e.preventDefault()
+        setPosition((prev) => ({
+          x: prev.x - e.deltaX,
+          y: prev.y - e.deltaY,
+        }))
       }
-    } else {
-      // Pan with trackpad/scroll wheel
-      e.preventDefault()
-      setPosition((prev) => ({
-        x: prev.x - e.deltaX,
-        y: prev.y - e.deltaY,
-      }))
-    }
-  }, [])
+    },
+    [zoom, zoomToPoint]
+  )
 
   useEffect(() => {
     const container = containerRef.current
@@ -833,6 +933,8 @@ export default function Whiteboard() {
             key={cell.id}
             cell={cell}
             isDragging={draggingCellId === cell.id}
+            isSelected={selectedIds.has(cell.id)}
+            zoom={zoom}
             onMouseDown={handleCellMouseDown}
             onContextMenu={(e, cellId) => handleContextMenu(e, cellId)}
             onTextChange={handleTextChange}
@@ -851,6 +953,7 @@ export default function Whiteboard() {
               y={pos.y}
               isDragging={draggingCellId === scholarship.id}
               isSelected={selectedIds.has(scholarship.id)}
+              zoom={zoom}
               onMouseDown={handleBlockMouseDown}
               onContextMenu={(e, blockId) => handleContextMenu(e, blockId)}
             >
@@ -878,6 +981,7 @@ export default function Whiteboard() {
               y={pos.y}
               isDragging={draggingCellId === essay.id}
               isSelected={selectedIds.has(essay.id)}
+              zoom={zoom}
               onMouseDown={handleBlockMouseDown}
               onContextMenu={(e, blockId) => handleContextMenu(e, blockId)}
             >
@@ -903,6 +1007,7 @@ export default function Whiteboard() {
               y={pos.y}
               isDragging={draggingCellId === jsonOutput.id}
               isSelected={selectedIds.has(jsonOutput.id)}
+              zoom={zoom}
               onMouseDown={handleBlockMouseDown}
               onContextMenu={(e, blockId) => handleContextMenu(e, blockId)}
             >
