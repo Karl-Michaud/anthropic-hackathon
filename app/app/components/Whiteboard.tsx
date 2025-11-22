@@ -10,8 +10,8 @@ import EssayBlock from './EssayBlock'
 import {
   submitFeedbackAnswers,
   analyzeSocraticQuestions,
-} from '../lib/dynamicFeedback'
-import { FeedbackPanel } from '../lib/dynamicFeedback'
+} from '../lib/dynamicFeedback/feedbackApi'
+import FeedbackPanel from './FeedbackPanel'
 import { useWhiteboard } from '../context/WhiteboardContext'
 import { useEditing } from '../context/EditingContext'
 import { useDarkMode } from '../context/DarkModeContext'
@@ -24,7 +24,7 @@ import type {
   EssayData,
   JsonOutputData,
 } from '../context/WhiteboardContext'
-import type { FeedbackData } from '../lib/dynamicFeedback'
+import type { FeedbackData } from '../lib/dynamicFeedback/types'
 
 const ZOOM_MIN = 0.06
 const ZOOM_MAX = 1.0
@@ -1178,6 +1178,7 @@ export default function Whiteboard() {
   return (
     <div
       ref={containerRef}
+      suppressHydrationWarning
       className={`fixed inset-0 overflow-hidden select-none transition-colors duration-200 ${
         isDarkMode ? 'bg-gray-900' : 'bg-neutral-50'
       }`}

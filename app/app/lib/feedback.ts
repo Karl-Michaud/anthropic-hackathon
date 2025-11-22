@@ -1,11 +1,8 @@
 'use server'
 
 import Anthropic from '@anthropic-ai/sdk'
-import {
-  FeedbackSection,
-  FeedbackData,
-} from './dynamicFeedback'
-import { generateFeedbackId } from './dynamicFeedback'
+import { FeedbackSection, FeedbackData } from '@/app/lib/dynamicFeedback/types'
+import { generateFeedbackId } from '@/app/lib/dynamicFeedback'
 
 const client = new Anthropic()
 

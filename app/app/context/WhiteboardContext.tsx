@@ -9,12 +9,12 @@ import {
   useRef,
   ReactNode,
 } from 'react'
-import { FeedbackData } from '../lib/dynamicFeedback'
+import { FeedbackData } from '../lib/dynamicFeedback/types'
 import {
   saveFeedbackDraft,
   loadFeedbackDraft,
   clearFeedbackDraft,
-} from '../lib/dynamicFeedback'
+} from '../lib/dynamicFeedback/feedbackApi'
 
 const STORAGE_KEY = 'whiteboard-data'
 const DEBOUNCE_MS = 500

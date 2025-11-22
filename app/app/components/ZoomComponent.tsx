@@ -26,6 +26,7 @@ export default function ZoomComponent({
 
   return (
     <div
+      suppressHydrationWarning
       className={`flex items-center gap-1 backdrop-blur-lg active:scale-95 rounded-lg shadow-lg border p-2 ${
         isDarkMode ? 'border-gray-700' : 'border-neutral-200'
       }`}

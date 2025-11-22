@@ -19,10 +19,13 @@ interface AnalysisData {
     evidencePhrases: string[]
   } | null
   weights: {
-    weights: Record<string, {
-      weight: number
-      subweights: Record<string, number>
-    }>
+    weights: Record<
+      string,
+      {
+        weight: number
+        subweights: Record<string, number>
+      }
+    >
   } | null
 }
 
@@ -87,7 +90,10 @@ export default function TestDraftPage() {
           </div>
 
           <div>
-            <label htmlFor="description" className="block text-sm font-medium mb-2">
+            <label
+              htmlFor="description"
+              className="block text-sm font-medium mb-2"
+            >
               Scholarship Description
             </label>
             <textarea
@@ -138,12 +144,26 @@ export default function TestDraftPage() {
             {/* Personality */}
             {analysis.personality && (
               <div className="p-4 bg-gray-800 border border-gray-700 rounded-lg">
-                <h3 className="text-lg font-semibold text-blue-400 mb-3">Personality Profile</h3>
+                <h3 className="text-lg font-semibold text-blue-400 mb-3">
+                  Personality Profile
+                </h3>
                 <div className="space-y-2 text-sm">
-                  <p><span className="text-gray-400">Spirit/Core Identity:</span> {analysis.personality.spirit}</p>
-                  <p><span className="text-gray-400">Tone & Style:</span> {analysis.personality.toneStyle}</p>
-                  <p><span className="text-gray-400">Values Emphasized:</span> {analysis.personality.valuesEmphasized.join(', ')}</p>
-                  <p><span className="text-gray-400">Recommended Focus:</span> {analysis.personality.recommendedEssayFocus}</p>
+                  <p>
+                    <span className="text-gray-400">Spirit/Core Identity:</span>{' '}
+                    {analysis.personality.spirit}
+                  </p>
+                  <p>
+                    <span className="text-gray-400">Tone & Style:</span>{' '}
+                    {analysis.personality.toneStyle}
+                  </p>
+                  <p>
+                    <span className="text-gray-400">Values Emphasized:</span>{' '}
+                    {analysis.personality.valuesEmphasized.join(', ')}
+                  </p>
+                  <p>
+                    <span className="text-gray-400">Recommended Focus:</span>{' '}
+                    {analysis.personality.recommendedEssayFocus}
+                  </p>
                 </div>
               </div>
             )}
@@ -151,15 +171,24 @@ export default function TestDraftPage() {
             {/* Priorities */}
             {analysis.priorities && (
               <div className="p-4 bg-gray-800 border border-gray-700 rounded-lg">
-                <h3 className="text-lg font-semibold text-green-400 mb-3">Priorities</h3>
+                <h3 className="text-lg font-semibold text-green-400 mb-3">
+                  Priorities
+                </h3>
                 <div className="space-y-2 text-sm">
-                  <p><span className="text-gray-400">Primary Focus:</span> {analysis.priorities.primaryFocus}</p>
+                  <p>
+                    <span className="text-gray-400">Primary Focus:</span>{' '}
+                    {analysis.priorities.primaryFocus}
+                  </p>
                   <div>
                     <span className="text-gray-400">Priority Weights:</span>
                     <ul className="mt-1 ml-4 list-disc">
-                      {Object.entries(analysis.priorities.priorityWeights).map(([key, value]) => (
-                        <li key={key}>{key}: {value}%</li>
-                      ))}
+                      {Object.entries(analysis.priorities.priorityWeights).map(
+                        ([key, value]) => (
+                          <li key={key}>
+                            {key}: {value}%
+                          </li>
+                        ),
+                      )}
                     </ul>
                   </div>
                 </div>
@@ -169,18 +198,30 @@ export default function TestDraftPage() {
             {/* Values */}
             {analysis.values && (
               <div className="p-4 bg-gray-800 border border-gray-700 rounded-lg">
-                <h3 className="text-lg font-semibold text-yellow-400 mb-3">Values</h3>
+                <h3 className="text-lg font-semibold text-yellow-400 mb-3">
+                  Values
+                </h3>
                 <div className="space-y-2 text-sm">
-                  <p><span className="text-gray-400">Values Emphasized:</span> {analysis.values.valuesEmphasized.join(', ')}</p>
+                  <p>
+                    <span className="text-gray-400">Values Emphasized:</span>{' '}
+                    {analysis.values.valuesEmphasized.join(', ')}
+                  </p>
                   <div>
                     <span className="text-gray-400">Value Definitions:</span>
                     <ul className="mt-1 ml-4 list-disc">
-                      {Object.entries(analysis.values.valueDefinitions).map(([key, value]) => (
-                        <li key={key}><strong>{key}:</strong> {value}</li>
-                      ))}
+                      {Object.entries(analysis.values.valueDefinitions).map(
+                        ([key, value]) => (
+                          <li key={key}>
+                            <strong>{key}:</strong> {value}
+                          </li>
+                        ),
+                      )}
                     </ul>
                   </div>
-                  <p><span className="text-gray-400">Evidence Phrases:</span> {analysis.values.evidencePhrases.join('; ')}</p>
+                  <p>
+                    <span className="text-gray-400">Evidence Phrases:</span>{' '}
+                    {analysis.values.evidencePhrases.join('; ')}
+                  </p>
                 </div>
               </div>
             )}
@@ -188,18 +229,34 @@ export default function TestDraftPage() {
             {/* Weights */}
             {analysis.weights && (
               <div className="p-4 bg-gray-800 border border-gray-700 rounded-lg">
-                <h3 className="text-lg font-semibold text-purple-400 mb-3">Hidden Criteria Weights</h3>
+                <h3 className="text-lg font-semibold text-purple-400 mb-3">
+                  Hidden Criteria Weights
+                </h3>
                 <div className="space-y-3 text-sm">
-                  {Object.entries(analysis.weights.weights).map(([category, data]) => (
-                    <div key={category} className="border-l-2 border-purple-600 pl-3">
-                      <p className="font-medium">{category} <span className="text-purple-300">({(data.weight * 100).toFixed(0)}%)</span></p>
-                      <ul className="mt-1 ml-4 text-xs text-gray-400">
-                        {Object.entries(data.subweights).map(([sub, weight]) => (
-                          <li key={sub}>{sub}: {(weight * 100).toFixed(0)}%</li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
+                  {Object.entries(analysis.weights.weights).map(
+                    ([category, data]) => (
+                      <div
+                        key={category}
+                        className="border-l-2 border-purple-600 pl-3"
+                      >
+                        <p className="font-medium">
+                          {category}{' '}
+                          <span className="text-purple-300">
+                            ({(data.weight * 100).toFixed(0)}%)
+                          </span>
+                        </p>
+                        <ul className="mt-1 ml-4 text-xs text-gray-400">
+                          {Object.entries(data.subweights).map(
+                            ([sub, weight]) => (
+                              <li key={sub}>
+                                {sub}: {(weight * 100).toFixed(0)}%
+                              </li>
+                            ),
+                          )}
+                        </ul>
+                      </div>
+                    ),
+                  )}
                 </div>
               </div>
             )}

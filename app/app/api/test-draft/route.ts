@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { saveScholarshipToDB, generateAndSavePromptAnalysis, getScholarshipFromDB } from '@/app/lib/dbUtils'
+import {
+  saveScholarshipToDB,
+  generateAndSavePromptAnalysis,
+  getScholarshipFromDB,
+} from '@/app/lib/dbUtils'
 import { generateDraftWithAnalysis } from '@/app/lib/request'
 
 export async function POST(request: NextRequest) {
@@ -9,7 +13,7 @@ export async function POST(request: NextRequest) {
     if (!title || !description || !prompt) {
       return NextResponse.json(
         { error: 'Missing required fields: title, description, prompt' },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
@@ -17,12 +21,9 @@ export async function POST(request: NextRequest) {
     const scholarship = await saveScholarshipToDB(title, description, [prompt])
 
     // Step 2: Generate and save all analysis data (personality, priorities, values, weights)
-    await generateAndSavePromptAnalysis(
-      scholarship.id,
-      title,
-      description,
-      [prompt]
-    )
+    await generateAndSavePromptAnalysis(scholarship.id, title, description, [
+      prompt,
+    ])
 
     // Step 3: Generate draft with analysis data from database
     const result = await generateDraftWithAnalysis(scholarship.id)
@@ -38,13 +39,13 @@ export async function POST(request: NextRequest) {
         priorities: scholarshipWithAnalysis?.promptPriorities || null,
         values: scholarshipWithAnalysis?.promptValues || null,
         weights: scholarshipWithAnalysis?.promptWeights || null,
-      }
+      },
     })
   } catch (error) {
     console.error('Error generating draft:', error)
     return NextResponse.json(
       { error: (error as Error).message },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }
