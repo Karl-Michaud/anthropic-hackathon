@@ -8,6 +8,7 @@ interface DraggableBlockProps {
   y: number
   isDragging: boolean
   isSelected?: boolean
+  zoom: number
   onMouseDown: (e: MouseEvent<HTMLDivElement>, id: string, x: number, y: number) => void
   onContextMenu?: (e: MouseEvent<HTMLDivElement>, id: string) => void
   children: ReactNode
@@ -19,6 +20,7 @@ export default function DraggableBlock({
   y,
   isDragging,
   isSelected = false,
+  zoom,
   onMouseDown,
   onContextMenu,
   children,
@@ -45,6 +47,12 @@ export default function DraggableBlock({
     }
   }
 
+  // Calculate inverse-scaled border width (Figma-style)
+  // At 100% zoom (1.0): 2/1.0 = 2px
+  // At 6% zoom (0.06): 2/0.06 = ~33px in canvas space = 2px on screen
+  const outlineWidth = 2 / zoom
+  const outlineOffset = 2 / zoom
+
   return (
     <div
       className={`absolute select-none ${isDragging ? 'cursor-grabbing z-50' : 'cursor-grab'}`}
@@ -53,8 +61,8 @@ export default function DraggableBlock({
         top: y,
         transition: isDragging ? 'none' : 'box-shadow 0.2s, outline 0.2s',
         boxShadow: isDragging ? '0 25px 50px -12px rgba(0, 0, 0, 0.25)' : undefined,
-        outline: isSelected ? '2px solid #3b82f6' : 'none',
-        outlineOffset: '2px',
+        outline: isSelected ? `${outlineWidth}px solid #3b82f6` : 'none',
+        outlineOffset: `${outlineOffset}px`,
       }}
       onMouseDown={handleMouseDown}
       onContextMenu={handleContextMenu}

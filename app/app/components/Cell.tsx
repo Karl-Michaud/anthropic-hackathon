@@ -11,6 +11,7 @@ interface CellProps {
   cell: CellData
   isDragging: boolean
   isSelected?: boolean
+  zoom: number
   onMouseDown: (
     e: MouseEvent<HTMLDivElement>,
     cellId: string,
@@ -26,6 +27,7 @@ export default function Cell({
   cell,
   isDragging,
   isSelected = false,
+  zoom,
   onMouseDown,
   onContextMenu,
   onTextChange,
@@ -82,6 +84,10 @@ export default function Cell({
     return colors[color] || 'bg-gray-100 border-gray-200'
   }
 
+  // Calculate inverse-scaled border width (Figma-style)
+  const outlineWidth = 2 / zoom
+  const outlineOffset = 2 / zoom
+
   return (
     <div
       className={`absolute w-48 h-48 shadow-lg rounded-sm p-4 border hover:rotate-0 transition-transform ${isEditingLocal ? '' : 'select-none'} ${getColorClasses(cell.color)}`}
@@ -90,8 +96,8 @@ export default function Cell({
         left: `${cell.x}px`,
         transform: `rotate(${cell.rotation}deg)`,
         cursor: isDragging ? 'grabbing' : isEditingLocal ? 'text' : 'grab',
-        outline: isSelected ? '2px solid #3b82f6' : 'none',
-        outlineOffset: '2px',
+        outline: isSelected ? `${outlineWidth}px solid #3b82f6` : 'none',
+        outlineOffset: `${outlineOffset}px`,
       }}
       onMouseDown={(e) => !isEditingLocal && onMouseDown(e, cell.id, cell.x, cell.y)}
       onContextMenu={(e) => onContextMenu && onContextMenu(e, cell.id)}
