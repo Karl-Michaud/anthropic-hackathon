@@ -4,8 +4,8 @@ import Anthropic from '@anthropic-ai/sdk'
 import {
   FeedbackSection,
   FeedbackData,
-} from '@/app/components/DynamicFeedback/types'
-import { generateFeedbackId } from '@/app/components/DynamicFeedback'
+} from './dynamicFeedback'
+import { generateFeedbackId } from './dynamicFeedback'
 
 const client = new Anthropic()
 

@@ -10,8 +10,8 @@ import EssayBlock from './EssayBlock'
 import {
   submitFeedbackAnswers,
   analyzeSocraticQuestions,
-} from './DynamicFeedback/utils/feedbackApi'
-import FeedbackPanel from './FeedbackPanel'
+} from '../lib/dynamicFeedback'
+import { FeedbackPanel } from '../lib/dynamicFeedback'
 import { useWhiteboard } from '../context/WhiteboardContext'
 import { useEditing } from '../context/EditingContext'
 import { useDarkMode } from '../context/DarkModeContext'
@@ -24,7 +24,7 @@ import type {
   EssayData,
   JsonOutputData,
 } from '../context/WhiteboardContext'
-import type { FeedbackData } from './DynamicFeedback/types'
+import type { FeedbackData } from '../lib/dynamicFeedback'
 
 const ZOOM_MIN = 0.06
 const ZOOM_MAX = 1.0

@@ -3,7 +3,7 @@
 import { X, Check, Loader2, Save, GripHorizontal } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useDarkMode } from '../context/DarkModeContext'
-import type { FeedbackData, Question } from './DynamicFeedback/types'
+import type { FeedbackData, Question } from '../lib/dynamicFeedback'
 import { colors } from '../styles/design-system'
 
 // Question component - auto-resizing textarea with auto-save

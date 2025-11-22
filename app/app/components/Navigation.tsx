@@ -22,7 +22,7 @@ import {
 } from '../lib/dbUtils'
 import { extractScholarshipInfo } from '../lib/claudeApi'
 import { requestClaude } from '../lib/request'
-import type { FeedbackData } from './DynamicFeedback/types'
+import type { FeedbackData } from '../lib/dynamicFeedback'
 import { IPromptWeights } from '../types/interfaces'
 
 const navItems = [{ href: '/', icon: Home, label: 'Home' }]
