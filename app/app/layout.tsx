@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
-import Navigation from './components/sidebar/Navigation'
+import Navigation from './components/Navigation'
 import { WhiteboardProvider } from './context/WhiteboardContext'
 import { EditingProvider } from './context/EditingContext'
 

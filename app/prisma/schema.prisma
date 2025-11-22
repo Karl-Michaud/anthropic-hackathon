@@ -33,8 +33,9 @@ model Prompt {
   promptValues         PromptValues?
   generateDraft        GenerateDraft?
 
-  scholarshipId String      @map("scholarship_id")
-  scholarship   Scholarship @relation(fields: [scholarshipId], references: [id])
+  scholarshipId String         @map("scholarship_id")
+  scholarship   Scholarship    @relation(fields: [scholarshipId], references: [id])
+  promptWeights PromptWeights?
 
   @@map("prompts")
 }
@@ -103,6 +104,17 @@ model PromptValues {
   prompt   Prompt @relation(fields: [promptId], references: [id])
 
   @@map("prompt_values")
+}
+
+model PromptWeights {
+  id String @id @default(cuid())
+
+  weights Json @map("weights")
+
+  promptId String @unique @map("prompt_id")
+  prompt   Prompt @relation(fields: [promptId], references: [id])
+
+  @@map("prompt_weights")
 }
 
 model GenerateDraft {

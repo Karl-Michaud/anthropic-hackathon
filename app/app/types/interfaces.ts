@@ -15,16 +15,13 @@ export enum PrimaryFocus {
 }
 
 export interface IScholarship {
-  id: string
   title: string
   description: string
   prompts?: IPrompt[]
 }
 
 export interface IPrompt {
-  id: string
   text: string
-  scholarshipId: string
   scholarship?: IScholarship
 
   promptHiddenCriteria?: IPromptHiddenCriteria
@@ -35,51 +32,58 @@ export interface IPrompt {
 }
 
 export interface IPromptHiddenCriteria {
-  id: string
-  scholarshipHiddenCriteriaId?: string
-  trait: string
-  rationale: string
-  evidencePhrases: string[]
-  importance: ImportanceLevel
-
-  promptId: string
-  prompt?: IPrompt
+  implicit_criteria: Array<{
+    trait: string
+    rationale: string
+    evidence_phrases: string[]
+    importance: string
+  }>
+  overall_pattern: string
+  summary: string
+  confidence_score: number
 }
 
 export interface IPromptPersonality {
-  id: string
-  spirit: string
-  toneStyle: string
-  valuesEmphasized: string[]
-  recommendedEssayFocus: string
-
-  promptId: string
-  prompt?: IPrompt
+  personality_profile: {
+    core_identity: string
+    tone_style: string
+    communication_strategy: string
+    values_emphasized: string[]
+    hidden_criteria: string[]
+    recommended_essay_focus: string
+    contrast_examples: {
+      vs_merit_academic: string
+      vs_service: string
+    }
+  }
 }
 
 export interface IPromptPriorities {
-  id: string
-  primaryFocus: PrimaryFocus
-  priorityWeights: Record<string, number>
-
-  promptId: string
-  prompt?: IPrompt
+  primary_focus: string
+  priority_weights: Record<string, number>
+  selection_signals: string[]
+  success_profile: string
+  summary: string
+  confidence_score: number
 }
 
 export interface IPromptValues {
-  id: string
-  valuesEmphasized: string[]
-  valueDefinitions: Record<string, string>
-  evidencePhrases: string[]
+  values_emphasized: string[]
+  value_definitions: Record<string, string>
+  evidence_phrases: string[]
+  summary: string
+  confidence_score: number
+}
 
-  promptId: string
-  prompt?: IPrompt
+export interface IPromptWeights {
+  [category: string]: {
+    weight: number
+    subweights: {
+      [subcategory: string]: number
+    }
+  }
 }
 
 export interface IGenerateDraft {
-  id: string
   essay: string
-
-  promptId: string
-  prompt?: IPrompt
 }

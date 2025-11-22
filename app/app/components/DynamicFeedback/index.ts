@@ -1,12 +1,8 @@
-// Core components
-export { default as Question } from './core/Question'
-export { default as FeedbackSection } from './core/FeedbackSection'
-export { default as FeedbackPanel } from './core/FeedbackPanel'
+// Main component (merged into root level)
+export { default as FeedbackPanel } from '../FeedbackPanel'
 
 // Types
 export type {
-  Question as QuestionType,
-  FeedbackSection as FeedbackSectionType,
   FeedbackData,
   QuestionProps,
   FeedbackSectionProps,

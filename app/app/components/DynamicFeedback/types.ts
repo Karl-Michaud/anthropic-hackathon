@@ -41,7 +41,11 @@ export interface FeedbackSectionProps {
 export interface FeedbackPanelProps {
   data: FeedbackData
   onClose: () => void
-  onSectionAnswerChange: (sectionId: string, questionId: string, answer: string) => void
+  onSectionAnswerChange: (
+    sectionId: string,
+    questionId: string,
+    answer: string,
+  ) => void
   onSectionComplete: (sectionId: string) => void
   onSubmitToAI: () => void
 }

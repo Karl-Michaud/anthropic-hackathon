@@ -1,7 +1,14 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 'use client'
 
-import { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from 'react'
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+  useRef,
+  ReactNode,
+} from 'react'
 import { FeedbackData } from '../components/DynamicFeedback/types'
 import {
   saveFeedbackDraft,
@@ -11,6 +18,13 @@ import {
 
 const STORAGE_KEY = 'whiteboard-data'
 const DEBOUNCE_MS = 500
+
+export interface AdaptiveWeightCategory {
+  weight: number
+  subweights: Record<string, number>
+}
+
+export type AdaptiveWeights = Record<string, AdaptiveWeightCategory>
 
 export interface CellData {
   id: string
@@ -27,7 +41,7 @@ export interface ScholarshipData {
   description: string
   prompt: string
   hiddenRequirements: string[]
-  adaptiveWeights?: any // Adaptive weighting output from /api/adaptive-weighting
+  adaptiveWeights?: AdaptiveWeights
 }
 
 export interface EssayData {
@@ -51,7 +65,7 @@ export interface JsonOutputData {
     ScholarshipDescription: string
     EssayPrompt: string
     HiddenRequirements?: string[]
-    AdaptiveWeights?: any // Complete adaptive weighting analysis from the pipeline
+    AdaptiveWeights?: AdaptiveWeights
   }
 }
 
@@ -93,7 +107,10 @@ interface WhiteboardContextType {
 
   // Feedback panel actions
   addFeedbackPanel: (feedbackData: FeedbackData) => void
-  updateFeedbackPanel: (feedbackId: string, updates: Partial<FeedbackData>) => void
+  updateFeedbackPanel: (
+    feedbackId: string,
+    updates: Partial<FeedbackData>,
+  ) => void
   deleteFeedbackPanel: (feedbackId: string) => void
 
   // Position actions
@@ -150,6 +167,7 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
   // Load from localStorage after hydration (client-side only)
   useEffect(() => {
     const stored = loadFromStorage()
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCells(stored.cells)
     setScholarships(stored.scholarships)
     setEssays(stored.essays)
@@ -169,78 +187,9 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
     setIsLoaded(true)
   }, [])
 
-  // Convenience getters
-  const { cells, scholarships, essays, jsonOutputs, blockPositions } = state
-
-  // Helper setters to maintain the same API
-  const setCells = useCallback(
-    (updater: CellData[] | ((prev: CellData[]) => CellData[])) => {
-      setState((prev) => ({
-        ...prev,
-        cells: typeof updater === 'function' ? updater(prev.cells) : updater,
-      }))
-    },
-    [],
-  )
-
-  const setScholarships = useCallback(
-    (
-      updater:
-        | ScholarshipData[]
-        | ((prev: ScholarshipData[]) => ScholarshipData[]),
-    ) => {
-      setState((prev) => ({
-        ...prev,
-        scholarships:
-          typeof updater === 'function' ? updater(prev.scholarships) : updater,
-      }))
-    },
-    [],
-  )
-
-  const setEssays = useCallback(
-    (updater: EssayData[] | ((prev: EssayData[]) => EssayData[])) => {
-      setState((prev) => ({
-        ...prev,
-        essays: typeof updater === 'function' ? updater(prev.essays) : updater,
-      }))
-    },
-    [],
-  )
-
-  const setJsonOutputs = useCallback(
-    (
-      updater:
-        | JsonOutputData[]
-        | ((prev: JsonOutputData[]) => JsonOutputData[]),
-    ) => {
-      setState((prev) => ({
-        ...prev,
-        jsonOutputs:
-          typeof updater === 'function' ? updater(prev.jsonOutputs) : updater,
-      }))
-    },
-    [],
-  )
-
-  const setBlockPositions = useCallback(
-    (
-      updater: BlockPosition[] | ((prev: BlockPosition[]) => BlockPosition[]),
-    ) => {
-      setState((prev) => ({
-        ...prev,
-        blockPositions:
-          typeof updater === 'function'
-            ? updater(prev.blockPositions)
-            : updater,
-      }))
-    },
-    [],
-  )
-
   // Debounced save to localStorage (only after hydration)
   useEffect(() => {
-    if (!isHydrated) return
+    if (!isLoaded) return
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current)
     }
@@ -260,7 +209,7 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
         clearTimeout(saveTimeoutRef.current)
       }
     }
-  }, [cells, scholarships, essays, jsonOutputs, blockPositions, isHydrated])
+  }, [cells, scholarships, essays, jsonOutputs, blockPositions, isLoaded])
 
   // Cell actions
   const addCell = useCallback((cell: Omit<CellData, 'id'>) => {
@@ -376,21 +325,24 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
     saveFeedbackDraft(feedbackData) // Auto-save to localStorage
   }, [])
 
-  const updateFeedbackPanel = useCallback((feedbackId: string, updates: Partial<FeedbackData>) => {
-    setFeedbackPanels((prev) =>
-      prev.map((panel) =>
-        panel.id === feedbackId ? { ...panel, ...updates } : panel
+  const updateFeedbackPanel = useCallback(
+    (feedbackId: string, updates: Partial<FeedbackData>) => {
+      setFeedbackPanels((prev) =>
+        prev.map((panel) =>
+          panel.id === feedbackId ? { ...panel, ...updates } : panel,
+        ),
       )
-    )
-    // Auto-save updated panel
-    setFeedbackPanels((prev) => {
-      const updatedPanel = prev.find((p) => p.id === feedbackId)
-      if (updatedPanel) {
-        saveFeedbackDraft({ ...updatedPanel, ...updates })
-      }
-      return prev
-    })
-  }, [])
+      // Auto-save updated panel
+      setFeedbackPanels((prev) => {
+        const updatedPanel = prev.find((p) => p.id === feedbackId)
+        if (updatedPanel) {
+          saveFeedbackDraft({ ...updatedPanel, ...updates })
+        }
+        return prev
+      })
+    },
+    [],
+  )
 
   const deleteFeedbackPanel = useCallback((feedbackId: string) => {
     setFeedbackPanels((prev) => {

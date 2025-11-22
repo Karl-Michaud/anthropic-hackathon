@@ -70,7 +70,7 @@ export default function DraggableBlock({
         boxShadow: isDragging
           ? '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
           : undefined,
-        outline: isSelected ? `${outlineWidth}px solid #3b82f6` : 'none',
+        outline: isSelected ? `${outlineWidth}px solid #0ea5e9` : 'none',
         outlineOffset: `${outlineOffset}px`,
         zIndex,
       }}
