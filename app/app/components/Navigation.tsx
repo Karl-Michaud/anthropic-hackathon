@@ -12,7 +12,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import NextLink from 'next/link'
-import { useState, useRef, useEffect, ChangeEvent, DragEvent } from 'react'
+import { useState, useRef, ChangeEvent, DragEvent } from 'react'
 import { useWhiteboard } from '../context/WhiteboardContext'
 import { useDarkMode } from '../context/DarkModeContext'
 import {
@@ -30,41 +30,34 @@ const navItems = [{ href: '/', icon: Home, label: 'Home' }]
 
 // DarkModeToggle component
 function DarkModeToggle() {
-  const { isDarkMode, toggleDarkMode } = useDarkMode()
-  const [isMounted, setIsMounted] = useState(false)
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setIsMounted(true)
-  }, [])
+  const { isDarkMode, toggleDarkMode, isMounted } = useDarkMode()
 
   return (
     <button
       onClick={toggleDarkMode}
-      suppressHydrationWarning
       className={`group relative p-2 rounded-xl transition-all duration-200 hover:scale-105 cursor-pointer ${
         isDarkMode
           ? 'hover:bg-gray-600/40 text-yellow-300'
           : 'hover:bg-white/40 text-gray-500 group-hover:text-gray-600'
       }`}
       aria-label="Toggle dark mode"
+      suppressHydrationWarning
     >
-      {isMounted ? (
-        isDarkMode ? (
-          <Sun size={28} />
-        ) : (
-          <Moon size={28} />
-        )
+      {!isMounted ? (
+        // Show Moon icon during SSR and initial render to match server output
+        <Moon size={28} />
+      ) : isDarkMode ? (
+        <Sun size={28} />
       ) : (
         <Moon size={28} />
       )}
       <span
-        suppressHydrationWarning
         className={`absolute left-12 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 text-xs rounded-md px-2 py-1 transition-all duration-200 ${
           isDarkMode ? 'bg-gray-900 text-yellow-100' : 'bg-gray-900 text-white'
         }`}
+        suppressHydrationWarning
       >
-        {isMounted ? (isDarkMode ? 'Light Mode' : 'Dark Mode') : 'Dark Mode'}
+        {isDarkMode ? 'Light Mode' : 'Dark Mode'}
       </span>
     </button>
   )
@@ -395,7 +388,7 @@ function ScholarshipUploadPopup({
         )
 
         // Fetch the analysis data from the database
-        const dbScholarship = await getScholarshipFromDB(scholarship.id)
+        const dbScholarship = (await getScholarshipFromDB(scholarship.id)) as any
 
         const weights = await requestClaude<IPromptWeights>(
           'promptWeights',
@@ -446,7 +439,7 @@ function ScholarshipUploadPopup({
       )
 
       // Fetch the analysis data from the database
-      const dbScholarship = await getScholarshipFromDB(scholarship.id)
+      const dbScholarship = (await getScholarshipFromDB(scholarship.id)) as any
 
       const prompt = prompts[0] || ''
       const weights = await requestClaude<IPromptWeights>(
@@ -624,12 +617,21 @@ export default function Navigation() {
   return (
     <>
       <div
+<<<<<<< Updated upstream
         suppressHydrationWarning
         className={`fixed left-6 top-6 bottom-6 z-50 rounded-2xl backdrop-blur-md shadow-lg p-2 flex flex-col items-center transition-colors duration-200 ${
           isDarkMode
             ? 'bg-gray-700/80 border border-gray-600/80'
             : 'bg-white/80 border border-white/80'
         }`}
+=======
+        className="fixed left-6 top-6 bottom-6 z-50 rounded-2xl backdrop-blur-md shadow-lg p-2 flex flex-col items-center transition-colors duration-200 border"
+        style={{
+          backgroundColor: isDarkMode ? '#262624' : '#FDFBF9e6',
+          borderColor: isDarkMode ? '#004D4D' : '#B1ADA1',
+        }}
+        suppressHydrationWarning
+>>>>>>> Stashed changes
       >
         {/* Top navigation items */}
         <nav className="flex flex-col gap-4 items-center py-4">

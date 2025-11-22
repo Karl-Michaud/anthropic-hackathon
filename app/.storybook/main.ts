@@ -11,6 +11,15 @@ const config: StorybookConfig = {
   },
   "staticDirs": [
     "../public"
-  ]
+  ],
+  webpackFinal: async (config) => {
+    // Exclude server-side modules from browser bundle
+    config.resolve = config.resolve || {};
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@anthropic-ai/sdk': false,
+    };
+    return config;
+  }
 };
 export default config;

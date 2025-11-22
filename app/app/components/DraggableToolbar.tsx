@@ -61,6 +61,12 @@ function ToolButton({
             ? 'text-gray-300 hover:bg-gray-700'
             : 'text-neutral-700 hover:bg-neutral-100'
       }`}
+<<<<<<< Updated upstream
+=======
+      style={{
+        backgroundColor: isActive ? colors.primary[800] : 'transparent',
+      }}
+>>>>>>> Stashed changes
       title={title}
     >
       {icon}
@@ -131,6 +137,15 @@ function ContextMenu({
             ? 'cursor-pointer text-neutral-100 bg-neutral-700/20'
             : 'cursor-not-allowed text-neutral-500 bg-transparent'
         }`}
+<<<<<<< Updated upstream
+=======
+        style={{
+          color: hasSelection ? colors.neutral[500] : colors.neutral[800],
+          backgroundColor: hasSelection
+            ? `${colors.neutral[700]}33`
+            : 'transparent',
+        }}
+>>>>>>> Stashed changes
       >
         <Copy size={16} />
         Copy
@@ -262,6 +277,7 @@ export default function DraggableToolbar({
 
   return (
     <div
+<<<<<<< Updated upstream
       suppressHydrationWarning
       className={`fixed z-50 flex items-center gap-1 p-2 backdrop-blur-md rounded-xl shadow-lg border ${
         isDarkMode
@@ -270,6 +286,15 @@ export default function DraggableToolbar({
       } ${isDragging ? 'cursor-grabbing' : ''} ${!isDragging ? `${positionConfig.className} transition-all duration-300` : ''}`}
       style={
         isDragging
+=======
+      className={`fixed z-50 flex items-center gap-1 p-2 backdrop-blur-md rounded-2xl shadow-lg border ${
+        isDragging ? 'cursor-grabbing' : ''
+      } ${!isDragging ? `${positionConfig.className} transition-all duration-300` : ''}`}
+      style={{
+        backgroundColor: isDarkMode ? `#262624` : '#FDFBF9e6',
+        borderColor: isDarkMode ? '#004D4D' : '#B1ADA1',
+        ...(isDragging
+>>>>>>> Stashed changes
           ? {
               left: dragPos.x - 40,
               top: dragPos.y - 20,

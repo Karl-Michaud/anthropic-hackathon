@@ -444,11 +444,14 @@ function EditableField({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className={`w-full border-b-4 border-blue-500 outline-none pb-2 transition-all ${
+          className={`w-full border-b-4 outline-none pb-2 transition-all ${
             isDarkMode
-              ? 'bg-blue-900 text-blue-100'
-              : 'bg-blue-50 text-gray-900'
+              ? 'bg-blue-900 text-blue-100 border-blue-500'
+              : 'text-gray-900 border-[#C15F3C]'
           } ${className}`}
+          style={{
+            backgroundColor: isDarkMode ? undefined : '#FDFBF9',
+          }}
         />
       )
     }
@@ -459,9 +462,12 @@ function EditableField({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         rows={4}
-        className={`w-full border-2 border-blue-500 rounded-lg p-3 outline-none resize-none leading-relaxed transition-all ${
-          isDarkMode ? 'bg-blue-900 text-blue-100' : 'bg-blue-50 text-gray-900'
+        className={`w-full border-2 rounded-lg p-3 outline-none resize-none leading-relaxed transition-all ${
+          isDarkMode ? 'bg-blue-900 text-blue-100 border-blue-500' : 'text-gray-900 border-[#C15F3C]'
         } ${className}`}
+        style={{
+          backgroundColor: isDarkMode ? undefined : '#FDFBF9',
+        }}
       />
     )
   }
@@ -645,11 +651,12 @@ function ScholarshipEditButtons({
       <button
         onClick={onSave}
         disabled={isLoading}
-        className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-all ${
-          isLoading
-            ? 'bg-blue-500 text-white cursor-not-allowed'
-            : 'bg-blue-500 hover:bg-blue-600 text-white cursor-pointer'
+        className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-all text-white cursor-pointer ${
+          isLoading ? 'opacity-70 cursor-not-allowed' : ''
         }`}
+        style={{
+          backgroundColor: '#C15F3C',
+        }}
       >
         {isLoading && <Loader2 size={14} className="animate-spin" />}
         {isLoading ? 'Saving...' : 'Save'}
@@ -671,7 +678,10 @@ export function ScholarshipActions({
       <button
         onClick={onDraft}
         disabled={isGenerating}
-        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium border-none cursor-pointer transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed"
+        className="flex items-center gap-2 px-4 py-2 text-white rounded-md font-medium border-none cursor-pointer transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed"
+        style={{
+          backgroundColor: '#C15F3C',
+        }}
       >
         {isGenerating ? (
           <>
@@ -773,15 +783,18 @@ export function ScholarshipBlock({
 
   return (
     <div
-      className={`w-[550px] rounded-xl p-6 relative transition-all border ${
+      className={`w-[550px] rounded-2xl p-6 relative transition-all ${
         isDarkMode
           ? isEditing
-            ? 'bg-gray-800 shadow-lg border-blue-400'
-            : 'bg-gray-800 shadow-md border-gray-700'
+            ? 'bg-gray-800 shadow-lg border-blue-400 border'
+            : 'bg-gray-800 shadow-md border-gray-700 border'
           : isEditing
-            ? 'bg-white shadow-lg border-blue-500'
-            : 'bg-white shadow-md border-gray-200'
+            ? 'shadow-lg border-[#C15F3C] border'
+            : 'shadow-md border border-[#B1ADA1]'
       }`}
+      style={{
+        backgroundColor: isDarkMode ? undefined : '#FDFBF9',
+      }}
     >
       {/* Menu - top right */}
       {!isEditing && (

@@ -175,7 +175,10 @@ function FeedbackSection({
         <button
           onClick={onComplete}
           disabled={!allQuestionsAnswered}
-          className="mt-4 w-full bg-primary-600 text-neutral-0 px-4 py-2 rounded-lg font-medium hover:bg-primary-700 disabled:bg-neutral-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+          className="mt-4 w-full text-white px-4 py-2 rounded-lg font-medium disabled:bg-neutral-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+          style={{
+            backgroundColor: allQuestionsAnswered ? '#C15F3C' : undefined,
+          }}
         >
           <Check size={16} />
           Mark as Complete
@@ -230,11 +233,14 @@ export default function FeedbackPanel({
 
   return (
     <div
-      className={`w-[600px] rounded-xl shadow-lg flex flex-col max-h-[800px] transition-colors ${
+      className={`w-[600px] rounded-2xl shadow-lg flex flex-col max-h-[800px] transition-colors border ${
         isDarkMode
-          ? 'bg-gray-800 border border-gray-700'
-          : 'bg-white border border-neutral-200'
+          ? 'bg-gray-800 border-gray-700'
+          : 'border-[#B1ADA1]'
       }`}
+      style={{
+        backgroundColor: isDarkMode ? undefined : '#FDFBF9',
+      }}
     >
       <div
         className={`p-6 border-b shrink-0 relative flex items-center justify-between gap-4 group cursor-grab active:cursor-grabbing transition-colors ${
@@ -310,7 +316,10 @@ export default function FeedbackPanel({
         <button
           onClick={handleSubmit}
           disabled={!allSectionsComplete || isSubmitting}
-          className="w-full bg-primary-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-primary-700 disabled:bg-neutral-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+          className="w-full text-white px-6 py-3 rounded-lg font-medium disabled:bg-neutral-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+          style={{
+            backgroundColor: allSectionsComplete && !isSubmitting ? '#C15F3C' : undefined,
+          }}
         >
           {isSubmitting ? (
             <>

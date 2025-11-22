@@ -4,6 +4,7 @@ import {
   createContext,
   useContext,
   useState,
+  useEffect,
   useLayoutEffect,
   useEffect,
   ReactNode,
@@ -12,6 +13,7 @@ import {
 interface DarkModeContextType {
   isDarkMode: boolean
   toggleDarkMode: () => void
+  isMounted: boolean
 }
 
 const DarkModeContext = createContext<DarkModeContextType | undefined>(
@@ -19,6 +21,7 @@ const DarkModeContext = createContext<DarkModeContextType | undefined>(
 )
 
 export function DarkModeProvider({ children }: { children: ReactNode }) {
+<<<<<<< Updated upstream
   // Initialize with false to match server-side rendering
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
@@ -36,6 +39,25 @@ export function DarkModeProvider({ children }: { children: ReactNode }) {
 
   // Update DOM and localStorage when dark mode changes
   useEffect(() => {
+=======
+  // Always start with false to match server rendering
+  const [isDarkMode, setIsDarkMode] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
+
+  // After mounting on client, read the actual preference
+  useEffect(() => {
+    setIsMounted(true)
+    const saved = localStorage.getItem('darkMode')
+    if (saved !== null) {
+      setIsDarkMode(JSON.parse(saved))
+    } else {
+      setIsDarkMode(window.matchMedia('(prefers-color-scheme: dark)').matches)
+    }
+  }, [])
+
+  // Update DOM and localStorage when dark mode changes
+  useLayoutEffect(() => {
+>>>>>>> Stashed changes
     if (!isMounted) return
     localStorage.setItem('darkMode', JSON.stringify(isDarkMode))
     if (isDarkMode) {
@@ -50,7 +72,7 @@ export function DarkModeProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <DarkModeContext.Provider value={{ isDarkMode, toggleDarkMode }}>
+    <DarkModeContext.Provider value={{ isDarkMode, toggleDarkMode, isMounted }}>
       {children}
     </DarkModeContext.Provider>
   )

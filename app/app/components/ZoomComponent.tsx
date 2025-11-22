@@ -26,14 +26,17 @@ export default function ZoomComponent({
 
   return (
     <div
+<<<<<<< Updated upstream
       suppressHydrationWarning
       className={`flex items-center gap-1 backdrop-blur-lg active:scale-95 rounded-lg shadow-lg border p-2 ${
         isDarkMode ? 'border-gray-700' : 'border-neutral-200'
       }`}
+=======
+      className="flex items-center gap-1 backdrop-blur-lg active:scale-95 rounded-lg shadow-lg border p-2"
+>>>>>>> Stashed changes
       style={{
-        background: isDarkMode
-          ? `rgba(31, 41, 55, 0.95)`
-          : `rgba(255, 255, 255, 0.95)`,
+        backgroundColor: isDarkMode ? '#262624' : 'rgba(255, 255, 255, 0.95)',
+        borderColor: isDarkMode ? '#004D4D' : '#B1ADA1',
         transition: transitions.common.all,
       }}
     >
@@ -42,8 +45,8 @@ export default function ZoomComponent({
         onClick={onZoomOut}
         className={`flex items-center justify-center transition-all active:scale-95 hover:scale-105 hover:cursor-pointer w-8 h-8 rounded-md text-lg font-bold ${
           isDarkMode
-            ? 'bg-gray-700 hover:bg-blue-900 text-gray-300 hover:text-blue-300'
-            : 'bg-neutral-100 hover:bg-primary-100 text-neutral-700 hover:text-primary-700'
+            ? 'bg-[#004D4D] hover:bg-[#008080] text-white'
+            : 'bg-neutral-100 hover:bg-[#008080] text-neutral-700 hover:text-white'
         }`}
         aria-label="Zoom out"
       >
@@ -64,8 +67,8 @@ export default function ZoomComponent({
         onClick={onZoomIn}
         className={`flex items-center justify-center transition-all active:scale-95 hover:scale-105 hover:cursor-pointer w-8 h-8 rounded-md text-lg font-bold ${
           isDarkMode
-            ? 'bg-gray-700 hover:bg-blue-900 text-gray-300 hover:text-blue-300'
-            : 'bg-neutral-100 hover:bg-primary-100 text-neutral-700 hover:text-primary-700'
+            ? 'bg-[#004D4D] hover:bg-[#008080] text-white'
+            : 'bg-neutral-100 hover:bg-[#008080] text-neutral-700 hover:text-white'
         }`}
         aria-label="Zoom in"
       >
