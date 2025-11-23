@@ -642,7 +642,45 @@ export default function Whiteboard() {
           { color: 'bg-purple-200/50 dark:bg-purple-500/30', colorName: 'purple' as const },
         ]
 
-        const highlightedSections: HighlightedSection[] = highlightResult.sections.map((section, i) => ({
+        console.log('  - Raw sections from AI:', highlightResult.sections.map(s => ({
+          start: s.startIndex,
+          end: s.endIndex,
+          title: s.title,
+        })))
+
+        // Filter out invalid and overlapping sections
+        const validSections = []
+        const sortedSections = [...highlightResult.sections].sort((a, b) => a.startIndex - b.startIndex)
+
+        for (const section of sortedSections) {
+          // Validate indices
+          if (
+            section.startIndex < 0 ||
+            section.endIndex > essay.content.length ||
+            section.startIndex >= section.endIndex
+          ) {
+            console.warn('  - ⚠️ Skipping invalid section:', { start: section.startIndex, end: section.endIndex })
+            continue
+          }
+
+          // Check for overlap with existing valid sections
+          const hasOverlap = validSections.some(existing =>
+            (section.startIndex >= existing.startIndex && section.startIndex < existing.endIndex) ||
+            (section.endIndex > existing.startIndex && section.endIndex <= existing.endIndex) ||
+            (section.startIndex <= existing.startIndex && section.endIndex >= existing.endIndex)
+          )
+
+          if (hasOverlap) {
+            console.warn('  - ⚠️ Skipping overlapping section:', { start: section.startIndex, end: section.endIndex })
+            continue
+          }
+
+          validSections.push(section)
+        }
+
+        console.log('  - Valid non-overlapping sections:', validSections.length)
+
+        const highlightedSections: HighlightedSection[] = validSections.map((section, i) => ({
           id: `section-${Date.now()}-${i}`,
           startIndex: section.startIndex,
           endIndex: section.endIndex,

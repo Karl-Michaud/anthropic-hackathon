@@ -1392,9 +1392,11 @@ Identify ${sectionCount} key sections in the essay that would benefit from impro
 3. Write a detailed explanation of WHY this section was highlighted. Reference the scholarship's requirements, values, priorities, or weights when relevant. Explain what's missing or weak based on the scholarship analysis.
 4. Provide 2-4 specific, actionable areas of improvement for this section
 
-Rules for highlighting:
+CRITICAL RULES for highlighting:
 - startIndex and endIndex are CHARACTER positions (0-indexed), not word positions
-- Ensure indices are valid and don't overlap
+- Sections MUST NOT overlap - each character can only be in ONE section
+- Each section must be unique with different start/end positions
+- Ensure indices are valid (0 <= startIndex < endIndex <= essay length)
 - The reasons should explicitly reference the scholarship's hidden requirements when relevant
 - Areas of improvement should be specific and actionable
 
