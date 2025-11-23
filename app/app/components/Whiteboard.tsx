@@ -91,12 +91,6 @@ export default function Whiteboard() {
   const [blockDimensions, setBlockDimensions] = useState<
     Map<string, { width: number; height: number }>
   >(new Map())
-  const [isResizing, setIsResizing] = useState(false)
-  const [resizingBlockId, setResizingBlockId] = useState<string | null>(null)
-  const [resizeStartDimensions, setResizeStartDimensions] = useState<{
-    width: number
-    height: number
-  } | null>(null)
 
   const {
     cells,
@@ -397,31 +391,6 @@ export default function Whiteboard() {
     ],
   )
 
-  const handleResizeStart = useCallback(
-    (
-      e: MouseEvent<HTMLDivElement>,
-      blockId: string,
-      startX: number,
-      startY: number,
-      startWidth: number,
-      startHeight: number,
-    ) => {
-      e.stopPropagation()
-      setIsResizing(true)
-      setResizingBlockId(blockId)
-      setDragOffset({
-        x: startX,
-        y: startY,
-      })
-      setResizeStartDimensions({
-        width: startWidth,
-        height: startHeight,
-      })
-      setMomentum({ x: 0, y: 0 })
-    },
-    [],
-  )
-
   const handleGenerateEssay = useCallback(
     async (scholarshipId: string) => {
       const scholarship = scholarships.find((s) => s.id === scholarshipId)
@@ -582,21 +551,6 @@ export default function Whiteboard() {
 
   const handleMouseMove = useCallback(
     (e: MouseEvent<HTMLDivElement>) => {
-      if (isResizing && resizingBlockId && resizeStartDimensions) {
-        const deltaX = (e.clientX - dragOffset.x) / zoom
-        const deltaY = (e.clientY - dragOffset.y) / zoom
-
-        const newWidth = Math.max(200, resizeStartDimensions.width + deltaX)
-        const newHeight = Math.max(200, resizeStartDimensions.height + deltaY)
-
-        setBlockDimensions((prev) => {
-          const updated = new Map(prev)
-          updated.set(resizingBlockId, { width: newWidth, height: newHeight })
-          return updated
-        })
-        return
-      }
-
       if (isPanning && !draggingCellId) {
         const newX = e.clientX - startPos.x
         const newY = e.clientY - startPos.y
@@ -649,9 +603,6 @@ export default function Whiteboard() {
       }
     },
     [
-      isResizing,
-      resizingBlockId,
-      resizeStartDimensions,
       dragOffset,
       zoom,
       isPanning,
@@ -671,10 +622,6 @@ export default function Whiteboard() {
     setIsPanning(false)
     setDraggingCellId(null)
     setDragStartPositions(new Map())
-    setIsResizing(false)
-    setResizingBlockId(null)
-    setResizeStartDimensions(null)
-
     // Handle selection box completion
     if (selectionBox) {
       const { startX, startY, currentX, currentY } = selectionBox
@@ -1354,24 +1301,17 @@ export default function Whiteboard() {
         {/* Render scholarship blocks */}
         {scholarships.map((scholarship) => {
           const pos = getBlockPosition(scholarship.id)
-          const dims = blockDimensions.get(scholarship.id) || {
-            width: 550,
-            height: 400,
-          }
           return (
             <DraggableBlock
               key={scholarship.id}
               id={scholarship.id}
               x={pos.x}
               y={pos.y}
-              width={dims.width}
-              height={dims.height}
               isDragging={draggingCellId === scholarship.id}
               isSelected={selectedIds.has(scholarship.id)}
               zoom={zoom}
               zIndex={getZIndex(scholarship.id)}
               onMouseDown={handleBlockMouseDown}
-              onResizeStart={handleResizeStart}
               onContextMenu={(e, blockId) => handleContextMenu(e, blockId)}
             >
               <ScholarshipBlock
@@ -1391,24 +1331,17 @@ export default function Whiteboard() {
           const scholarship = scholarships.find(
             (s) => s.id === essay.scholarshipId,
           )
-          const dims = blockDimensions.get(essay.id) || {
-            width: 500,
-            height: 600,
-          }
           return (
             <DraggableBlock
               key={essay.id}
               id={essay.id}
               x={pos.x}
               y={pos.y}
-              width={dims.width}
-              height={dims.height}
               isDragging={draggingCellId === essay.id}
               isSelected={selectedIds.has(essay.id)}
               zoom={zoom}
               zIndex={getZIndex(essay.id)}
               onMouseDown={handleBlockMouseDown}
-              onResizeStart={handleResizeStart}
               onContextMenu={(e, blockId) => handleContextMenu(e, blockId)}
             >
               <EssayBlock
@@ -1426,24 +1359,17 @@ export default function Whiteboard() {
         {/* Render feedback panels */}
         {feedbackPanels.map((feedbackData) => {
           const pos = getBlockPosition(feedbackData.id)
-          const dims = blockDimensions.get(feedbackData.id) || {
-            width: 600,
-            height: 600,
-          }
           return (
             <DraggableBlock
               key={feedbackData.id}
               id={feedbackData.id}
               x={pos.x}
               y={pos.y}
-              width={dims.width}
-              height={dims.height}
               isDragging={draggingCellId === feedbackData.id}
               isSelected={selectedIds.has(feedbackData.id)}
               zoom={zoom}
               zIndex={getZIndex(feedbackData.id)}
               onMouseDown={handleBlockMouseDown}
-              onResizeStart={handleResizeStart}
               onContextMenu={(e, blockId) => handleContextMenu(e, blockId)}
             >
               <FeedbackPanel

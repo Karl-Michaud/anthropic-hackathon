@@ -23,11 +23,15 @@ export function LandingPage() {
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center px-4 transition-colors duration-200"
+      className="h-screen w-screen flex flex-col items-center justify-center px-4 transition-colors duration-200"
       style={{
         backgroundColor: colors.background.default,
         backgroundImage: `radial-gradient(circle, ${dotColor} 1px, transparent 1px)`,
         backgroundSize: `${dotSize}px ${dotSize}px`,
+        overflow: 'hidden',
+        position: 'fixed',
+        top: 0,
+        left: 0,
       }}
     >
       {/* Logo/Title */}
@@ -36,7 +40,7 @@ export function LandingPage() {
           className="text-5xl font-bold mb-3"
           style={{
             color: colors.text.primary,
-            fontFamily: typography.fonts.serif
+            fontFamily: typography.fonts.serif,
           }}
         >
           Socratic.ai
@@ -45,7 +49,7 @@ export function LandingPage() {
           className="text-lg"
           style={{
             color: colors.text.secondary,
-            fontFamily: typography.fonts.serif
+            fontFamily: typography.fonts.serif,
           }}
         >
           Organize, draft, and refine your scholarship essays
@@ -56,10 +60,7 @@ export function LandingPage() {
       <AuthForm />
 
       {/* Footer */}
-      <div
-        className="mt-8 text-sm"
-        style={{ color: colors.text.secondary }}
-      >
+      <div className="mt-8 text-sm" style={{ color: colors.text.secondary }}>
         Built for organizing scholarship applications
       </div>
     </div>
