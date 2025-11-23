@@ -1,3 +1,5 @@
+![](banner.png)
+
 # Socratic AI
 
 > Tailor Your Scholarship Essays with Critical Thinkers.
@@ -5,6 +7,12 @@
 ## About
 
 Generic AI tools generate polished but ineffective scholarship essays because they don't understand that each scholarship seeks specific types of students. Socratic AI uses Socratic questioning to extract authentic stories and guide strategic positioning, helping students reframe their experiences to align with what different scholarships truly value while maintaining their authentic voice. Built on analysis of 26+ major Canadian scholarships, our AI acts like an expert scholarship coach that decodes hidden selection criteria and teaches effective storytelling.
+
+### Hackathon Requirements
+
+-   Find the prompts we used to the LLM in `/docs/research/prompts`
+-   Find the Research with 25+ scholarships and award profiles in `/docs/research/25 Scholarships and Award Profiles.pdf`
+-   Use our app [Here](socraticai.vercel.app/)
 
 ## Getting Started
 
