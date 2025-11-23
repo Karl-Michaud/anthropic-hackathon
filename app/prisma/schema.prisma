@@ -91,7 +91,7 @@ model WhiteboardData {
   userProfile     Json?    @map("user_profile")
   userResponses   Json     @default("[]")
   createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @map("updated_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 
   @@map("whiteboard_data")
 }

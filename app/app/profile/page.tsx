@@ -8,11 +8,7 @@ import { useDarkMode } from '../context/DarkModeContext'
 import { useWhiteboard } from '../context/WhiteboardContext'
 import { UserProfileForm } from '../components/UserProfileForm'
 import { IUserProfile } from '../types/user-profile'
-import {
-  colorsLight,
-  colorsDark,
-  brandColors,
-} from '../styles/design-system'
+import { colorsLight, colorsDark, brandColors } from '../styles/design-system'
 
 export default function ProfilePage() {
   const { user, loading: authLoading } = useAuth()

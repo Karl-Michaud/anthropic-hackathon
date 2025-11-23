@@ -4,8 +4,6 @@ import { X } from 'lucide-react'
 import { MouseEvent } from 'react'
 import {
   brandColors,
-  colorsLight,
-  colorsDark,
   borderRadius,
   shadows,
   transitions,
@@ -34,7 +32,6 @@ export default function DeleteButton({
   }
 
   const config = sizeConfig[size]
-  const colors = isDarkMode ? colorsDark : colorsLight
 
   const bgColor = isDarkMode ? brandColors.backgroundDark : brandColors.pampas
   const textColor = isDarkMode ? brandColors.foregroundDark : brandColors.maroon

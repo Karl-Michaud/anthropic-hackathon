@@ -17,13 +17,11 @@ import {
 interface UserProfileFormProps {
   onSubmit: (profile: IUserProfile) => void
   initialData?: IUserProfile | null
-  isModal?: boolean
 }
 
 export function UserProfileForm({
   onSubmit,
   initialData,
-  isModal = false,
 }: UserProfileFormProps) {
   const [firstName, setFirstName] = useState(initialData?.firstName || '')
   const [lastName, setLastName] = useState(initialData?.lastName || '')

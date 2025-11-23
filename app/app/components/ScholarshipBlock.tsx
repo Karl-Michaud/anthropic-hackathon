@@ -1,7 +1,14 @@
 'use client'
 
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { MoreVertical, Pencil, Trash2, Plus, Loader2, Sparkles } from 'lucide-react'
+import {
+  MoreVertical,
+  Pencil,
+  Trash2,
+  Plus,
+  Loader2,
+  Sparkles,
+} from 'lucide-react'
 import { useEditing } from '../context/EditingContext'
 import { useDarkMode } from '../context/DarkModeContext'
 import { ScholarshipData } from '../context/WhiteboardContext'
@@ -132,91 +139,91 @@ function PersonalityDisplay({
   )
 }
 
-// Priorities Display
-function PrioritiesDisplay({
-  data,
-  isDarkMode = false,
-}: {
-  data?: Record<string, unknown>
-  isDarkMode?: boolean
-}) {
-  const [isExpanded, setIsExpanded] = useState(false)
-  const classes = getDarkModeClasses(isDarkMode)
+// Priority Display
+// function PriorityDisplay({
+//   data,
+//   isDarkMode = false,
+// }: {
+//   data?: Record<string, unknown>
+//   isDarkMode?: boolean
+// }) {
+//   const [isExpanded, setIsExpanded] = useState(false)
+//   const classes = getDarkModeClasses(isDarkMode)
 
-  if (!data) return null
+//   if (!data) return null
 
-  const primaryFocus = (data.primaryFocus || data.primary_focus) as
-    | string
-    | undefined
-  const selectionSignals = (data.selectionSignals || data.selection_signals) as
-    | string[]
-    | undefined
-  const successProfile = (data.successProfile || data.success_profile) as
-    | string
-    | undefined
+//   const primaryFocus = (data.primaryFocus || data.primary_focus) as
+//     | string
+//     | undefined
+//   const selectionSignals = (data.selectionSignals || data.selection_signals) as
+//     | string[]
+//     | undefined
+//   const successProfile = (data.successProfile || data.success_profile) as
+//     | string
+//     | undefined
 
-  if (!primaryFocus && !selectionSignals && !successProfile) return null
+//   if (!primaryFocus && !selectionSignals && !successProfile) return null
 
-  return (
-    <div className={`mt-4 border-t pt-4 ${classes.border}`}>
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className={`w-full text-left flex items-center justify-between px-2 py-1 rounded transition-colors cursor-pointer ${
-          isDarkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-50'
-        }`}
-      >
-        <h4 className={`text-sm font-semibold ${classes.heading}`}>
-          Priorities
-        </h4>
-        <span className={`text-xs ${classes.label}`}>
-          {isExpanded ? '▼' : '▶'}
-        </span>
-      </button>
-      {isExpanded && (
-        <div
-          className={`mt-2 p-3 rounded text-xs space-y-3 ${classes.surface} ${classes.text}`}
-        >
-          {primaryFocus && (
-            <div>
-              <p className={`font-semibold mb-1 ${classes.heading}`}>
-                Primary Focus:
-              </p>
-              <p className={classes.text}>{primaryFocus}</p>
-            </div>
-          )}
-          {successProfile && (
-            <div>
-              <p className={`font-semibold mb-1 ${classes.heading}`}>
-                Success Profile:
-              </p>
-              <p className={classes.text}>{successProfile}</p>
-            </div>
-          )}
-          {selectionSignals && selectionSignals.length > 0 && (
-            <div>
-              <p className={`font-semibold mb-1 ${classes.heading}`}>
-                Selection Signals:
-              </p>
-              <div className="flex flex-wrap gap-1">
-                {selectionSignals.map((signal: string, idx: number) => (
-                  <span
-                    key={idx}
-                    className="px-2 py-1 rounded text-xs text-white"
-                    style={{
-                      backgroundColor: brandColors.purple,
-                    }}
-                  >
-                    {signal}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
+//   return (
+//     <div className={`mt-4 border-t pt-4 ${classes.border}`}>
+//       <button
+//         onClick={() => setIsExpanded(!isExpanded)}
+//         className={`w-full text-left flex items-center justify-between px-2 py-1 rounded transition-colors cursor-pointer ${
+//           isDarkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-50'
+//         }`}
+//       >
+//         <h4 className={`text-sm font-semibold ${classes.heading}`}>
+//           Priorities
+//         </h4>
+//         <span className={`text-xs ${classes.label}`}>
+//           {isExpanded ? '▼' : '▶'}
+//         </span>
+//       </button>
+//       {isExpanded && (
+//         <div
+//           className={`mt-2 p-3 rounded text-xs space-y-3 ${classes.surface} ${classes.text}`}
+//         >
+//           {primaryFocus && (
+//             <div>
+//               <p className={`font-semibold mb-1 ${classes.heading}`}>
+//                 Primary Focus:
+//               </p>
+//               <p className={classes.text}>{primaryFocus}</p>
+//             </div>
+//           )}
+//           {successProfile && (
+//             <div>
+//               <p className={`font-semibold mb-1 ${classes.heading}`}>
+//                 Success Profile:
+//               </p>
+//               <p className={classes.text}>{successProfile}</p>
+//             </div>
+//           )}
+//           {selectionSignals && selectionSignals.length > 0 && (
+//             <div>
+//               <p className={`font-semibold mb-1 ${classes.heading}`}>
+//                 Selection Signals:
+//               </p>
+//               <div className="flex flex-wrap gap-1">
+//                 {selectionSignals.map((signal: string, idx: number) => (
+//                   <span
+//                     key={idx}
+//                     className="px-2 py-1 rounded text-xs text-white"
+//                     style={{
+//                       backgroundColor: brandColors.purple,
+//                     }}
+//                   >
+//                     {signal}
+//                   </span>
+//                 ))}
+//               </div>
+//             </div>
+//           )}
+//         </div>
+//       )}
+//     </div>
+//   )
+// }
 
 // Values Display
 function ValuesDisplay({
@@ -892,9 +899,8 @@ export function ScholarshipBlock({
           : data.personality
       ) as Record<string, unknown>
 
-      const valuesEmphasized = (profile.valuesEmphasized || profile.values_emphasized) as
-        | string[]
-        | undefined
+      const valuesEmphasized = (profile.valuesEmphasized ||
+        profile.values_emphasized) as string[] | undefined
       if (valuesEmphasized && valuesEmphasized.length > 0) {
         badges.push({ label: valuesEmphasized[0], color: 'teal' })
       }
@@ -1049,22 +1055,21 @@ export function ScholarshipBlock({
       {!isEditing && (
         <>
           <PersonalityDisplay data={data.personality} isDarkMode={isDarkMode} />
+          {/* <PriorityDisplay data={data.priorities} isDarkMode={isDarkMode} /> */}
           <ValuesDisplay data={data.values} isDarkMode={isDarkMode} />
           <WeightsDisplay data={data.weights} isDarkMode={isDarkMode} />
-          {!data.personality &&
-            !data.values &&
-            !data.weights && (
-              <div
-                className={`mt-4 p-3 rounded text-sm italic ${
-                  isDarkMode
-                    ? 'bg-gray-700 text-gray-400'
-                    : 'bg-gray-50 text-gray-500'
-                }`}
-              >
-                No AI analysis available. Generate analysis to see personality,
-                values, and weights.
-              </div>
-            )}
+          {!data.personality && !data.values && !data.weights && (
+            <div
+              className={`mt-4 p-3 rounded text-sm italic ${
+                isDarkMode
+                  ? 'bg-gray-700 text-gray-400'
+                  : 'bg-gray-50 text-gray-500'
+              }`}
+            >
+              No AI analysis available. Generate analysis to see personality,
+              values, and weights.
+            </div>
+          )}
         </>
       )}
 
@@ -1082,7 +1087,9 @@ export function ScholarshipBlock({
       {!isEditing && onDraft && (
         <ScholarshipActions
           onDraft={() => onDraft(data.id)}
-          onCustomDraft={onCustomDraft ? () => onCustomDraft(data.id) : undefined}
+          onCustomDraft={
+            onCustomDraft ? () => onCustomDraft(data.id) : undefined
+          }
           isGenerating={isGeneratingEssay}
         />
       )}

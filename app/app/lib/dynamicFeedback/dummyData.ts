@@ -9,7 +9,6 @@ export function createDummyFeedbackData(
     essayId,
     scholarshipId,
     problemTitle: 'Hidden Weight Type: Resiliency (40%)',
-    createdAt: Date.now(),
     sections: [
       {
         id: 'section-1',

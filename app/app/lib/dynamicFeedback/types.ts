@@ -19,7 +19,6 @@ export interface FeedbackData {
   scholarshipId: string
   problemTitle: string
   sections: FeedbackSection[]
-  createdAt: number
 }
 
 export interface QuestionProps {

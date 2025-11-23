@@ -17,12 +17,7 @@ export function AuthForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const {
-    signInWithGoogle,
-    signInWithGitHub,
-    signInWithEmail,
-    signUpWithEmail,
-  } = useAuth()
+  const { signInWithEmail, signUpWithEmail } = useAuth()
   const { isDarkMode } = useDarkMode()
 
   const handleEmailAuth = async (e: React.FormEvent) => {
@@ -39,22 +34,6 @@ export function AuthForm() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Authentication failed')
     } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleSocialAuth = async (provider: 'google' | 'github') => {
-    setError(null)
-    setLoading(true)
-
-    try {
-      if (provider === 'google') {
-        await signInWithGoogle()
-      } else {
-        await signInWithGitHub()
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Authentication failed')
       setLoading(false)
     }
   }

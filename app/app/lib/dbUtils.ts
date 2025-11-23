@@ -455,10 +455,15 @@ export async function saveWhiteboardData(
     await prisma.whiteboardData.upsert({
       where: { userId },
       update: {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         cells: whiteboardData.cells as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         scholarships: whiteboardData.scholarships as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         essays: whiteboardData.essays as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         jsonOutputs: whiteboardData.jsonOutputs as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         blockPositions: whiteboardData.blockPositions as any,
         updatedAt: new Date(),
         // Preserve first-time status if profile exists
@@ -468,10 +473,15 @@ export async function saveWhiteboardData(
       },
       create: {
         userId,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         cells: whiteboardData.cells as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         scholarships: whiteboardData.scholarships as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         essays: whiteboardData.essays as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         jsonOutputs: whiteboardData.jsonOutputs as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         blockPositions: whiteboardData.blockPositions as any,
         userProfile: whiteboardData.userProfile as any,
         isFirstTimeUser,

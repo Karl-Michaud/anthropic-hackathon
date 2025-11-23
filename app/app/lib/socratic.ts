@@ -31,9 +31,15 @@ export async function analyzeSocratic(
   console.log('🔍 [analyzeSocratic] CALLED')
   console.log('  - scholarshipTitle:', scholarshipTitle || 'NOT PROVIDED')
   console.log('  - essayContent type:', typeof essayContent)
-  console.log('  - essayContent value:', essayContent ? `"${essayContent.substring(0, 100)}..."` : 'NULL/UNDEFINED')
+  console.log(
+    '  - essayContent value:',
+    essayContent ? `"${essayContent.substring(0, 100)}..."` : 'NULL/UNDEFINED',
+  )
   console.log('  - essayContent length:', essayContent?.length || 0)
-  console.log('  - essayContent trimmed length:', essayContent?.trim().length || 0)
+  console.log(
+    '  - essayContent trimmed length:',
+    essayContent?.trim().length || 0,
+  )
 
   if (!essayContent || essayContent.trim().length === 0) {
     console.error('❌ [analyzeSocratic] Essay content is empty!')
@@ -47,7 +53,9 @@ export async function analyzeSocratic(
   console.log('  - Word count:', wordCount)
 
   if (wordCount < 10) {
-    console.warn('⚠️ [analyzeSocratic] Essay too short for analysis:', { wordCount })
+    console.warn('⚠️ [analyzeSocratic] Essay too short for analysis:', {
+      wordCount,
+    })
     // Return empty result instead of error for very short essays
     return {
       highlightedSections: [],
@@ -229,7 +237,12 @@ Rules:
 
     // Determine color based on property type
     let colorName: 'amber' | 'cyan' | 'pink' | 'lime' | 'purple'
-    const propertyType = section.propertyType as 'personality' | 'value' | 'weight' | 'priority' | undefined
+    const propertyType = section.propertyType as
+      | 'personality'
+      | 'value'
+      | 'weight'
+      | 'priority'
+      | undefined
 
     // Map property types to specific colors
     if (propertyType === 'personality') {
@@ -256,7 +269,12 @@ Rules:
       title: section.title || 'Improvement area',
       explanation: section.explanation || undefined,
       colorName,
-      propertyType: section.propertyType as 'personality' | 'value' | 'weight' | 'priority' | undefined,
+      propertyType: section.propertyType as
+        | 'personality'
+        | 'value'
+        | 'weight'
+        | 'priority'
+        | undefined,
       propertyValue: section.propertyValue as string | undefined,
     })
 
@@ -322,7 +340,10 @@ export async function submitSocraticAnswers(
         })
       }
     } catch (error) {
-      console.warn('Could not load user profile for Socratic submission:', error)
+      console.warn(
+        'Could not load user profile for Socratic submission:',
+        error,
+      )
     }
   }
 

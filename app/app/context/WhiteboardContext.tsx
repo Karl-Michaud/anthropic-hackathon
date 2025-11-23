@@ -247,7 +247,8 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle')
   const [userProfile, setUserProfileState] = useState<IUserProfile | null>(null)
   const [isFirstTimeUser, setIsFirstTimeUser] = useState<boolean>(false)
-  const [hasCheckedFirstTimeUser, setHasCheckedFirstTimeUser] = useState<boolean>(false)
+  const [hasCheckedFirstTimeUser, setHasCheckedFirstTimeUser] =
+    useState<boolean>(false)
 
   const { user } = useAuth()
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -275,16 +276,19 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
       }
       syncManager.cancelPendingSync()
 
-      setIsLoaded(false)
-      setCells([])
-      setScholarships([])
-      setEssays([])
-      setJsonOutputs([])
-      setBlockPositions([])
-      setFeedbackPanels([])
-      setUserProfileState(null)
-      setIsFirstTimeUser(false)
-      setHasCheckedFirstTimeUser(false)
+      // Schedule state reset after effect completes to avoid cascading renders
+      queueMicrotask(() => {
+        setIsLoaded(false)
+        setCells([])
+        setScholarships([])
+        setEssays([])
+        setJsonOutputs([])
+        setBlockPositions([])
+        setFeedbackPanels([])
+        setUserProfileState(null)
+        setIsFirstTimeUser(false)
+        setHasCheckedFirstTimeUser(false)
+      })
     }
 
     previousUserIdRef.current = currentUserId
@@ -502,11 +506,14 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
   // Position actions
   const updateBlockPosition = useCallback(
     (id: string, x: number, y: number) => {
-      console.log('📍 [WhiteboardContext.updateBlockPosition] Updating position:', {
-        id,
-        x,
-        y,
-      })
+      console.log(
+        '📍 [WhiteboardContext.updateBlockPosition] Updating position:',
+        {
+          id,
+          x,
+          y,
+        },
+      )
       setBlockPositions((prev) => {
         const existing = prev.find((p) => p.id === id)
         if (existing) {
@@ -615,7 +622,7 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
 
       console.log('🔐 [setUserProfile] Complete!')
     },
-    [user?.id],
+    [user],
   )
 
   const completeOnboarding = useCallback(() => {

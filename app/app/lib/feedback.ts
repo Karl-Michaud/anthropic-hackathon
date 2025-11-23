@@ -193,7 +193,6 @@ Return 2-3 sections based on the essay quality and length.`
     scholarshipId,
     problemTitle: `Essay Enhancement Feedback${scholarshipTitle ? ` - ${scholarshipTitle}` : ''}`,
     sections,
-    createdAt: Date.now(),
   }
 
   return feedbackData
@@ -230,7 +229,10 @@ export async function submitFeedback(
         })
       }
     } catch (error) {
-      console.warn('Could not load user profile for feedback submission:', error)
+      console.warn(
+        'Could not load user profile for feedback submission:',
+        error,
+      )
     }
   }
 
