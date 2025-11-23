@@ -85,6 +85,9 @@ export default function Whiteboard() {
     currentY: number
   } | null>(null)
   const [zIndexStack, setZIndexStack] = useState<string[]>([])
+  const [blockDimensions, setBlockDimensions] = useState<
+    Map<string, { width: number; height: number }>
+  >(new Map())
 
   const {
     cells,
@@ -382,7 +385,6 @@ export default function Whiteboard() {
       activeTool,
     ],
   )
-
 
   const handleGenerateEssay = useCallback(
     async (scholarshipId: string) => {

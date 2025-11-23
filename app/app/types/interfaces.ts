@@ -21,8 +21,8 @@ export interface IScholarship {
   prompt: string
 
   promptPersonality?: IPromptPersonality
-  promptPriorities?: IPromptPriority
-  promptValues?: IPromptValues
+  promptPriority?: IPromptPriority
+  promptValue?: IPromptValues
   promptWeights?: IPromptWeights
   generateDraft?: IGenerateDraft
 }
@@ -32,8 +32,8 @@ export interface IPrompt {
   scholarship?: IScholarship
 
   promptPersonality?: IPromptPersonality
-  promptPriorities?: IPromptPriority
-  promptValues?: IPromptValues
+  promptPriority?: IPromptPriority
+  promptValue?: IPromptValues
   generateDraft?: IGenerateDraft
 }
 

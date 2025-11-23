@@ -365,3 +365,122 @@ export async function generateAndSavePromptAnalysis(
     throw new Error(`Failed to generate analysis: ${(error as Error).message}`)
   }
 }
+
+// Whiteboard Data functions
+export interface WhiteboardData {
+  cells: unknown[]
+  scholarships: unknown[]
+  essays: unknown[]
+  jsonOutputs: unknown[]
+  blockPositions: unknown[]
+}
+
+export interface WhiteboardDatabaseRow {
+  id: string
+  userId: string
+  cells: unknown[]
+  scholarships: unknown[]
+  essays: unknown[]
+  jsonOutputs: unknown[]
+  blockPositions: unknown[]
+  isFirstTimeUser: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+/**
+ * Get whiteboard data for a user
+ * Returns null if no data exists yet
+ */
+export async function getWhiteboardData(
+  userId: string,
+): Promise<WhiteboardDatabaseRow | null> {
+  try {
+    const data = await prisma.whiteboardData.findUnique({
+      where: { userId },
+    })
+
+    if (!data) {
+      return null
+    }
+
+    return {
+      id: data.id,
+      userId: data.userId,
+      cells: Array.isArray(data.cells) ? data.cells : [],
+      scholarships: Array.isArray(data.scholarships) ? data.scholarships : [],
+      essays: Array.isArray(data.essays) ? data.essays : [],
+      jsonOutputs: Array.isArray(data.jsonOutputs) ? data.jsonOutputs : [],
+      blockPositions: Array.isArray(data.blockPositions)
+        ? data.blockPositions
+        : [],
+      isFirstTimeUser: data.isFirstTimeUser,
+      createdAt: data.createdAt.toISOString(),
+      updatedAt: data.updatedAt.toISOString(),
+    }
+  } catch (error) {
+    console.error('Error fetching whiteboard data:', error)
+    throw error
+  }
+}
+
+/**
+ * Save whiteboard data for a user
+ * Creates new row if doesn't exist, updates if it does
+ */
+export async function saveWhiteboardData(
+  userId: string,
+  whiteboardData: WhiteboardData,
+): Promise<void> {
+  try {
+    console.log('Attempting to save data for user:', userId)
+    console.log('Whiteboard data:', {
+      cellsCount: whiteboardData.cells.length,
+      scholarshipsCount: whiteboardData.scholarships.length,
+      essaysCount: whiteboardData.essays.length,
+    })
+
+    await prisma.whiteboardData.upsert({
+      where: { userId },
+      update: {
+        cells: whiteboardData.cells as any,
+        scholarships: whiteboardData.scholarships as any,
+        essays: whiteboardData.essays as any,
+        jsonOutputs: whiteboardData.jsonOutputs as any,
+        blockPositions: whiteboardData.blockPositions as any,
+        updatedAt: new Date(),
+      },
+      create: {
+        userId,
+        cells: whiteboardData.cells as any,
+        scholarships: whiteboardData.scholarships as any,
+        essays: whiteboardData.essays as any,
+        jsonOutputs: whiteboardData.jsonOutputs as any,
+        blockPositions: whiteboardData.blockPositions as any,
+        updatedAt: new Date(),
+      },
+    })
+
+    console.log('Successfully saved whiteboard data for user:', userId)
+  } catch (error) {
+    console.error('Error saving whiteboard data:', error)
+    throw new Error(
+      `Failed to save whiteboard data: ${error instanceof Error ? error.message : 'Unknown error'}`,
+    )
+  }
+}
+
+/**
+ * Mark user as returning (no longer first-time user)
+ */
+export async function markUserAsReturning(userId: string): Promise<void> {
+  try {
+    await prisma.whiteboardData.update({
+      where: { userId },
+      data: { isFirstTimeUser: false },
+    })
+  } catch (error) {
+    console.error('Error marking user as returning:', error)
+    // Don't throw - this is not critical
+  }
+}

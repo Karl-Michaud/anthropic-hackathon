@@ -832,28 +832,35 @@ export function ScholarshipBlock({
 
   // Extract badge information
   const getBadges = () => {
-    const badges: Array<{ label: string; color: 'teal' | 'crail' | 'olive' | 'purple' | 'navy' }> = []
+    const badges: Array<{
+      label: string
+      color: 'teal' | 'crail' | 'olive' | 'purple' | 'navy'
+    }> = []
 
     // Get personality badge (teal)
     if (data.personality) {
       const profile = (
-        typeof data.personality.personality_profile === 'object' && data.personality.personality_profile
+        typeof data.personality.personality_profile === 'object' &&
+        data.personality.personality_profile
           ? (data.personality.personality_profile as Record<string, unknown>)
           : data.personality
       ) as Record<string, unknown>
 
-      const spirit = (profile.spirit || profile.core_identity) as string | undefined
+      const spirit = (profile.spirit || profile.core_identity) as
+        | string
+        | undefined
       if (spirit) {
         // Extract a keyword from the spirit description
         const words = spirit.split(' ')
-        const keyword = words.find(w => w.length > 5) || words[0]
+        const keyword = words.find((w) => w.length > 5) || words[0]
         badges.push({ label: keyword.replace(/[,.:;]/g, ''), color: 'teal' })
       }
     }
 
     // Get values badge (crail/red)
     if (data.values) {
-      const valuesEmphasized = (data.values.valuesEmphasized || data.values.values_emphasized) as string[] | undefined
+      const valuesEmphasized = (data.values.valuesEmphasized ||
+        data.values.values_emphasized) as string[] | undefined
       if (valuesEmphasized && valuesEmphasized.length > 0) {
         badges.push({ label: valuesEmphasized[0], color: 'crail' })
       }
@@ -869,7 +876,9 @@ export function ScholarshipBlock({
         let maxCategory = categories[0]
 
         categories.forEach((category) => {
-          const categoryData = weightsData[category] as Record<string, unknown> | undefined
+          const categoryData = weightsData[category] as
+            | Record<string, unknown>
+            | undefined
           if (categoryData && typeof categoryData.weight === 'number') {
             if (categoryData.weight > maxWeight) {
               maxWeight = categoryData.weight
@@ -879,8 +888,10 @@ export function ScholarshipBlock({
         })
 
         badges.push({
-          label: maxCategory.charAt(0).toUpperCase() + maxCategory.slice(1).replace(/_/g, ' '),
-          color: 'olive'
+          label:
+            maxCategory.charAt(0).toUpperCase() +
+            maxCategory.slice(1).replace(/_/g, ' '),
+          color: 'olive',
         })
       }
     }
@@ -932,7 +943,12 @@ export function ScholarshipBlock({
       {!isEditing && badges.length > 0 && (
         <div className="flex gap-2 mb-4">
           {badges.map((badge, idx) => (
-            <Badge key={idx} label={badge.label} color={badge.color} isDarkMode={isDarkMode} />
+            <Badge
+              key={idx}
+              label={badge.label}
+              color={badge.color}
+              isDarkMode={isDarkMode}
+            />
           ))}
         </div>
       )}

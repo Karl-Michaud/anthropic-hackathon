@@ -41,9 +41,9 @@ const anthropic = new Anthropic({
 })
 
 export type ClaudeRequestType =
-  | 'promptPersonalities'
-  | 'promptPriorities'
-  | 'promptValues'
+  | 'promptPersonality'
+  | 'promptPriority'
+  | 'promptValue'
   | 'promptWeights'
   | 'generateDraft'
 
@@ -507,19 +507,19 @@ function getPromptForType(
   prompt: string,
 ): string {
   switch (type) {
-    case 'promptPersonalities':
+    case 'promptPersonality':
       return generatePersonalityPrompt(
         scholarshipTitle,
         scholarshipDescription,
         prompt,
       )
-    case 'promptPriorities':
+    case 'promptPriority':
       return generatePrioritiesPrompt(
         scholarshipTitle,
         scholarshipDescription,
         prompt,
       )
-    case 'promptValues':
+    case 'promptValue':
       return generateValuesPrompt(
         scholarshipTitle,
         scholarshipDescription,
@@ -551,19 +551,19 @@ export async function generateAllPromptAnalysis(
   try {
     const [personality, priorities, values, weights] = await Promise.all([
       requestClaude<IPromptPersonality>(
-        'promptPersonalities',
+        'promptPersonality',
         scholarshipTitle,
         scholarshipDescription,
         prompt,
       ),
       requestClaude<IPromptPriority>(
-        'promptPriorities',
+        'promptPriority',
         scholarshipTitle,
         scholarshipDescription,
         prompt,
       ),
       requestClaude<IPromptValues>(
-        'promptValues',
+        'promptValue',
         scholarshipTitle,
         scholarshipDescription,
         prompt,

@@ -25,22 +25,22 @@ const HIGHLIGHT_COLORS: Record<
   string,
   { bg: string; text: string; ring: string }
 > = {
-  mustard: {
+  amber: {
     bg: brandColors.mustard,
     text: brandColors.foreground,
     ring: brandColors.clay,
   },
-  teal: {
+  cyan: {
     bg: brandColors.teal,
     text: brandColors.foregroundDark,
     ring: brandColors.navy,
   },
-  crail: {
+  pink: {
     bg: brandColors.crail,
     text: brandColors.foregroundDark,
     ring: brandColors.maroon,
   },
-  olive: {
+  lime: {
     bg: brandColors.olive,
     text: brandColors.foregroundDark,
     ring: brandColors.clay,
@@ -80,7 +80,7 @@ function renderHighlightedText(
 
     // Add highlighted text
     const colorConfig =
-      HIGHLIGHT_COLORS[section.colorName] || HIGHLIGHT_COLORS.mustard
+      HIGHLIGHT_COLORS[section.colorName] || HIGHLIGHT_COLORS.amber
     elements.push(
       <mark
         key={`highlight-${section.id}`}
@@ -232,7 +232,9 @@ function EssayMenu({
       {showMenu && (
         <div
           className={`absolute top-8 right-0 rounded-lg shadow-xl border py-2 z-50 min-w-[180px] ${
-            isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+            isDarkMode
+              ? 'bg-gray-800 border-gray-700'
+              : 'bg-white border-gray-200'
           }`}
         >
           <div
@@ -241,9 +243,7 @@ function EssayMenu({
             }`}
           >
             <label className="flex items-center gap-2 text-sm">
-              <span
-                className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}
-              >
+              <span className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>
                 Max words:
               </span>
               <input
@@ -593,100 +593,106 @@ export default function EssayBlock({
         }`}
         ref={blockRef}
       >
-      <div
-        className={`flex items-center justify-between py-3 px-4 border-b rounded-t-xl transition-colors duration-200 ${
-          isDarkMode
-            ? 'bg-gray-700 border-gray-600'
-            : 'bg-neutral-50 border-neutral-200'
-        }`}
-      >
-        <div className="flex-1">
-          <h3
-            className={`text-sm font-semibold m-0 ${
-              isDarkMode ? 'text-gray-100' : 'text-neutral-700'
-            }`}
-          >
-            {scholarshipTitle ? `Draft for ${scholarshipTitle}` : 'Essay Draft'}
-          </h3>
+        <div
+          className={`flex items-center justify-between py-3 px-4 border-b rounded-t-xl transition-colors duration-200 ${
+            isDarkMode
+              ? 'bg-gray-700 border-gray-600'
+              : 'bg-neutral-50 border-neutral-200'
+          }`}
+        >
+          <div className="flex-1">
+            <h3
+              className={`text-sm font-semibold m-0 ${
+                isDarkMode ? 'text-gray-100' : 'text-neutral-700'
+              }`}
+            >
+              {scholarshipTitle
+                ? `Draft for ${scholarshipTitle}`
+                : 'Essay Draft'}
+            </h3>
+          </div>
+          <div className="flex items-center gap-3">
+            <WordCounter
+              currentCount={wordCount}
+              maxCount={data.maxWordCount}
+            />
+            <ExportMenu
+              content={data.content}
+              filename={
+                scholarshipTitle ? `essay_${scholarshipTitle}` : 'essay_draft'
+              }
+              title={
+                scholarshipTitle
+                  ? `Draft for ${scholarshipTitle}`
+                  : 'Essay Draft'
+              }
+              disabled={isGenerating}
+            />
+            <EssayMenu
+              maxWords={maxWords}
+              onMaxWordsChange={handleMaxWordsChange}
+              onDelete={handleDelete}
+              isDarkMode={isDarkMode}
+            />
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          <WordCounter currentCount={wordCount} maxCount={data.maxWordCount} />
-          <ExportMenu
-            content={data.content}
-            filename={
-              scholarshipTitle ? `essay_${scholarshipTitle}` : 'essay_draft'
-            }
-            title={
-              scholarshipTitle ? `Draft for ${scholarshipTitle}` : 'Essay Draft'
-            }
-            disabled={isGenerating}
-          />
-          <EssayMenu
-            maxWords={maxWords}
-            onMaxWordsChange={handleMaxWordsChange}
-            onDelete={handleDelete}
+
+        {showDeleteConfirm && (
+          <EssayDeleteConfirm
+            onConfirm={confirmDelete}
+            onCancel={() => setShowDeleteConfirm(false)}
             isDarkMode={isDarkMode}
           />
-        </div>
-      </div>
-
-      {showDeleteConfirm && (
-        <EssayDeleteConfirm
-          onConfirm={confirmDelete}
-          onCancel={() => setShowDeleteConfirm(false)}
-          isDarkMode={isDarkMode}
-        />
-      )}
-
-      <div className="p-4 relative">
-        {isGenerating ? (
-          <div className="flex items-center justify-center p-12 py-0">
-            <Loader2 size={32} className="animate-spin text-primary-500" />
-            <span
-              className={`ml-3 ${isDarkMode ? 'text-gray-400' : 'text-neutral-600'}`}
-            >
-              Generating essay...
-            </span>
-          </div>
-        ) : isEditMode ||
-          !data.highlightedSections ||
-          data.highlightedSections.length === 0 ? (
-          <textarea
-            ref={textareaRef}
-            value={data.content}
-            onChange={handleContentChange}
-            onFocus={() => setEditing(true)}
-            onBlur={() => setEditing(false)}
-            onWheel={(e) => e.stopPropagation()}
-            placeholder="Start writing your essay here..."
-            className={`w-full resize-none outline-none text-sm leading-relaxed border-0 p-0 transition-colors ${
-              isDarkMode
-                ? 'bg-gray-800 text-gray-100 placeholder-gray-500'
-                : 'bg-white text-neutral-800 placeholder-gray-400'
-            }`}
-            style={{
-              minHeight: '100px',
-              height: textareaRef.current?.scrollHeight || 'auto',
-            }}
-          />
-        ) : (
-          <div
-            className={`w-full border-0 p-0 text-sm leading-relaxed transition-colors cursor-pointer opacity-75 ${
-              isDarkMode ? 'text-gray-100' : 'text-neutral-800'
-            }`}
-            onDoubleClick={() => setIsEditMode(true)}
-            onWheel={(e) => e.stopPropagation()}
-            title="Double-click to edit"
-          >
-            {renderHighlightedText(
-              data.content,
-              data.highlightedSections,
-              handleSectionClick,
-            )}
-          </div>
         )}
-      </div>
 
+        <div className="p-4 relative">
+          {isGenerating ? (
+            <div className="flex items-center justify-center p-12 py-0">
+              <Loader2 size={32} className="animate-spin text-primary-500" />
+              <span
+                className={`ml-3 ${isDarkMode ? 'text-gray-400' : 'text-neutral-600'}`}
+              >
+                Generating essay...
+              </span>
+            </div>
+          ) : isEditMode ||
+            !data.highlightedSections ||
+            data.highlightedSections.length === 0 ? (
+            <textarea
+              ref={textareaRef}
+              value={data.content}
+              onChange={handleContentChange}
+              onFocus={() => setEditing(true)}
+              onBlur={() => setEditing(false)}
+              onWheel={(e) => e.stopPropagation()}
+              placeholder="Start writing your essay here..."
+              className={`w-full resize-none outline-none text-sm leading-relaxed border-0 p-0 transition-colors ${
+                isDarkMode
+                  ? 'bg-gray-800 text-gray-100 placeholder-gray-500'
+                  : 'bg-white text-neutral-800 placeholder-gray-400'
+              }`}
+              style={{
+                minHeight: '100px',
+                height: textareaRef.current?.scrollHeight || 'auto',
+              }}
+            />
+          ) : (
+            <div
+              className={`w-full border-0 p-0 text-sm leading-relaxed transition-colors cursor-pointer opacity-75 ${
+                isDarkMode ? 'text-gray-100' : 'text-neutral-800'
+              }`}
+              onDoubleClick={() => setIsEditMode(true)}
+              onWheel={(e) => e.stopPropagation()}
+              title="Double-click to edit"
+            >
+              {renderHighlightedText(
+                data.content,
+                data.highlightedSections,
+                handleSectionClick,
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {socraticPanelData && (

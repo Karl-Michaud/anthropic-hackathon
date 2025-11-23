@@ -41,7 +41,7 @@ export default function DraggableBlock({
       return
     }
 
-    // Prevent drag from inputs, buttons, and textareas
+    // Prevent drag from inputs, buttons, textareas
     if (
       target.tagName === 'INPUT' ||
       target.tagName === 'TEXTAREA' ||

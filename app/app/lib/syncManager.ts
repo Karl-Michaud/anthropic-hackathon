@@ -3,7 +3,7 @@ import {
   getWhiteboardData,
   markUserAsReturning,
   type WhiteboardData,
-} from './supabase/queries'
+} from './dbUtils'
 
 const DEBOUNCE_DELAY = 3000 // 3 seconds
 
@@ -97,8 +97,8 @@ class SyncManager {
         cells: data.cells || [],
         scholarships: data.scholarships || [],
         essays: data.essays || [],
-        jsonOutputs: data.json_outputs || [],
-        blockPositions: data.block_positions || [],
+        jsonOutputs: data.jsonOutputs || [],
+        blockPositions: data.blockPositions || [],
       }
     } catch (error) {
       console.error('Error loading from database:', error)
@@ -112,7 +112,7 @@ class SyncManager {
   async isFirstTimeUser(userId: string): Promise<boolean> {
     try {
       const data = await getWhiteboardData(userId)
-      return data?.is_first_time_user ?? true
+      return data?.isFirstTimeUser ?? true
     } catch (error) {
       console.error('Error checking first-time user status:', error)
       return true

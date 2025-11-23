@@ -633,8 +633,8 @@ function ScholarshipUploadPopup({
           prompt: prompt,
           weights: weights as Record<string, unknown>,
           personality: dbScholarship?.promptPersonality || undefined,
-          priorities: dbScholarship?.promptPriorities || undefined,
-          values: dbScholarship?.promptValues || undefined,
+          priorities: dbScholarship?.promptPriority || undefined,
+          values: dbScholarship?.promptValue || undefined,
         })
         onClose()
       } else {
@@ -684,8 +684,8 @@ function ScholarshipUploadPopup({
         prompt,
         weights: weights as Record<string, unknown>,
         personality: dbScholarship?.promptPersonality || undefined,
-        priorities: dbScholarship?.promptPriorities || undefined,
-        values: dbScholarship?.promptValues || undefined,
+        priorities: dbScholarship?.promptPriority || undefined,
+        values: dbScholarship?.promptValue || undefined,
       })
       onClose()
     } catch (err) {
@@ -850,31 +850,31 @@ export default function Navigation() {
       Values: data.values,
     })
 
-    // Create feedback panel for dynamic prompting
-    const feedbackData: FeedbackData = {
-      id: `feedback-${scholarshipId}`,
-      essayId: '', // Will be linked when essay is created
-      scholarshipId,
-      problemTitle: `Dynamic Prompting for ${data.title}`,
-      sections: [
-        {
-          id: `section-1-${scholarshipId}`,
-          title: 'Essay Analysis',
-          description: 'Get feedback on your essay response',
-          questions: [
-            {
-              id: `q-1-${scholarshipId}`,
-              text: 'Paste your essay draft below:',
-              answer: '',
-              placeholder: 'Paste your essay here...',
-            },
-          ],
-          isComplete: false,
-        },
-      ],
-      createdAt: Date.now(),
-    }
-    addFeedbackPanel(feedbackData)
+    // // Create feedback panel for dynamic prompting
+    // const feedbackData: FeedbackData = {
+    //   id: `feedback-${scholarshipId}`,
+    //   essayId: '', // Will be linked when essay is created
+    //   scholarshipId,
+    //   problemTitle: `Dynamic Prompting for ${data.title}`,
+    //   sections: [
+    //     {
+    //       id: `section-1-${scholarshipId}`,
+    //       title: 'Essay Analysis',
+    //       description: 'Get feedback on your essay response',
+    //       questions: [
+    //         {
+    //           id: `q-1-${scholarshipId}`,
+    //           text: 'Paste your essay draft below:',
+    //           answer: '',
+    //           placeholder: 'Paste your essay here...',
+    //         },
+    //       ],
+    //       isComplete: false,
+    //     },
+    //   ],
+    //   createdAt: Date.now(),
+    // }
+    // addFeedbackPanel(feedbackData)
   }
 
   const colors = isDarkMode ? colorsDark : colorsLight
