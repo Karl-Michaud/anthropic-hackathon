@@ -10,7 +10,7 @@ import {
 } from '@/app/types/interfaces'
 import { IUserProfile, IUserProfileAIResponse } from '@/app/types/user-profile'
 import { prisma } from './prisma'
-import { getUserProfile } from './supabase/queries'
+import { createClient as createServerClient } from '@/app/utils/supabase/server'
 
 // Interface for analysis data used in draft generation
 export interface IDraftAnalysisData {
@@ -689,15 +689,39 @@ export async function generateDraftWithAnalysis(
 
     // Fetch user profile if userId is provided
     if (userId) {
-      const userProfile = await getUserProfile(userId)
-      if (userProfile) {
+      console.log('🔍 Fetching user profile for userId:', userId)
+
+      // Use server-side Supabase client to fetch user profile
+      const supabase = await createServerClient()
+      const { data, error } = await supabase
+        .from('whiteboard_data')
+        .select('user_profile')
+        .eq('user_id', userId)
+        .single()
+
+      if (error) {
+        if (error.code !== 'PGRST116') {
+          console.error('Error fetching user profile:', error)
+        }
+        console.warn('⚠️ No user profile found for userId:', userId)
+      } else if (data?.user_profile) {
+        const userProfile = data.user_profile as IUserProfile
+        console.log('✅ User profile found:', {
+          name: `${userProfile.firstName} ${userProfile.lastName}`,
+          hasCvSummary: !!userProfile.cvResumeSummary,
+          hasUserSummary: !!userProfile.userSummary,
+        })
         analysisData.userProfile = {
           firstName: userProfile.firstName,
           lastName: userProfile.lastName,
           cvResumeSummary: userProfile.cvResumeSummary,
           userSummary: userProfile.userSummary,
         }
+      } else {
+        console.warn('⚠️ No user profile found for userId:', userId)
       }
+    } else {
+      console.warn('⚠️ No userId provided - essay will be generated without user context')
     }
 
     if (scholarship.promptPersonality) {
@@ -749,6 +773,20 @@ export async function generateDraftWithAnalysis(
       analysisData,
     )
 
+    console.log('📝 ========== ESSAY GENERATION PROMPT ==========')
+    console.log('Scholarship:', scholarship.title)
+    console.log('User Profile Included:', !!analysisData.userProfile)
+    console.log('Analysis Data Summary:', {
+      hasPersonality: !!analysisData.personality,
+      hasPriorities: !!analysisData.priorities,
+      hasValues: !!analysisData.values,
+      hasWeights: !!analysisData.weights,
+      hasUserProfile: !!analysisData.userProfile,
+    })
+    console.log('\n📄 FULL PROMPT:\n')
+    console.log(llmPrompt)
+    console.log('\n========================================\n')
+
     // Call Claude to generate the draft
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-5',
@@ -770,7 +808,13 @@ export async function generateDraftWithAnalysis(
     }
     jsonText = jsonText.trim()
 
-    return JSON.parse(jsonText) as IGenerateDraft
+    const parsedResponse = JSON.parse(jsonText) as IGenerateDraft
+
+    console.log('✅ Essay generated successfully')
+    console.log('Essay length:', parsedResponse.essay.length, 'characters')
+    console.log('First 200 chars:', parsedResponse.essay.substring(0, 200))
+
+    return parsedResponse
   } catch (error) {
     console.error('Error generating draft with analysis:', error)
     throw new Error(
