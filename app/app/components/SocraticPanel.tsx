@@ -152,7 +152,7 @@ export default function SocraticPanel({
               <span
                 className="px-3 py-1 rounded-md text-xs font-medium capitalize"
                 style={{
-                  backgroundColor: brandColors.navy,
+                  backgroundColor: brandColors.cloudy,
                   color: brandColors.foregroundDark,
                 }}
               >

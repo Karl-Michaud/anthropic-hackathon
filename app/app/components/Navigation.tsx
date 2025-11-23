@@ -590,12 +590,10 @@ function ManualEntryForm({
         }}
         onMouseEnter={(e) => {
           if (!isSubmitting) {
-            e.currentTarget.style.backgroundColor = brandColors.navy
             e.currentTarget.style.transform = 'translateY(-2px)'
           }
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = brandColors.teal
           e.currentTarget.style.transform = 'translateY(0)'
         }}
       >
