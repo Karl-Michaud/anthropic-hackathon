@@ -242,7 +242,7 @@ This project was built by a dedicated team passionate about making scholarships 
       </td>
       <td align="center">
         <a href="https://github.com/daviddimalanta">
-          <img src="https://github.com/daviddimalanta.png" width="100px;" alt="David Dimalanta"/>
+          <img src="https://github.com/davidjamesdimalanta.png" width="100px;" alt="David Dimalanta"/>
           <br />
           <sub><b>David Dimalanta</b></sub>
         </a>
