@@ -21,13 +21,7 @@ export default function DeleteButton({
   onClick,
   size = 'sm',
 }: DeleteButtonProps) {
-  let isDarkMode = false
-  try {
-    const darkModeContext = useDarkMode()
-    isDarkMode = darkModeContext.isDarkMode
-  } catch {
-    isDarkMode = false
-  }
+  const { isDarkMode } = useDarkMode()
 
   const handleClick = (e: MouseEvent) => {
     e.stopPropagation()

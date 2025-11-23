@@ -435,14 +435,7 @@ export default function EssayBlock({
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const blockRef = useRef<HTMLDivElement>(null)
   const { setEditing } = useEditing()
-
-  let isDarkMode = false
-  try {
-    const darkModeContext = useDarkMode()
-    isDarkMode = darkModeContext.isDarkMode
-  } catch {
-    isDarkMode = false
-  }
+  const { isDarkMode } = useDarkMode()
 
   const wordCount = useMemo(() => {
     return data.content.trim() ? data.content.trim().split(/\s+/).length : 0

@@ -8,7 +8,9 @@ import {
   IPromptWeights,
   IGenerateDraft,
 } from '@/app/types/interfaces'
+import { IUserProfile, IUserProfileAIResponse } from '@/app/types/user-profile'
 import { prisma } from './prisma'
+import { getUserProfile } from './supabase/queries'
 
 // Interface for analysis data used in draft generation
 export interface IDraftAnalysisData {
@@ -34,6 +36,12 @@ export interface IDraftAnalysisData {
       subweights: Record<string, number>
     }
   >
+  userProfile?: {
+    firstName: string
+    lastName: string
+    cvResumeSummary: string
+    userSummary: string
+  }
 }
 
 const anthropic = new Anthropic({
@@ -46,6 +54,7 @@ export type ClaudeRequestType =
   | 'promptValue'
   | 'promptWeights'
   | 'generateDraft'
+  | 'processUserProfile'
 
 export type ClaudeResponse =
   | IPromptPersonality
@@ -53,6 +62,7 @@ export type ClaudeResponse =
   | IPromptValues
   | IPromptWeights
   | IGenerateDraft
+  | IUserProfileAIResponse
 
 export async function requestClaude<T extends ClaudeResponse>(
   type: ClaudeRequestType,
@@ -453,6 +463,21 @@ These weights indicate how much emphasis each criterion should receive in the es
 ${weightsStr}
 `
     }
+
+    if (analysisData.userProfile) {
+      analysisSection += `
+### APPLICANT PROFILE
+Use this information to personalize the essay with the applicant's actual experiences and achievements:
+
+**Name**: ${analysisData.userProfile.firstName} ${analysisData.userProfile.lastName}
+
+**Background Summary**:
+${analysisData.userProfile.userSummary}
+
+**CV/Resume Highlights**:
+${analysisData.userProfile.cvResumeSummary}
+`
+    }
   }
 
   return `You are an expert scholarship essay writer. Your task is to write a compelling, personalized essay that maximizes the applicant's chances of winning this scholarship.
@@ -488,6 +513,7 @@ Write a draft essay that:
 4. ${analysisData?.values ? `Demonstrates the values of ${analysisData.values.valuesEmphasized.slice(0, 3).join(', ')}` : 'Demonstrates relevant values'}
 5. ${analysisData?.weights ? 'Addresses the hidden criteria according to their weights' : 'Addresses potential hidden criteria'}
 6. ${analysisData?.personality ? `Follows the recommended essay focus: ${analysisData.personality.recommendedEssayFocus}` : 'Has a clear narrative focus'}
+7. ${analysisData?.userProfile ? `Incorporates specific experiences, achievements, and details from ${analysisData.userProfile.firstName}'s profile to create a personalized, authentic essay` : 'Uses placeholder experiences that the applicant can fill in later'}
 
 The essay should be approximately 500-750 words, well-structured with clear paragraphs, and compelling throughout.
 
@@ -497,6 +523,55 @@ Return JSON only:
 
 {
   "essay": "the complete essay goes here"
+}`
+}
+
+function generateUserProfilePrompt(
+  firstName: string,
+  lastName: string,
+  cvText: string,
+  aboutYourself: string,
+): string {
+  return `You are an expert at analyzing student profiles and creating concise, insightful summaries for scholarship applications.
+
+---
+
+## INPUT DATA
+
+**First Name**: ${firstName}
+**Last Name**: ${lastName}
+
+**CV/Resume Content**:
+${cvText}
+
+**About Themselves (Extracurricular Involvement)**:
+${aboutYourself || 'Not provided'}
+
+---
+
+## TASK
+
+Analyze the provided CV/resume and personal statement to create two summaries:
+
+1. **CV/Resume Summary**: A 2-3 paragraph summary of the applicant's academic background, work experience, skills, achievements, and qualifications. Focus on concrete accomplishments, leadership roles, and relevant experiences. This should be written in third person.
+
+2. **User Summary**: A comprehensive 2-3 paragraph profile that combines insights from both the CV and the "about themselves" section. This should capture:
+   - Their core strengths and unique qualities
+   - Their passions and motivations
+   - Key themes in their experiences (e.g., leadership, community service, innovation)
+   - What makes them stand out as a scholarship candidate
+
+   Write this in third person and make it suitable for providing context to essay generation.
+
+---
+
+## OUTPUT FORMAT
+
+CRITICAL: Return ONLY valid JSON. Do NOT use markdown code blocks. Do NOT add explanatory text.
+
+{
+  "cvResumeSummary": "Detailed summary of the CV/resume...",
+  "userSummary": "Comprehensive profile summary combining all information..."
 }`
 }
 
@@ -591,6 +666,7 @@ export async function generateAllPromptAnalysis(
 // Generate draft essay with analysis data from database
 export async function generateDraftWithAnalysis(
   scholarshipId: string,
+  userId?: string,
 ): Promise<IGenerateDraft> {
   try {
     // Retrieve scholarship with all analysis data from database
@@ -610,6 +686,19 @@ export async function generateDraftWithAnalysis(
 
     // Build analysis data from database records
     const analysisData: IDraftAnalysisData = {}
+
+    // Fetch user profile if userId is provided
+    if (userId) {
+      const userProfile = await getUserProfile(userId)
+      if (userProfile) {
+        analysisData.userProfile = {
+          firstName: userProfile.firstName,
+          lastName: userProfile.lastName,
+          cvResumeSummary: userProfile.cvResumeSummary,
+          userSummary: userProfile.userSummary,
+        }
+      }
+    }
 
     if (scholarship.promptPersonality) {
       analysisData.personality = {
@@ -686,6 +775,62 @@ export async function generateDraftWithAnalysis(
     console.error('Error generating draft with analysis:', error)
     throw new Error(
       `Failed to generate draft with analysis: ${(error as Error).message}`,
+    )
+  }
+}
+
+// Process user profile with AI
+export async function processUserProfileWithAI(
+  firstName: string,
+  lastName: string,
+  cvText: string,
+  aboutYourself: string,
+): Promise<IUserProfile> {
+  try {
+    const llmPrompt = generateUserProfilePrompt(
+      firstName,
+      lastName,
+      cvText,
+      aboutYourself,
+    )
+
+    const message = await anthropic.messages.create({
+      model: 'claude-sonnet-4-5',
+      max_tokens: 2048,
+      messages: [{ role: 'user', content: llmPrompt }],
+    })
+
+    const responseText = (message.content[0] as Anthropic.TextBlock).text
+
+    // Parse response
+    let jsonText = responseText.trim()
+    if (jsonText.startsWith('```json')) {
+      jsonText = jsonText.slice(7)
+    } else if (jsonText.startsWith('```')) {
+      jsonText = jsonText.slice(3)
+    }
+    if (jsonText.endsWith('```')) {
+      jsonText = jsonText.slice(0, -3)
+    }
+    jsonText = jsonText.trim()
+
+    const aiResponse = JSON.parse(jsonText) as IUserProfileAIResponse
+
+    // Return complete user profile
+    return {
+      firstName,
+      lastName,
+      cvResumeSummary: aiResponse.cvResumeSummary,
+      userSummary: aiResponse.userSummary,
+      rawData: {
+        cvText,
+        aboutYourself,
+      },
+    }
+  } catch (error) {
+    console.error('Error processing user profile:', error)
+    throw new Error(
+      `Failed to process user profile: ${(error as Error).message}`,
     )
   }
 }

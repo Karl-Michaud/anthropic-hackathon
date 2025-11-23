@@ -20,14 +20,7 @@ export default function ZoomComponent({
   onZoomOut,
 }: ZoomComponentProps) {
   const percentage = Math.round(zoom * 100)
-
-  let isDarkMode = false
-  try {
-    const darkModeContext = useDarkMode()
-    isDarkMode = darkModeContext.isDarkMode
-  } catch {
-    isDarkMode = false
-  }
+  const { isDarkMode } = useDarkMode()
 
   const colors = isDarkMode ? colorsDark : colorsLight
 

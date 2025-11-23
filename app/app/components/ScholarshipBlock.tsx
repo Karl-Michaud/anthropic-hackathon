@@ -769,14 +769,7 @@ export function ScholarshipBlock({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [editedData, setEditedData] = useState(data)
   const { setEditing: setGlobalEditing } = useEditing()
-
-  let isDarkMode = false
-  try {
-    const darkModeContext = useDarkMode()
-    isDarkMode = darkModeContext.isDarkMode
-  } catch {
-    isDarkMode = false
-  }
+  const { isDarkMode } = useDarkMode()
 
   const startEditing = () => {
     setIsEditing(true)

@@ -23,14 +23,7 @@ export function AuthForm() {
     signInWithEmail,
     signUpWithEmail,
   } = useAuth()
-
-  let isDarkMode = false
-  try {
-    const darkModeContext = useDarkMode()
-    isDarkMode = darkModeContext.isDarkMode
-  } catch {
-    isDarkMode = false
-  }
+  const { isDarkMode } = useDarkMode()
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault()

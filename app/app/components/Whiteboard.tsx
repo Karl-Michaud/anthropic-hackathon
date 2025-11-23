@@ -16,8 +16,10 @@ import { useWhiteboard } from '../context/WhiteboardContext'
 import { useEditing } from '../context/EditingContext'
 import { useDarkMode } from '../context/DarkModeContext'
 import { saveEssayDraftToDB } from '../lib/dbUtils'
-import { requestClaude } from '../lib/request'
+import { generateDraftWithAnalysis } from '../lib/request'
+import { useAuth } from './auth/AuthProvider'
 import { SyncStatusIndicator } from './SyncStatusIndicator'
+import { FirstTimeUserModal } from './FirstTimeUserModal'
 import type { IGenerateDraft } from '../types/interfaces'
 import type {
   CellData,
@@ -45,6 +47,7 @@ export default function Whiteboard() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const animationFrameRef = useRef<number | null>(null)
 
+  const { user } = useAuth()
   const [isPanning, setIsPanning] = useState(false)
   const [position, setPosition] = useState({ x: 0, y: 0 })
   const [startPos, setStartPos] = useState({ x: 0, y: 0 })
@@ -52,13 +55,7 @@ export default function Whiteboard() {
   const [momentum, setMomentum] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1.0)
 
-  let isDarkMode = false
-  try {
-    const darkModeContext = useDarkMode()
-    isDarkMode = darkModeContext.isDarkMode
-  } catch {
-    isDarkMode = false
-  }
+  const { isDarkMode } = useDarkMode()
 
   const [draggingCellId, setDraggingCellId] = useState<string | null>(null)
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
@@ -96,6 +93,8 @@ export default function Whiteboard() {
     jsonOutputs,
     feedbackPanels,
     blockPositions,
+    isFirstTimeUser,
+    setUserProfile,
     addCell,
     updateCell,
     deleteCell,
@@ -394,11 +393,10 @@ export default function Whiteboard() {
       setGeneratingEssayFor(scholarshipId)
 
       try {
-        const response = await requestClaude<IGenerateDraft>(
-          'generateDraft',
-          scholarship.title,
-          scholarship.description,
-          scholarship.prompt,
+        // Use generateDraftWithAnalysis to include user profile context
+        const response = await generateDraftWithAnalysis(
+          scholarshipId,
+          user?.id,
         )
 
         const essayContent = response.essay || ''
@@ -427,7 +425,7 @@ export default function Whiteboard() {
         setGeneratingEssayFor(null)
       }
     },
-    [scholarships, addEssay, getBlockPosition, updateBlockPosition],
+    [scholarships, addEssay, getBlockPosition, updateBlockPosition, user?.id],
   )
 
   const handleGenerateSocraticQuestions = useCallback(
@@ -510,7 +508,7 @@ export default function Whiteboard() {
 
   const handleCanvasMouseDown = useCallback(
     (e: MouseEvent<HTMLDivElement>) => {
-      if (isEditing) return
+      if (isEditing || isFirstTimeUser) return
 
       // Close context menu if open
       if (contextMenu) {
@@ -542,7 +540,14 @@ export default function Whiteboard() {
         }
       }
     },
-    [position, draggingCellId, isEditing, contextMenu, activeTool],
+    [
+      position,
+      draggingCellId,
+      isEditing,
+      contextMenu,
+      activeTool,
+      isFirstTimeUser,
+    ],
   )
 
   const handleMouseMove = useCallback(
@@ -1152,6 +1157,9 @@ export default function Whiteboard() {
 
   const handleWheel = useCallback(
     (e: WheelEvent) => {
+      // Disable wheel events when first-time user modal is open
+      if (isFirstTimeUser) return
+
       if (e.metaKey || e.ctrlKey) {
         // Zoom with cmd/ctrl + scroll - zoom towards cursor
         e.preventDefault()
@@ -1170,7 +1178,7 @@ export default function Whiteboard() {
         }))
       }
     },
-    [zoom, zoomToPoint],
+    [zoom, zoomToPoint, isFirstTimeUser],
   )
 
   useEffect(() => {
@@ -1457,6 +1465,15 @@ export default function Whiteboard() {
 
       {/* Sync Status Indicator */}
       <SyncStatusIndicator />
+
+      {/* First-time User Modal */}
+      {isFirstTimeUser && (
+        <FirstTimeUserModal
+          onComplete={async (profile) => {
+            await setUserProfile(profile)
+          }}
+        />
+      )}
     </div>
   )
 }

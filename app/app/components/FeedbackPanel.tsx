@@ -213,14 +213,7 @@ export default function FeedbackPanel({
   onSubmitToAI: () => Promise<void> | void
 }) {
   const [isSubmitting, setIsSubmitting] = useState(false)
-
-  let isDarkMode = false
-  try {
-    const darkModeContext = useDarkMode()
-    isDarkMode = darkModeContext.isDarkMode
-  } catch {
-    isDarkMode = false
-  }
+  const { isDarkMode } = useDarkMode()
 
   const completedSections = data.sections.filter((s) => s.isComplete).length
   const totalSections = data.sections.length

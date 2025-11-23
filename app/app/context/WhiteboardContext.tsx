@@ -17,6 +17,12 @@ import {
 } from '../lib/dynamicFeedback'
 import { syncManager, type SyncStatus } from '../lib/syncManager'
 import { useAuth } from '../components/auth/AuthProvider'
+import { IUserProfile } from '../types/user-profile'
+import {
+  saveUserProfile as saveUserProfileToDb,
+  getUserProfile,
+  isFirstTimeUser as checkFirstTimeUser,
+} from '../lib/supabase/queries'
 
 const STORAGE_KEY_PREFIX = 'whiteboard-data'
 const DEBOUNCE_MS = 500
@@ -113,6 +119,8 @@ interface WhiteboardContextType {
   feedbackPanels: FeedbackData[]
   blockPositions: BlockPosition[]
   syncStatus: SyncStatus
+  userProfile: IUserProfile | null
+  isFirstTimeUser: boolean
 
   // Cell actions
   addCell: (cell: Omit<CellData, 'id'>) => string
@@ -146,6 +154,10 @@ interface WhiteboardContextType {
   // Position actions
   updateBlockPosition: (id: string, x: number, y: number) => void
   getBlockPosition: (id: string) => BlockPosition
+
+  // User profile actions
+  setUserProfile: (profile: IUserProfile) => Promise<void>
+  completeOnboarding: () => void
 
   // Clear all
   clearAll: () => void
@@ -194,6 +206,8 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
   const [blockPositions, setBlockPositions] = useState<BlockPosition[]>([])
   const [isLoaded, setIsLoaded] = useState(false)
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle')
+  const [userProfile, setUserProfileState] = useState<IUserProfile | null>(null)
+  const [isFirstTimeUser, setIsFirstTimeUser] = useState<boolean>(true)
 
   const { user } = useAuth()
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -228,6 +242,8 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
       setJsonOutputs([])
       setBlockPositions([])
       setFeedbackPanels([])
+      setUserProfileState(null)
+      setIsFirstTimeUser(true)
     }
 
     previousUserIdRef.current = currentUserId
@@ -255,6 +271,20 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
           setEssays(dbData.essays as EssayData[])
           setJsonOutputs(dbData.jsonOutputs as JsonOutputData[])
           setBlockPositions(dbData.blockPositions as BlockPosition[])
+          setIsLoaded(true)
+        }
+      }
+
+      // Load user profile and first-time status if user is logged in
+      if (user) {
+        const [profile, firstTime] = await Promise.all([
+          getUserProfile(user.id),
+          checkFirstTimeUser(user.id),
+        ])
+        setUserProfileState(profile)
+        setIsFirstTimeUser(firstTime)
+
+        if (!hasLocalData && profile) {
           setIsLoaded(true)
           return
         }
@@ -471,6 +501,41 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
     setBlockPositions([])
   }, [])
 
+  // User profile actions
+  const setUserProfile = useCallback(
+    async (profile: IUserProfile) => {
+      setUserProfileState(profile)
+      setIsFirstTimeUser(false)
+
+      // Save to database if user is logged in
+      if (user?.id) {
+        try {
+          await saveUserProfileToDb(user.id, profile)
+        } catch (error) {
+          console.error('Error saving user profile to database:', error)
+        }
+      }
+
+      // Also save to localStorage
+      if (typeof window !== 'undefined') {
+        const key = getStorageKey(user?.id)
+        try {
+          const stored = localStorage.getItem(key)
+          const data = stored ? JSON.parse(stored) : defaultState
+          data.userProfile = profile
+          localStorage.setItem(key, JSON.stringify(data))
+        } catch (error) {
+          console.error('Error saving user profile to localStorage:', error)
+        }
+      }
+    },
+    [user?.id],
+  )
+
+  const completeOnboarding = useCallback(() => {
+    setIsFirstTimeUser(false)
+  }, [])
+
   return (
     <WhiteboardContext.Provider
       value={{
@@ -481,6 +546,8 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
         feedbackPanels,
         blockPositions,
         syncStatus,
+        userProfile,
+        isFirstTimeUser,
         addCell,
         updateCell,
         deleteCell,
@@ -497,6 +564,8 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
         deleteFeedbackPanel,
         updateBlockPosition,
         getBlockPosition,
+        setUserProfile,
+        completeOnboarding,
         clearAll,
       }}
     >
