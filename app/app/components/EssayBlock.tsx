@@ -774,37 +774,6 @@ export default function EssayBlock({
     })
   }
 
-  const handleSocraticSubmit = async (answers: Record<string, string>) => {
-    if (!selectedSection) return
-
-    try {
-      // Submit the Socratic answers to update the essay
-      const updatedContent = await submitSocraticAnswers(
-        data.content,
-        selectedSection.id,
-        answers,
-        userId,
-      )
-
-      // Clear the selected section
-      setSelectedSection(null)
-
-      // Update the essay with the new content
-      onUpdate({
-        ...data,
-        content: updatedContent,
-        highlightedSections: undefined,
-        socraticData: undefined,
-      })
-
-      // Trigger regeneration of highlights and questions
-      if (onGenerateSocraticQuestions) {
-        await onGenerateSocraticQuestions(data.id)
-      }
-    } catch (error) {
-      console.error('Error submitting Socratic answers:', error)
-    }
-  }
 
   const handleSubmitForReview = async () => {
     if (!onSubmitForReview) return
@@ -814,6 +783,10 @@ export default function EssayBlock({
 
     try {
       console.log('🔘 [EssayBlock] Submit for Review button clicked')
+
+      // Close any open Socratic panel
+      setSelectedSection(null)
+
       await onSubmitForReview(data.id)
       console.log('✅ [EssayBlock] Submit successful')
     } catch (error) {
@@ -945,51 +918,62 @@ export default function EssayBlock({
             </div>
           )}
 
-          {/* Submit for Review Button - Only for custom drafts without analysis */}
-          {data.isCustomDraft &&
-            !data.customDraftAnalysis &&
-            !isGenerating &&
-            onSubmitForReview && (
-              <div className="mt-4 pt-4 border-t">
-                <button
-                  onClick={handleSubmitForReview}
-                  disabled={isSubmitting || wordCount < 50}
-                  className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all ${
-                    isSubmitting || wordCount < 50
-                      ? 'opacity-50 cursor-not-allowed'
-                      : 'hover:shadow-md cursor-pointer'
+          {/* Submit for Review Button - Always visible for custom drafts */}
+          {data.isCustomDraft && !isGenerating && onSubmitForReview && (
+            <div
+              className={`mt-4 pt-4 border-t ${
+                isDarkMode ? 'border-gray-700' : 'border-gray-200'
+              }`}
+            >
+              <button
+                onClick={handleSubmitForReview}
+                disabled={isSubmitting || wordCount < 50}
+                className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all ${
+                  isSubmitting || wordCount < 50
+                    ? 'opacity-50 cursor-not-allowed'
+                    : 'hover:shadow-md cursor-pointer'
+                }`}
+                style={{
+                  backgroundColor: brandColors.teal,
+                  color: '#ffffff',
+                }}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 size={18} className="animate-spin" />
+                    Submitting for Review...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles size={18} />
+                    {data.customDraftAnalysis ? 'Resubmit for Review' : 'Submit for Review'}{' '}
+                    {wordCount < 50 && `(${wordCount}/50 words)`}
+                  </>
+                )}
+              </button>
+              {submitError && (
+                <p className="mt-2 text-xs text-red-600">{submitError}</p>
+              )}
+              {wordCount < 50 && !submitError && (
+                <p
+                  className={`mt-2 text-xs ${
+                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
                   }`}
-                  style={{
-                    backgroundColor: brandColors.teal,
-                    color: '#ffffff',
-                  }}
                 >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 size={18} className="animate-spin" />
-                      Submitting for Review...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles size={18} />
-                      Submit for Review {wordCount < 50 && `(${wordCount}/50 words)`}
-                    </>
-                  )}
-                </button>
-                {submitError && (
-                  <p className="mt-2 text-xs text-red-600">{submitError}</p>
-                )}
-                {wordCount < 50 && !submitError && (
-                  <p
-                    className={`mt-2 text-xs ${
-                      isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                    }`}
-                  >
-                    Write at least 50 words to submit for comprehensive analysis
-                  </p>
-                )}
-              </div>
-            )}
+                  Write at least 50 words to submit for comprehensive analysis
+                </p>
+              )}
+              {data.customDraftAnalysis && data.socraticData && wordCount >= 50 && !submitError && (
+                <p
+                  className={`mt-2 text-xs ${
+                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                  }`}
+                >
+                  Answer questions in highlighted sections, then resubmit to refine your essay
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Custom Draft Analysis */}
           {data.isCustomDraft && data.customDraftAnalysis && (
@@ -1007,7 +991,6 @@ export default function EssayBlock({
             data={socraticPanelData}
             onClose={() => setSelectedSection(null)}
             onAnswerChange={handleSocraticAnswerChange}
-            onSubmit={handleSocraticSubmit}
           />
         </div>
       )}

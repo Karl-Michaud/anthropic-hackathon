@@ -21,7 +21,6 @@ import { useAuth } from './auth/AuthProvider'
 import { SyncStatusIndicator } from './SyncStatusIndicator'
 import { FirstTimeUserModal } from './FirstTimeUserModal'
 import { ContextMenu } from './ContextMenu'
-import type { IGenerateDraft } from '../types/interfaces'
 import type {
   CellData,
   ScholarshipData,
@@ -609,28 +608,110 @@ export default function Whiteboard() {
       console.log('  - Essay found:', {
         contentLength: essay.content.length,
         wordCount: essay.content.trim().split(/\s+/).length,
+        hasSocraticData: !!essay.socraticData,
       })
 
       try {
-        // Run both analyses in parallel
+        let contentToAnalyze = essay.content
+
+        // Check if there are any Socratic answers to incorporate first
+        const hasSocraticAnswers = essay.socraticData && Object.keys(essay.socraticData).length > 0
+
+        if (hasSocraticAnswers) {
+          console.log('  - Found Socratic answers, collecting responses...')
+
+          // Collect all answered questions (partial answers allowed)
+          const answeredQuestions: Record<string, string> = {}
+          let answeredCount = 0
+          let totalCount = 0
+
+          Object.values(essay.socraticData!).forEach((questions) => {
+            questions.forEach((q) => {
+              totalCount++
+              if (q.answer && q.answer.trim().length > 0) {
+                answeredQuestions[q.id] = q.answer
+                answeredCount++
+              }
+            })
+          })
+
+          console.log(`  - Collected ${answeredCount}/${totalCount} answered questions`)
+
+          // If user has answered at least some questions, incorporate them
+          if (answeredCount > 0) {
+            console.log('  - Submitting Socratic answers to update essay content...')
+
+            const { submitSocraticAnswers } = await import('@/app/lib/dynamicFeedback')
+
+            try {
+              const updatedContent = await submitSocraticAnswers(
+                essay.content,
+                '', // sectionId not needed when submitting all
+                answeredQuestions,
+                user?.id,
+              )
+
+              console.log('  - ✅ Essay content updated with Socratic answers')
+              contentToAnalyze = updatedContent
+            } catch (socraticError) {
+              console.error('  - ⚠️ Error submitting Socratic answers:', socraticError)
+              // Continue with original content if Socratic submission fails
+            }
+          } else {
+            console.log('  - No answers provided, skipping Socratic submission')
+          }
+        }
+
+        // Validate content length for analysis
+        const wordCount = contentToAnalyze.trim().split(/\s+/).length
+        if (wordCount < 50) {
+          console.log('Essay too short for comprehensive analysis:', { wordCount })
+          throw new Error(
+            `Essay too short for analysis. Please write at least 50 words (currently ${wordCount} words).`,
+          )
+        }
+
+        // Run both analyses in parallel on the (potentially updated) content
         console.log('  - Running Socratic analysis and comprehensive analysis...')
-        const [socraticResult] = await Promise.all([
+        const [socraticResult, customDraftResult] = await Promise.all([
           analyzeSocraticQuestions(
-            essay.content,
+            contentToAnalyze,
             scholarships.find((s) => s.id === essay.scholarshipId)?.title,
+            user?.id,
           ),
-          handleAnalyzeCustomDraft(essayId),
+          analyzeCustomDraftWithAnalysis(essay.scholarshipId, contentToAnalyze),
         ])
 
         console.log('  - ✅ Both analyses complete')
-        console.log('  - Updating essay with Socratic results...')
+        console.log('  - Updating essay with both Socratic and custom draft results...')
+        console.log('  - Content length:', {
+          original: essay.content.length,
+          updated: contentToAnalyze.length,
+          changed: essay.content !== contentToAnalyze,
+        })
 
-        // Update with Socratic results (custom draft analysis is handled in handleAnalyzeCustomDraft)
-        updateEssay({
-          ...essay,
+        // Update essay with both results - explicitly preserve all fields
+        const updatedEssay: EssayData = {
+          id: essay.id,
+          scholarshipId: essay.scholarshipId,
+          content: contentToAnalyze, // Use the potentially updated content
+          maxWordCount: essay.maxWordCount,
           highlightedSections: socraticResult.highlightedSections,
           socraticData: socraticResult.socraticData,
+          customDraftAnalysis: customDraftResult,
+          lastEditedAt: Date.now(),
+          isCustomDraft: essay.isCustomDraft,
+        }
+
+        console.log('  - Updated essay object created:', {
+          id: updatedEssay.id,
+          contentLength: updatedEssay.content.length,
+          hasHighlights: updatedEssay.highlightedSections?.length || 0,
+          hasSocraticData: Object.keys(updatedEssay.socraticData || {}).length,
+          hasCustomDraftAnalysis: !!updatedEssay.customDraftAnalysis,
         })
+
+        updateEssay(updatedEssay)
 
         console.log('🏁 [Whiteboard.handleSubmitCustomDraftForReview] COMPLETED')
       } catch (error) {
@@ -638,7 +719,7 @@ export default function Whiteboard() {
         throw error
       }
     },
-    [essays, scholarships, updateEssay, handleAnalyzeCustomDraft],
+    [essays, scholarships, updateEssay, handleAnalyzeCustomDraft, user?.id],
   )
 
   // Auto-generate Socratic questions for new essays without highlights

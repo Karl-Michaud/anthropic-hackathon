@@ -1,6 +1,6 @@
 'use client'
 
-import { X, Loader2 } from 'lucide-react'
+import { X } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { useDarkMode } from '../context/DarkModeContext'
 import { brandColors, colorsLight, colorsDark } from '../styles/design-system'
@@ -26,7 +26,6 @@ interface SocraticPanelProps {
   data: SocraticPanelData
   onClose: () => void
   onAnswerChange: (questionId: string, answer: string) => void
-  onSubmit: (answers: Record<string, string>) => Promise<void>
 }
 
 function Question({
@@ -80,7 +79,7 @@ function Question({
         ref={textareaRef}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="Example of this field |"
+        placeholder="type response here..."
         className="w-full p-3 border rounded-lg resize-none focus:ring-2 transition-all min-h-20"
         style={{
           backgroundColor: colors.background.paper,
@@ -106,33 +105,9 @@ export default function SocraticPanel({
   data,
   onClose,
   onAnswerChange,
-  onSubmit,
 }: SocraticPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null)
-  const isSubmitting = useRef(false)
   const { isDarkMode } = useDarkMode()
-
-  const allQuestionsAnswered = data.questions.every(
-    (q) => q.answer.trim().length > 0,
-  )
-
-  const handleSubmit = async () => {
-    if (isSubmitting.current || !allQuestionsAnswered) return
-
-    isSubmitting.current = true
-    try {
-      const answers = data.questions.reduce(
-        (acc, q) => {
-          acc[q.id] = q.answer
-          return acc
-        },
-        {} as Record<string, string>,
-      )
-      await onSubmit(answers)
-    } finally {
-      isSubmitting.current = false
-    }
-  }
 
   const colors = isDarkMode ? colorsDark : colorsLight
 
@@ -222,7 +197,7 @@ export default function SocraticPanel({
       </div>
 
       <div
-        className="p-6 overflow-y-auto flex-1"
+        className="p-6 overflow-y-auto flex-1 rounded-2xl"
         style={{ backgroundColor: colors.background.paper }}
       >
         {data.questions.map((question) => (
@@ -235,36 +210,6 @@ export default function SocraticPanel({
             isDarkMode={isDarkMode}
           />
         ))}
-      </div>
-
-      <div
-        className="p-6 shrink-0 rounded-2xl"
-        style={{
-          backgroundColor: colors.background.paper,
-          borderColor: brandColors.cloudy,
-        }}
-      >
-        <button
-          onClick={handleSubmit}
-          disabled={!allQuestionsAnswered || isSubmitting.current}
-          className="w-full px-6 py-3 rounded-lg font-medium disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
-          style={{
-            backgroundColor:
-              allQuestionsAnswered && !isSubmitting.current
-                ? brandColors.teal
-                : brandColors.cloudy,
-            color: brandColors.foregroundDark,
-          }}
-        >
-          {isSubmitting.current ? (
-            <>
-              <Loader2 size={18} className="animate-spin" />
-              Updating essay...
-            </>
-          ) : (
-            'Update Essay'
-          )}
-        </button>
       </div>
     </div>
   )
