@@ -59,12 +59,12 @@ export const colorsLight = {
 
   // Sticky note colors (using brand palette)
   sticky: {
-    mustard: { bg: brandColors.mustard, border: brandColors.clay },
-    teal: { bg: brandColors.teal, border: brandColors.navy },
-    crail: { bg: brandColors.crail, border: brandColors.maroon },
-    olive: { bg: brandColors.olive, border: brandColors.clay },
-    purple: { bg: brandColors.purple, border: brandColors.magenta },
-    navy: { bg: brandColors.navy, border: brandColors.teal },
+    mustard: { bg: brandColors.mustard, border: brandColors.clay, text: brandColors.foreground },
+    teal: { bg: brandColors.teal, border: brandColors.navy, text: brandColors.foregroundDark },
+    crail: { bg: brandColors.crail, border: brandColors.maroon, text: brandColors.foreground },
+    olive: { bg: brandColors.olive, border: brandColors.clay, text: brandColors.foregroundDark },
+    purple: { bg: brandColors.purple, border: brandColors.magenta, text: brandColors.foregroundDark },
+    navy: { bg: brandColors.navy, border: brandColors.teal, text: brandColors.foregroundDark },
   },
 }
 
@@ -98,12 +98,12 @@ export const colorsDark = {
 
   // Sticky note colors (darker variants for dark mode)
   sticky: {
-    mustard: { bg: brandColors.clay, border: brandColors.mustard },
-    teal: { bg: brandColors.navy, border: brandColors.teal },
-    crail: { bg: brandColors.maroon, border: brandColors.crail },
-    olive: { bg: brandColors.clay, border: brandColors.olive },
-    purple: { bg: brandColors.magenta, border: brandColors.purple },
-    navy: { bg: brandColors.navy, border: brandColors.teal },
+    mustard: { bg: brandColors.clay, border: brandColors.mustard, text: brandColors.foregroundDark },
+    teal: { bg: brandColors.navy, border: brandColors.teal, text: brandColors.foregroundDark },
+    crail: { bg: brandColors.maroon, border: brandColors.crail, text: brandColors.foregroundDark },
+    olive: { bg: brandColors.clay, border: brandColors.olive, text: brandColors.foregroundDark },
+    purple: { bg: brandColors.magenta, border: brandColors.purple, text: brandColors.foregroundDark },
+    navy: { bg: brandColors.navy, border: brandColors.teal, text: brandColors.foregroundDark },
   },
 }
 
