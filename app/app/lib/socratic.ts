@@ -28,14 +28,26 @@ export async function analyzeSocratic(
   scholarshipTitle?: string,
   userId?: string,
 ): Promise<SocraticAnalysisResponse> {
+  console.log('🔍 [analyzeSocratic] CALLED')
+  console.log('  - scholarshipTitle:', scholarshipTitle || 'NOT PROVIDED')
+  console.log('  - essayContent type:', typeof essayContent)
+  console.log('  - essayContent value:', essayContent ? `"${essayContent.substring(0, 100)}..."` : 'NULL/UNDEFINED')
+  console.log('  - essayContent length:', essayContent?.length || 0)
+  console.log('  - essayContent trimmed length:', essayContent?.trim().length || 0)
+
   if (!essayContent || essayContent.trim().length === 0) {
+    console.error('❌ [analyzeSocratic] Essay content is empty!')
+    console.error('  - essayContent:', essayContent)
+    console.error('  - Stack trace will follow...')
     throw new Error('Essay content is required')
   }
 
   // Validate that essay is long enough for analysis
   const wordCount = essayContent.trim().split(/\s+/).length
+  console.log('  - Word count:', wordCount)
+
   if (wordCount < 10) {
-    console.warn('Essay too short for analysis:', { wordCount })
+    console.warn('⚠️ [analyzeSocratic] Essay too short for analysis:', { wordCount })
     // Return empty result instead of error for very short essays
     return {
       highlightedSections: [],

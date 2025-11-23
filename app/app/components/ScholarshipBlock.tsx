@@ -676,10 +676,28 @@ export function ScholarshipActions({
   onCustomDraft?: () => void
   isGenerating?: boolean
 }) {
+  const handleGenerateDraftClick = () => {
+    console.log('🎯 [ScholarshipActions] Generate Draft button clicked')
+    console.log('  - isGenerating:', isGenerating)
+    console.log('  - onDraft function:', typeof onDraft)
+    onDraft()
+  }
+
+  const handleCustomDraftClick = () => {
+    console.log('✏️ [ScholarshipActions] Custom Draft button clicked')
+    console.log('  - isGenerating:', isGenerating)
+    console.log('  - onCustomDraft function:', typeof onCustomDraft)
+    if (onCustomDraft) {
+      onCustomDraft()
+    } else {
+      console.error('⚠️ onCustomDraft is undefined!')
+    }
+  }
+
   return (
     <div className="flex gap-2 mt-4">
       <button
-        onClick={onDraft}
+        onClick={handleGenerateDraftClick}
         disabled={isGenerating}
         className="flex items-center gap-2 px-4 py-2 text-white rounded-md font-medium border-none cursor-pointer transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed"
         style={{
@@ -700,7 +718,7 @@ export function ScholarshipActions({
       </button>
       {onCustomDraft && (
         <button
-          onClick={onCustomDraft}
+          onClick={handleCustomDraftClick}
           disabled={isGenerating}
           className="flex items-center gap-2 px-4 py-2 text-white rounded-md font-medium border-none cursor-pointer transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed"
           style={{
@@ -788,6 +806,17 @@ export function ScholarshipBlock({
   const [editedData, setEditedData] = useState(data)
   const { setEditing: setGlobalEditing } = useEditing()
   const { isDarkMode } = useDarkMode()
+
+  // Log props on mount and when they change
+  useEffect(() => {
+    console.log('📦 [ScholarshipBlock] Props received:', {
+      scholarshipId: data.id,
+      scholarshipTitle: data.title,
+      hasOnDraft: !!onDraft,
+      hasOnCustomDraft: !!onCustomDraft,
+      isGeneratingEssay,
+    })
+  }, [data.id, data.title, onDraft, onCustomDraft, isGeneratingEssay])
 
   const startEditing = () => {
     setIsEditing(true)

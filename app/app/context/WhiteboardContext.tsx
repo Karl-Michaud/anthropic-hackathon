@@ -73,6 +73,37 @@ export interface SocraticQuestion {
   answer: string
 }
 
+export interface CustomDraftAnalysis {
+  overall_alignment_score: number
+  personality_alignment: {
+    score: number
+    matches: string[]
+    gaps: string[]
+    suggestions: string[]
+  }
+  priorities_alignment: {
+    score: number
+    well_addressed: string[]
+    needs_attention: string[]
+    suggestions: string[]
+  }
+  values_alignment: {
+    score: number
+    demonstrated_values: string[]
+    missing_values: string[]
+    suggestions: string[]
+  }
+  weights_alignment: {
+    score: number
+    strong_categories: string[]
+    weak_categories: string[]
+    suggestions: string[]
+  }
+  key_strengths: string[]
+  critical_improvements: string[]
+  summary: string
+}
+
 export interface EssayData {
   id: string
   scholarshipId: string
@@ -80,7 +111,9 @@ export interface EssayData {
   maxWordCount?: number
   highlightedSections?: HighlightedSection[]
   socraticData?: Record<string, SocraticQuestion[]>
+  customDraftAnalysis?: CustomDraftAnalysis
   lastEditedAt?: number
+  isCustomDraft?: boolean
 }
 
 export interface BlockPosition {
@@ -413,7 +446,18 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
   // Essay actions
   const addEssay = useCallback((essay: Omit<EssayData, 'id'>) => {
     const id = `essay-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-    setEssays((prev) => [...prev, { ...essay, id }])
+    console.log('📝 [WhiteboardContext.addEssay] Creating new essay:', {
+      id,
+      scholarshipId: essay.scholarshipId,
+      isCustomDraft: essay.isCustomDraft || false,
+      contentLength: essay.content.length,
+    })
+    setEssays((prev) => {
+      const newEssays = [...prev, { ...essay, id }]
+      console.log('  - Total essays after add:', newEssays.length)
+      return newEssays
+    })
+    console.log('  - ✅ Essay added to context')
     return id
   }, [])
 
@@ -444,13 +488,21 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
   // Position actions
   const updateBlockPosition = useCallback(
     (id: string, x: number, y: number) => {
+      console.log('📍 [WhiteboardContext.updateBlockPosition] Updating position:', {
+        id,
+        x,
+        y,
+      })
       setBlockPositions((prev) => {
         const existing = prev.find((p) => p.id === id)
         if (existing) {
+          console.log('  - Existing position found, updating:', existing)
           return prev.map((p) => (p.id === id ? { ...p, x, y } : p))
         }
+        console.log('  - No existing position, creating new')
         return [...prev, { id, x, y }]
       })
+      console.log('  - ✅ Position updated')
     },
     [],
   )

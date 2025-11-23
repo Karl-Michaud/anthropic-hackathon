@@ -80,3 +80,34 @@ export interface IPromptWeights {
 export interface IGenerateDraft {
   essay: string
 }
+
+export interface ICustomDraftAnalysis {
+  overall_alignment_score: number
+  personality_alignment: {
+    score: number
+    matches: string[]
+    gaps: string[]
+    suggestions: string[]
+  }
+  priorities_alignment: {
+    score: number
+    well_addressed: string[]
+    needs_attention: string[]
+    suggestions: string[]
+  }
+  values_alignment: {
+    score: number
+    demonstrated_values: string[]
+    missing_values: string[]
+    suggestions: string[]
+  }
+  weights_alignment: {
+    score: number
+    strong_categories: string[]
+    weak_categories: string[]
+    suggestions: string[]
+  }
+  key_strengths: string[]
+  critical_improvements: string[]
+  summary: string
+}

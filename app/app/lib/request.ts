@@ -7,6 +7,7 @@ import {
   IPromptValues,
   IPromptWeights,
   IGenerateDraft,
+  ICustomDraftAnalysis,
 } from '@/app/types/interfaces'
 import { IUserProfile, IUserProfileAIResponse } from '@/app/types/user-profile'
 import { prisma } from './prisma'
@@ -55,6 +56,7 @@ export type ClaudeRequestType =
   | 'promptWeights'
   | 'generateDraft'
   | 'processUserProfile'
+  | 'analyzeCustomDraft'
 
 export type ClaudeResponse =
   | IPromptPersonality
@@ -63,6 +65,7 @@ export type ClaudeResponse =
   | IPromptWeights
   | IGenerateDraft
   | IUserProfileAIResponse
+  | ICustomDraftAnalysis
 
 export async function requestClaude<T extends ClaudeResponse>(
   type: ClaudeRequestType,
@@ -526,6 +529,170 @@ Return JSON only:
 }`
 }
 
+function generateCustomDraftAnalysisPrompt(
+  title: string,
+  desc: string,
+  prompt: string,
+  essayContent: string,
+  analysisData?: IDraftAnalysisData,
+): string {
+  // Build analysis sections if data is available
+  let analysisSection = ''
+
+  if (analysisData) {
+    if (analysisData.personality) {
+      analysisSection += `
+### SCHOLARSHIP PERSONALITY PROFILE
+- **Core Identity/Spirit**: ${analysisData.personality.spirit}
+- **Tone & Style**: ${analysisData.personality.toneStyle}
+- **Values Emphasized**: ${analysisData.personality.valuesEmphasized.join(', ')}
+- **Recommended Essay Focus**: ${analysisData.personality.recommendedEssayFocus}
+`
+    }
+
+    if (analysisData.priorities) {
+      const weightsStr = Object.entries(analysisData.priorities.priorityWeights)
+        .map(([key, value]) => `  - ${key}: ${value}%`)
+        .join('\n')
+      analysisSection += `
+### SCHOLARSHIP PRIORITIES
+- **Primary Focus**: ${analysisData.priorities.primaryFocus}
+- **Priority Weights**:
+${weightsStr}
+`
+    }
+
+    if (analysisData.values) {
+      const valueDefsStr = Object.entries(analysisData.values.valueDefinitions)
+        .map(([key, value]) => `  - **${key}**: ${value}`)
+        .join('\n')
+      analysisSection += `
+### SCHOLARSHIP VALUES
+- **Values Emphasized**: ${analysisData.values.valuesEmphasized.join(', ')}
+- **Value Definitions**:
+${valueDefsStr}
+- **Evidence Phrases from Description**: ${analysisData.values.evidencePhrases.join('; ')}
+`
+    }
+
+    if (analysisData.weights) {
+      const weightsStr = Object.entries(analysisData.weights)
+        .map(([category, data]) => {
+          const subweightsStr = Object.entries(data.subweights)
+            .map(
+              ([sub, weight]) => `    - ${sub}: ${(weight * 100).toFixed(0)}%`,
+            )
+            .join('\n')
+          return `  - **${category}** (${(data.weight * 100).toFixed(0)}%):\n${subweightsStr}`
+        })
+        .join('\n')
+      analysisSection += `
+### HIDDEN CRITERIA WEIGHTS
+These weights indicate how much emphasis each criterion should receive in the essay:
+${weightsStr}
+`
+    }
+  }
+
+  return `You are an expert scholarship essay evaluator. Your task is to analyze a student's custom essay draft and provide comprehensive feedback on how well it aligns with the scholarship's hidden requirements and selection criteria.
+
+---
+
+## SCHOLARSHIP INFORMATION
+
+**Title**: ${title}
+
+**Description**: ${desc}
+
+**Essay Prompt**: ${prompt}
+
+---
+${
+  analysisSection
+    ? `
+## SCHOLARSHIP ANALYSIS
+
+The following analysis reveals what this scholarship truly values:
+${analysisSection}
+---
+`
+    : ''
+}
+## STUDENT'S ESSAY DRAFT
+
+"""
+${essayContent}
+"""
+
+---
+
+## TASK
+
+Analyze the student's essay draft and evaluate how well it aligns with the scholarship's requirements. Provide scores (0-100) and detailed feedback for each dimension:
+
+1. **Personality Alignment**: ${analysisData?.personality ? `Does the essay match the ${analysisData.personality.toneStyle} tone and ${analysisData.personality.spirit} spirit expected by this scholarship?` : 'Does the essay match the expected personality and tone?'}
+
+2. **Priorities Alignment**: ${analysisData?.priorities ? `Does the essay emphasize ${analysisData.priorities.primaryFocus} as the primary focus, with appropriate weight to other priorities?` : 'Does the essay address the key priorities?'}
+
+3. **Values Alignment**: ${analysisData?.values ? `Does the essay demonstrate the values of ${analysisData.values.valuesEmphasized.join(', ')}?` : 'Does the essay demonstrate relevant values?'}
+
+4. **Weights Alignment**: ${analysisData?.weights ? 'Does the essay address the hidden criteria according to their weights?' : 'Does the essay address potential hidden criteria?'}
+
+For each dimension, identify:
+- What the essay does well (matches/strengths)
+- What is missing or weak (gaps/weaknesses)
+- Specific, actionable suggestions for improvement
+
+Also provide:
+- An overall alignment score (0-100)
+- 3-5 key strengths of the current essay
+- 3-5 critical improvements needed
+- A concise summary (2-3 sentences) of the overall assessment
+
+CRITICAL: Return ONLY valid JSON. Do NOT use markdown code blocks. Do NOT add explanatory text.
+
+Return JSON matching this exact structure:
+
+{
+  "overall_alignment_score": 75,
+  "personality_alignment": {
+    "score": 80,
+    "matches": ["Authentic tone", "Shows passion"],
+    "gaps": ["Could be more formal", "Missing visionary elements"],
+    "suggestions": ["Add more forward-looking statements", "Use more scholarly language"]
+  },
+  "priorities_alignment": {
+    "score": 70,
+    "well_addressed": ["Innovation", "Leadership"],
+    "needs_attention": ["Community impact", "Academic excellence"],
+    "suggestions": ["Add specific community outcomes", "Highlight academic achievements"]
+  },
+  "values_alignment": {
+    "score": 75,
+    "demonstrated_values": ["Creativity", "Resilience"],
+    "missing_values": ["Integrity", "Service"],
+    "suggestions": ["Include an example of ethical decision-making", "Mention community service activities"]
+  },
+  "weights_alignment": {
+    "score": 72,
+    "strong_categories": ["Problem-Solving Orientation", "Values-Driven Decision Making"],
+    "weak_categories": ["Sustained Depth Over Resume Padding", "Future Investment Potential"],
+    "suggestions": ["Emphasize long-term commitment to activities", "Articulate vision for future contribution"]
+  },
+  "key_strengths": [
+    "Strong narrative hook that engages the reader",
+    "Clear demonstration of problem-solving skills",
+    "Authentic voice and personal reflection"
+  ],
+  "critical_improvements": [
+    "Add more specific, quantifiable outcomes",
+    "Better align with scholarship's emphasis on innovation",
+    "Incorporate more examples of sustained commitment"
+  ],
+  "summary": "The essay shows strong potential with authentic storytelling and clear problem-solving orientation. To improve alignment, focus on demonstrating sustained depth in activities and articulating future impact vision."
+}`
+}
+
 function generateUserProfilePrompt(
   firstName: string,
   lastName: string,
@@ -580,6 +747,7 @@ function getPromptForType(
   scholarshipTitle: string,
   scholarshipDescription: string,
   prompt: string,
+  essayContent?: string,
 ): string {
   switch (type) {
     case 'promptPersonality':
@@ -611,6 +779,16 @@ function getPromptForType(
         scholarshipTitle,
         scholarshipDescription,
         prompt,
+      )
+    case 'analyzeCustomDraft':
+      if (!essayContent) {
+        throw new Error('Essay content is required for custom draft analysis')
+      }
+      return generateCustomDraftAnalysisPrompt(
+        scholarshipTitle,
+        scholarshipDescription,
+        prompt,
+        essayContent,
       )
     default:
       throw new Error(`Unsupported Claude request type: ${type}`)
@@ -875,6 +1053,142 @@ export async function processUserProfileWithAI(
     console.error('Error processing user profile:', error)
     throw new Error(
       `Failed to process user profile: ${(error as Error).message}`,
+    )
+  }
+}
+
+// Analyze custom draft essay against scholarship requirements
+export async function analyzeCustomDraftWithAnalysis(
+  scholarshipId: string,
+  essayContent: string,
+): Promise<ICustomDraftAnalysis> {
+  try {
+    // Validate essay content
+    if (!essayContent || essayContent.trim().length === 0) {
+      throw new Error('Essay content is required for analysis')
+    }
+
+    // Validate essay is long enough
+    const wordCount = essayContent.trim().split(/\s+/).length
+    if (wordCount < 50) {
+      throw new Error(
+        `Essay too short for comprehensive analysis. Need at least 50 words, got ${wordCount}`,
+      )
+    }
+
+    // Retrieve scholarship with all analysis data from database
+    const scholarship = await prisma.scholarship.findUnique({
+      where: { id: scholarshipId },
+      include: {
+        promptPersonality: true,
+        promptPriority: true,
+        promptValue: true,
+        promptWeight: true,
+      },
+    })
+
+    if (!scholarship) {
+      throw new Error(`Scholarship not found: ${scholarshipId}`)
+    }
+
+    // Build analysis data from database records
+    const analysisData: IDraftAnalysisData = {}
+
+    if (scholarship.promptPersonality) {
+      analysisData.personality = {
+        spirit: scholarship.promptPersonality.spirit,
+        toneStyle: scholarship.promptPersonality.toneStyle,
+        valuesEmphasized: scholarship.promptPersonality.valuesEmphasized,
+        recommendedEssayFocus:
+          scholarship.promptPersonality.recommendedEssayFocus,
+      }
+    }
+
+    if (scholarship.promptPriority) {
+      analysisData.priorities = {
+        primaryFocus: scholarship.promptPriority.primaryFocus,
+        priorityWeights: scholarship.promptPriority.priorityWeights as Record<
+          string,
+          number
+        >,
+      }
+    }
+
+    if (scholarship.promptValue) {
+      analysisData.values = {
+        valuesEmphasized: scholarship.promptValue.valuesEmphasized,
+        valueDefinitions: scholarship.promptValue.valueDefinitions as Record<
+          string,
+          string
+        >,
+        evidencePhrases: scholarship.promptValue.evidencePhrases,
+      }
+    }
+
+    if (scholarship.promptWeight) {
+      analysisData.weights = scholarship.promptWeight.weights as Record<
+        string,
+        {
+          weight: number
+          subweights: Record<string, number>
+        }
+      >
+    }
+
+    // Generate the analysis prompt
+    const llmPrompt = generateCustomDraftAnalysisPrompt(
+      scholarship.title,
+      scholarship.description,
+      scholarship.prompt,
+      essayContent,
+      analysisData,
+    )
+
+    console.log('📊 ========== CUSTOM DRAFT ANALYSIS ==========')
+    console.log('Scholarship:', scholarship.title)
+    console.log('Essay word count:', wordCount)
+    console.log('Analysis Data Summary:', {
+      hasPersonality: !!analysisData.personality,
+      hasPriorities: !!analysisData.priorities,
+      hasValues: !!analysisData.values,
+      hasWeights: !!analysisData.weights,
+    })
+    console.log('\n📄 ANALYSIS PROMPT (first 500 chars):\n')
+    console.log(llmPrompt.substring(0, 500) + '...')
+    console.log('\n========================================\n')
+
+    // Call Claude to analyze the draft
+    const message = await anthropic.messages.create({
+      model: 'claude-sonnet-4-5',
+      max_tokens: 3072, // Increased for detailed analysis
+      messages: [{ role: 'user', content: llmPrompt }],
+    })
+
+    const responseText = (message.content[0] as Anthropic.TextBlock).text
+
+    // Parse response
+    let jsonText = responseText.trim()
+    if (jsonText.startsWith('```json')) {
+      jsonText = jsonText.slice(7)
+    } else if (jsonText.startsWith('```')) {
+      jsonText = jsonText.slice(3)
+    }
+    if (jsonText.endsWith('```')) {
+      jsonText = jsonText.slice(0, -3)
+    }
+    jsonText = jsonText.trim()
+
+    const parsedResponse = JSON.parse(jsonText) as ICustomDraftAnalysis
+
+    console.log('✅ Custom draft analysis complete')
+    console.log('Overall alignment score:', parsedResponse.overall_alignment_score)
+    console.log('Summary:', parsedResponse.summary)
+
+    return parsedResponse
+  } catch (error) {
+    console.error('Error analyzing custom draft:', error)
+    throw new Error(
+      `Failed to analyze custom draft: ${(error as Error).message}`,
     )
   }
 }

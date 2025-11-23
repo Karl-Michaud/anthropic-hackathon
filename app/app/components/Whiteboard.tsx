@@ -16,7 +16,7 @@ import { useWhiteboard } from '../context/WhiteboardContext'
 import { useEditing } from '../context/EditingContext'
 import { useDarkMode } from '../context/DarkModeContext'
 import { saveEssayDraftToDB } from '../lib/dbUtils'
-import { generateDraftWithAnalysis } from '../lib/request'
+import { generateDraftWithAnalysis, analyzeCustomDraftWithAnalysis } from '../lib/request'
 import { useAuth } from './auth/AuthProvider'
 import { SyncStatusIndicator } from './SyncStatusIndicator'
 import { FirstTimeUserModal } from './FirstTimeUserModal'
@@ -394,45 +394,65 @@ export default function Whiteboard() {
 
   const handleGenerateEssay = useCallback(
     async (scholarshipId: string) => {
-      const scholarship = scholarships.find((s) => s.id === scholarshipId)
-      if (!scholarship) return
+      console.log('🎯 [Whiteboard.handleGenerateEssay] CALLED')
+      console.log('  - scholarshipId:', scholarshipId)
 
-      console.log('🎯 Starting essay generation for scholarship:', scholarship.title)
-      console.log('User ID:', user?.id || 'NOT PROVIDED')
+      const scholarship = scholarships.find((s) => s.id === scholarshipId)
+      if (!scholarship) {
+        console.error('❌ [Whiteboard.handleGenerateEssay] Scholarship not found!', scholarshipId)
+        return
+      }
+
+      console.log('  - Scholarship found:', scholarship.title)
+      console.log('  - User ID:', user?.id || 'NOT PROVIDED')
 
       setGeneratingEssayFor(scholarshipId)
 
       try {
+        console.log('  - Calling generateDraftWithAnalysis...')
         // Use generateDraftWithAnalysis to include user profile context
         const response = await generateDraftWithAnalysis(
           scholarshipId,
           user?.id,
         )
 
+        console.log('  - ✅ Received response from AI')
         const essayContent = response.essay || ''
+        console.log('  - Essay length:', essayContent.length, 'characters')
 
+        console.log('  - Creating essay in context...')
         const essayId = addEssay({
           scholarshipId,
           content: essayContent,
           maxWordCount: undefined,
           lastEditedAt: Date.now(),
         })
+        console.log('  - ✅ Essay created with ID:', essayId)
 
         // Position essay to the right of the scholarship
         const scholarshipPos = getBlockPosition(scholarshipId)
         const essayX = scholarshipPos.x + 600 // 550px width + 50px gap
         const essayY = scholarshipPos.y
+        console.log('  - Positioning essay at:', { x: essayX, y: essayY })
 
         updateBlockPosition(essayId, essayX, essayY)
+        console.log('  - ✅ Essay positioned')
 
         // Save to database
         if (scholarship.id) {
+          console.log('  - Saving essay to database...')
           await saveEssayDraftToDB(scholarship.id, essayContent)
+          console.log('  - ✅ Essay saved to database')
         }
       } catch (error) {
-        console.error('Failed to generate essay:', error)
+        console.error('❌ [Whiteboard.handleGenerateEssay] Error:', error)
+        if (error instanceof Error) {
+          console.error('  - Error message:', error.message)
+          console.error('  - Error stack:', error.stack)
+        }
       } finally {
         setGeneratingEssayFor(null)
+        console.log('🏁 [Whiteboard.handleGenerateEssay] COMPLETED')
       }
     },
     [scholarships, addEssay, getBlockPosition, updateBlockPosition, user?.id],
@@ -440,57 +460,194 @@ export default function Whiteboard() {
 
   const handleCustomDraft = useCallback(
     (scholarshipId: string) => {
-      const scholarship = scholarships.find((s) => s.id === scholarshipId)
-      if (!scholarship) return
+      console.log('✏️ [Whiteboard.handleCustomDraft] CALLED')
+      console.log('  - scholarshipId:', scholarshipId)
 
-      // Create a blank essay
+      const scholarship = scholarships.find((s) => s.id === scholarshipId)
+      if (!scholarship) {
+        console.error('❌ [Whiteboard.handleCustomDraft] Scholarship not found!', scholarshipId)
+        return
+      }
+
+      console.log('  - Scholarship found:', scholarship.title)
+      console.log('  - Creating blank essay marked as custom draft...')
+
+      // Create a blank essay marked as custom draft
       const essayId = addEssay({
         scholarshipId,
         content: '',
         maxWordCount: undefined,
         lastEditedAt: Date.now(),
+        isCustomDraft: true, // Mark this as a custom draft
       })
+      console.log('  - ✅ Essay created with ID:', essayId)
 
       // Position essay to the right of the scholarship
       const scholarshipPos = getBlockPosition(scholarshipId)
       const essayX = scholarshipPos.x + 600 // 550px width + 50px gap
       const essayY = scholarshipPos.y
+      console.log('  - Positioning essay at:', { x: essayX, y: essayY })
 
       updateBlockPosition(essayId, essayX, essayY)
+      console.log('  - ✅ Essay positioned')
+
+      console.log('🏁 [Whiteboard.handleCustomDraft] COMPLETED')
+      console.log('  - New essay should be visible to the right of the scholarship')
     },
     [scholarships, addEssay, getBlockPosition, updateBlockPosition],
   )
 
   const handleGenerateSocraticQuestions = useCallback(
     async (essayId: string) => {
+      console.log('❓ [Whiteboard.handleGenerateSocraticQuestions] CALLED')
+      console.log('  - essayId:', essayId)
+
       const essay = essays.find((e) => e.id === essayId)
-      if (!essay) return
+      if (!essay) {
+        console.error('  - ❌ Essay not found!')
+        return
+      }
+
+      console.log('  - Essay found:', {
+        id: essay.id,
+        isCustomDraft: essay.isCustomDraft,
+        contentLength: essay.content?.length || 0,
+        wordCount: essay.content?.trim().split(/\s+/).length || 0,
+      })
+
+      if (essay.isCustomDraft) {
+        console.warn('  - ⚠️ WARNING: Attempting to analyze custom draft!')
+        console.warn('  - This should NOT happen - custom drafts should use manual submission')
+        console.warn('  - Aborting auto-analysis')
+        return
+      }
 
       try {
         const scholarship = scholarships.find(
           (s) => s.id === essay.scholarshipId,
         )
+        console.log('  - Calling analyzeSocraticQuestions...')
+        console.log('  - Content being analyzed:', {
+          length: essay.content.length,
+          preview: essay.content.substring(0, 100),
+        })
+
         const analysisResult = await analyzeSocraticQuestions(
           essay.content,
           scholarship?.title,
           user?.id,
         )
 
+        console.log('  - ✅ Analysis complete, updating essay')
         updateEssay({
           ...essay,
           highlightedSections: analysisResult.highlightedSections,
           socraticData: analysisResult.socraticData,
         })
       } catch (error) {
-        console.error('Failed to generate Socratic questions:', error)
+        console.error('❌ [Whiteboard.handleGenerateSocraticQuestions] Error:', error)
+        if (error instanceof Error) {
+          console.error('  - Error message:', error.message)
+          console.error('  - Error stack:', error.stack)
+        }
       }
     },
     [essays, scholarships, updateEssay, user?.id],
   )
 
+  const handleAnalyzeCustomDraft = useCallback(
+    async (essayId: string) => {
+      const essay = essays.find((e) => e.id === essayId)
+      if (!essay || !essay.isCustomDraft) return
+
+      // Only analyze if essay has sufficient content
+      const wordCount = essay.content.trim().split(/\s+/).length
+      if (wordCount < 50) {
+        console.log('Essay too short for comprehensive analysis:', { wordCount })
+        throw new Error(
+          `Essay too short for analysis. Please write at least 50 words (currently ${wordCount} words).`,
+        )
+      }
+
+      try {
+        console.log('🔍 Analyzing custom draft for essay:', essayId)
+        const analysisResult = await analyzeCustomDraftWithAnalysis(
+          essay.scholarshipId,
+          essay.content,
+        )
+
+        console.log('✅ Analysis complete, updating essay with results')
+        updateEssay({
+          ...essay,
+          customDraftAnalysis: analysisResult,
+        })
+      } catch (error) {
+        console.error('Failed to analyze custom draft:', error)
+        throw error // Re-throw to let caller handle it
+      }
+    },
+    [essays, updateEssay],
+  )
+
+  // Combined handler for submitting custom drafts for review
+  const handleSubmitCustomDraftForReview = useCallback(
+    async (essayId: string) => {
+      console.log('📤 [Whiteboard.handleSubmitCustomDraftForReview] CALLED')
+      console.log('  - essayId:', essayId)
+
+      const essay = essays.find((e) => e.id === essayId)
+      if (!essay) {
+        console.error('❌ Essay not found:', essayId)
+        throw new Error('Essay not found')
+      }
+
+      if (!essay.isCustomDraft) {
+        console.error('❌ Essay is not a custom draft:', essayId)
+        return
+      }
+
+      console.log('  - Essay found:', {
+        contentLength: essay.content.length,
+        wordCount: essay.content.trim().split(/\s+/).length,
+      })
+
+      try {
+        // Run both analyses in parallel
+        console.log('  - Running Socratic analysis and comprehensive analysis...')
+        const [socraticResult] = await Promise.all([
+          analyzeSocraticQuestions(
+            essay.content,
+            scholarships.find((s) => s.id === essay.scholarshipId)?.title,
+          ),
+          handleAnalyzeCustomDraft(essayId),
+        ])
+
+        console.log('  - ✅ Both analyses complete')
+        console.log('  - Updating essay with Socratic results...')
+
+        // Update with Socratic results (custom draft analysis is handled in handleAnalyzeCustomDraft)
+        updateEssay({
+          ...essay,
+          highlightedSections: socraticResult.highlightedSections,
+          socraticData: socraticResult.socraticData,
+        })
+
+        console.log('🏁 [Whiteboard.handleSubmitCustomDraftForReview] COMPLETED')
+      } catch (error) {
+        console.error('❌ [Whiteboard.handleSubmitCustomDraftForReview] Error:', error)
+        throw error
+      }
+    },
+    [essays, scholarships, updateEssay, handleAnalyzeCustomDraft],
+  )
+
   // Auto-generate Socratic questions for new essays without highlights
+  // NOTE: Custom drafts are excluded - they require manual submission
   useEffect(() => {
     const essaysWithoutHighlights = essays.filter((essay) => {
+      // Skip custom drafts - they need manual submission
+      if (essay.isCustomDraft) return false
+
       // Only generate for essays with content and no highlights
       if (!essay.content || essay.content.trim().length === 0) return false
       if (essay.highlightedSections && essay.highlightedSections.length > 0) {
@@ -513,6 +670,10 @@ export default function Whiteboard() {
 
     return () => clearTimeout(timer)
   }, [essays, handleGenerateSocraticQuestions])
+
+  // NOTE: Auto-analysis for custom drafts is DISABLED
+  // Custom drafts now use manual "Submit for Review" button
+  // This prevents the error when content is empty or incomplete
 
   const addNewCell = useCallback(() => {
     const colors = ['yellow', 'blue', 'pink', 'green', 'purple', 'orange']
@@ -1354,7 +1515,7 @@ export default function Whiteboard() {
 
       {/* Syncing indicator */}
       {syncingData && (
-        <div className="absolute bottom-4 left-4 text-sm text-gray-500">
+        <div className="absolute bottom-4 right-4 text-sm text-gray-500">
           Syncing...
         </div>
       )}
@@ -1471,6 +1632,7 @@ export default function Whiteboard() {
                 isGenerating={generatingEssayFor === essay.scholarshipId}
                 onGenerateSocraticQuestions={handleGenerateSocraticQuestions}
                 userId={user?.id}
+                onSubmitForReview={handleSubmitCustomDraftForReview}
               />
             </DraggableBlock>
           )
