@@ -66,6 +66,7 @@ export interface HighlightedSection {
   title: string
   explanation?: string
   colorName: 'amber' | 'cyan' | 'pink' | 'lime' | 'purple'
+  areasOfImprovement?: string[] // For custom drafts - specific areas to improve
 }
 
 export interface SocraticQuestion {

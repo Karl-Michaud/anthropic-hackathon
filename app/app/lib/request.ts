@@ -520,12 +520,27 @@ Write a draft essay that:
 
 The essay should be approximately 500-750 words (or the specified word count if included in the scholarship description), well-structured with clear paragraphs, and compelling throughout. Do NOT fabricate any information; use only the provided applicant profile details. Do NOT hallucinate.
 
+Additionally, identify 3-5 sections in your generated essay that could benefit from elaboration. For each:
+1. Find exact character positions (0-indexed)
+2. Create a brief title (3-5 words)
+3. Write a 1-2 sentence explanation of why this section needs improvement
+4. Generate 2-4 Socratic questions to guide elaboration
+
 CRITICAL: Return ONLY valid JSON. Do NOT use markdown code blocks. Do NOT add explanatory text.
 
 Return JSON only:
 
 {
-  "essay": "the complete essay goes here"
+  "essay": "the complete essay goes here",
+  "sections": [
+    {
+      "startIndex": 0,
+      "endIndex": 50,
+      "title": "Theme title here",
+      "explanation": "Why this section was highlighted and how questions help.",
+      "questions": ["Question 1?", "Question 2?"]
+    }
+  ]
 }`
 }
 
@@ -1189,6 +1204,258 @@ export async function analyzeCustomDraftWithAnalysis(
     console.error('Error analyzing custom draft:', error)
     throw new Error(
       `Failed to analyze custom draft: ${(error as Error).message}`,
+    )
+  }
+}
+
+// Highlight sections in custom draft essays with reasons and areas of improvement
+export async function analyzeCustomDraftHighlights(
+  scholarshipId: string,
+  essayContent: string,
+): Promise<{
+  sections: {
+    startIndex: number
+    endIndex: number
+    title: string
+    reasons: string
+    areasOfImprovement: string[]
+  }[]
+}> {
+  try {
+    // Validate essay content
+    if (!essayContent || essayContent.trim().length === 0) {
+      throw new Error('Essay content is required for highlighting')
+    }
+
+    // Retrieve scholarship with all analysis data from database
+    const scholarship = await prisma.scholarship.findUnique({
+      where: { id: scholarshipId },
+      include: {
+        promptPersonality: true,
+        promptPriority: true,
+        promptValue: true,
+        promptWeight: true,
+      },
+    })
+
+    if (!scholarship) {
+      throw new Error(`Scholarship not found: ${scholarshipId}`)
+    }
+
+    // Build analysis data from database records
+    const analysisData: IDraftAnalysisData = {}
+
+    if (scholarship.promptPersonality) {
+      analysisData.personality = {
+        spirit: scholarship.promptPersonality.spirit,
+        toneStyle: scholarship.promptPersonality.toneStyle,
+        valuesEmphasized: scholarship.promptPersonality.valuesEmphasized,
+        recommendedEssayFocus:
+          scholarship.promptPersonality.recommendedEssayFocus,
+      }
+    }
+
+    if (scholarship.promptPriority) {
+      analysisData.priorities = {
+        primaryFocus: scholarship.promptPriority.primaryFocus,
+        priorityWeights: scholarship.promptPriority.priorityWeights as Record<
+          string,
+          number
+        >,
+      }
+    }
+
+    if (scholarship.promptValue) {
+      analysisData.values = {
+        valuesEmphasized: scholarship.promptValue.valuesEmphasized,
+        valueDefinitions: scholarship.promptValue.valueDefinitions as Record<
+          string,
+          string
+        >,
+        evidencePhrases: scholarship.promptValue.evidencePhrases,
+      }
+    }
+
+    if (scholarship.promptWeight) {
+      analysisData.weights = scholarship.promptWeight.weights as Record<
+        string,
+        {
+          weight: number
+          subweights: Record<string, number>
+        }
+      >
+    }
+
+    // Determine number of sections based on essay length
+    const charCount = essayContent.length
+    let sectionCount = '3-5'
+    if (charCount < 200) {
+      sectionCount = '1-2'
+    } else if (charCount < 500) {
+      sectionCount = '2-3'
+    }
+
+    // Build analysis sections for context
+    let analysisSection = ''
+
+    if (analysisData.personality) {
+      analysisSection += `
+### SCHOLARSHIP PERSONALITY PROFILE
+- **Core Identity/Spirit**: ${analysisData.personality.spirit}
+- **Tone & Style**: ${analysisData.personality.toneStyle}
+- **Values Emphasized**: ${analysisData.personality.valuesEmphasized.join(', ')}
+- **Recommended Essay Focus**: ${analysisData.personality.recommendedEssayFocus}
+`
+    }
+
+    if (analysisData.priorities) {
+      const weightsStr = Object.entries(analysisData.priorities.priorityWeights)
+        .map(([key, value]) => `  - ${key}: ${value}%`)
+        .join('\n')
+      analysisSection += `
+### SCHOLARSHIP PRIORITIES
+- **Primary Focus**: ${analysisData.priorities.primaryFocus}
+- **Priority Weights**:
+${weightsStr}
+`
+    }
+
+    if (analysisData.values) {
+      const valueDefsStr = Object.entries(analysisData.values.valueDefinitions)
+        .map(([key, value]) => `  - **${key}**: ${value}`)
+        .join('\n')
+      analysisSection += `
+### SCHOLARSHIP VALUES
+- **Values Emphasized**: ${analysisData.values.valuesEmphasized.join(', ')}
+- **Value Definitions**:
+${valueDefsStr}
+- **Evidence Phrases from Description**: ${analysisData.values.evidencePhrases.join('; ')}
+`
+    }
+
+    if (analysisData.weights) {
+      const weightsStr = Object.entries(analysisData.weights)
+        .map(([category, data]) => {
+          const subweightsStr = Object.entries(data.subweights)
+            .map(
+              ([sub, weight]) => `    - ${sub}: ${(weight * 100).toFixed(0)}%`,
+            )
+            .join('\n')
+          return `  - **${category}** (${(data.weight * 100).toFixed(0)}%):\n${subweightsStr}`
+        })
+        .join('\n')
+      analysisSection += `
+### HIDDEN CRITERIA WEIGHTS
+These weights indicate how much emphasis each criterion should receive in the essay:
+${weightsStr}
+`
+    }
+
+    // Generate the highlighting prompt
+    const llmPrompt = `You are an expert scholarship essay editor analyzing a custom draft.
+
+---
+
+## SCHOLARSHIP INFORMATION
+
+**Title**: ${scholarship.title}
+
+**Description**: ${scholarship.description}
+
+**Essay Prompt**: ${scholarship.prompt}
+
+---
+${
+  analysisSection
+    ? `
+## SCHOLARSHIP ANALYSIS
+
+The following analysis reveals what this scholarship truly values:
+${analysisSection}
+---
+`
+    : ''
+}
+## STUDENT'S ESSAY DRAFT
+
+"""
+${essayContent}
+"""
+
+---
+
+## TASK
+
+Identify ${sectionCount} key sections in the essay that would benefit from improvement. For each section:
+1. Find exact character start and end positions (0-indexed) of the text to improve
+2. Create a brief title/theme for that section (3-5 words)
+3. Write a detailed explanation of WHY this section was highlighted. Reference the scholarship's requirements, values, priorities, or weights when relevant. Explain what's missing or weak based on the scholarship analysis.
+4. Provide 2-4 specific, actionable areas of improvement for this section
+
+Rules for highlighting:
+- startIndex and endIndex are CHARACTER positions (0-indexed), not word positions
+- Ensure indices are valid and don't overlap
+- The reasons should explicitly reference the scholarship's hidden requirements when relevant
+- Areas of improvement should be specific and actionable
+
+---
+
+CRITICAL: Return ONLY valid JSON. Do NOT use markdown code blocks. Do NOT add explanatory text.
+
+Respond with ONLY valid JSON (no markdown, no code blocks), matching this exact structure:
+
+{
+  "sections": [
+    {
+      "startIndex": 0,
+      "endIndex": 50,
+      "title": "Opening statement",
+      "reasons": "This opening lacks connection to the scholarship's emphasis on innovation and problem-solving. The tone is too informal for a merit-based scholarship that values scholarly communication.",
+      "areasOfImprovement": [
+        "Connect opening to innovation theme from scholarship priorities",
+        "Adopt a more formal, scholarly tone matching the scholarship's communication strategy",
+        "Reference specific problem-solving context early"
+      ]
+    }
+  ]
+}`
+
+    console.log('📊 ========== CUSTOM DRAFT HIGHLIGHTING ==========')
+    console.log('Scholarship:', scholarship.title)
+    console.log('Essay length:', charCount)
+    console.log('Target sections:', sectionCount)
+
+    // Call Claude to highlight sections
+    const message = await anthropic.messages.create({
+      model: 'claude-sonnet-4-5',
+      max_tokens: 2048,
+      messages: [{ role: 'user', content: llmPrompt }],
+    })
+
+    const responseText = (message.content[0] as Anthropic.TextBlock).text
+
+    // Parse response
+    let jsonText = responseText.trim()
+    if (jsonText.startsWith('```json')) {
+      jsonText = jsonText.slice(7)
+    } else if (jsonText.startsWith('```')) {
+      jsonText = jsonText.slice(3)
+    }
+    if (jsonText.endsWith('```')) {
+      jsonText = jsonText.slice(0, -3)
+    }
+    jsonText = jsonText.trim()
+
+    const parsedResponse = JSON.parse(jsonText)
+
+    console.log('✅ Custom draft highlighting complete')
+    console.log('Sections identified:', parsedResponse.sections.length)
+
+    return parsedResponse
+  } catch (error) {
+    console.error('Error highlighting custom draft:', error)
+    throw new Error(
+      `Failed to highlight custom draft: ${(error as Error).message}`,
     )
   }
 }

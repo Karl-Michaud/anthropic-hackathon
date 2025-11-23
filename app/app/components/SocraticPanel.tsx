@@ -21,6 +21,7 @@ export interface SocraticPanelData {
   scholarshipPrompt?: string
   introText?: string
   questions: SocraticQuestion[]
+  areasOfImprovement?: string[] // For custom drafts
 }
 
 interface SocraticPanelProps {
@@ -215,7 +216,9 @@ export default function SocraticPanel({
             <p className="text-sm leading-relaxed">{data.explanation}</p>
           </div>
         )}
-        {data.questions.map((question) => (
+
+        {/* Display questions for auto-generated essays */}
+        {data.questions && data.questions.length > 0 && data.questions.map((question) => (
           <Question
             key={question.id}
             question={question.text}
@@ -225,6 +228,48 @@ export default function SocraticPanel({
             isDarkMode={isDarkMode}
           />
         ))}
+
+        {/* Display areas of improvement for custom drafts */}
+        {data.areasOfImprovement && data.areasOfImprovement.length > 0 && (
+          <div className="space-y-2">
+            <h3
+              className="text-sm font-semibold mb-3 font-serif"
+              style={{ color: colors.text.primary }}
+            >
+              Areas of Improvement
+            </h3>
+            <ul className="space-y-2">
+              {data.areasOfImprovement.map((area, index) => (
+                <li
+                  key={index}
+                  className="flex items-start gap-2 p-3 rounded-lg border-l-4"
+                  style={{
+                    borderLeftColor: brandColors.teal,
+                    backgroundColor: isDarkMode
+                      ? 'rgba(20, 184, 166, 0.1)'
+                      : 'rgba(20, 184, 166, 0.05)',
+                  }}
+                >
+                  <span
+                    className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+                    style={{
+                      backgroundColor: brandColors.teal,
+                      color: brandColors.foregroundDark,
+                    }}
+                  >
+                    {index + 1}
+                  </span>
+                  <p
+                    className="text-sm leading-relaxed flex-1"
+                    style={{ color: colors.text.primary }}
+                  >
+                    {area}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     </div>
   )

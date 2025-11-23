@@ -921,6 +921,7 @@ export default function EssayBlock({
         title: selectedSection.title,
         explanation: selectedSection.explanation,
         questions: data.socraticData?.[selectedSection.id] || [],
+        areasOfImprovement: selectedSection.areasOfImprovement, // For custom drafts
       }
     : null
 

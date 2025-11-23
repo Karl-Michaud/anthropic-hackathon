@@ -612,58 +612,8 @@ export default function Whiteboard() {
       })
 
       try {
-        let contentToAnalyze = essay.content
-
-        // Check if there are any Socratic answers to incorporate first
-        const hasSocraticAnswers = essay.socraticData && Object.keys(essay.socraticData).length > 0
-
-        if (hasSocraticAnswers) {
-          console.log('  - Found Socratic answers, collecting responses...')
-
-          // Collect all answered questions (partial answers allowed)
-          const answeredQuestions: Record<string, string> = {}
-          let answeredCount = 0
-          let totalCount = 0
-
-          Object.values(essay.socraticData!).forEach((questions) => {
-            questions.forEach((q) => {
-              totalCount++
-              if (q.answer && q.answer.trim().length > 0) {
-                answeredQuestions[q.id] = q.answer
-                answeredCount++
-              }
-            })
-          })
-
-          console.log(`  - Collected ${answeredCount}/${totalCount} answered questions`)
-
-          // If user has answered at least some questions, incorporate them
-          if (answeredCount > 0) {
-            console.log('  - Submitting Socratic answers to update essay content...')
-
-            const { submitSocraticAnswers } = await import('@/app/lib/dynamicFeedback')
-
-            try {
-              const updatedContent = await submitSocraticAnswers(
-                essay.content,
-                '', // sectionId not needed when submitting all
-                answeredQuestions,
-                user?.id,
-              )
-
-              console.log('  - ✅ Essay content updated with Socratic answers')
-              contentToAnalyze = updatedContent
-            } catch (socraticError) {
-              console.error('  - ⚠️ Error submitting Socratic answers:', socraticError)
-              // Continue with original content if Socratic submission fails
-            }
-          } else {
-            console.log('  - No answers provided, skipping Socratic submission')
-          }
-        }
-
         // Validate content length for analysis
-        const wordCount = contentToAnalyze.trim().split(/\s+/).length
+        const wordCount = essay.content.trim().split(/\s+/).length
         if (wordCount < 50) {
           console.log('Essay too short for comprehensive analysis:', { wordCount })
           throw new Error(
@@ -671,33 +621,47 @@ export default function Whiteboard() {
           )
         }
 
-        // Run both analyses in parallel on the (potentially updated) content
-        console.log('  - Running Socratic analysis and comprehensive analysis...')
-        const [socraticResult, customDraftResult] = await Promise.all([
-          analyzeSocraticQuestions(
-            contentToAnalyze,
-            scholarships.find((s) => s.id === essay.scholarshipId)?.title,
-            user?.id,
-          ),
-          analyzeCustomDraftWithAnalysis(essay.scholarshipId, contentToAnalyze),
+        // Run both analyses in parallel (NO content modification, only analysis)
+        console.log('  - Running custom draft analysis and highlighting in parallel...')
+
+        const { analyzeCustomDraftHighlights } = await import('@/app/lib/request')
+
+        const [customDraftResult, highlightResult] = await Promise.all([
+          analyzeCustomDraftWithAnalysis(essay.scholarshipId, essay.content),
+          analyzeCustomDraftHighlights(essay.scholarshipId, essay.content),
         ])
 
         console.log('  - ✅ Both analyses complete')
-        console.log('  - Updating essay with both Socratic and custom draft results...')
-        console.log('  - Content length:', {
-          original: essay.content.length,
-          updated: contentToAnalyze.length,
-          changed: essay.content !== contentToAnalyze,
-        })
 
-        // Update essay with both results - explicitly preserve all fields
+        // Convert highlighted sections from analysis to HighlightedSection format
+        const HIGHLIGHT_COLORS = [
+          { color: 'bg-amber-200/50 dark:bg-amber-500/30', colorName: 'amber' as const },
+          { color: 'bg-cyan-200/50 dark:bg-cyan-500/30', colorName: 'cyan' as const },
+          { color: 'bg-pink-200/50 dark:bg-pink-500/30', colorName: 'pink' as const },
+          { color: 'bg-lime-200/50 dark:bg-lime-500/30', colorName: 'lime' as const },
+          { color: 'bg-purple-200/50 dark:bg-purple-500/30', colorName: 'purple' as const },
+        ]
+
+        const highlightedSections: HighlightedSection[] = highlightResult.sections.map((section, i) => ({
+          id: `section-${Date.now()}-${i}`,
+          startIndex: section.startIndex,
+          endIndex: section.endIndex,
+          title: section.title,
+          explanation: section.reasons, // Store reasons in explanation field
+          color: HIGHLIGHT_COLORS[i % HIGHLIGHT_COLORS.length].color,
+          colorName: HIGHLIGHT_COLORS[i % HIGHLIGHT_COLORS.length].colorName,
+          areasOfImprovement: section.areasOfImprovement, // Add this for custom drafts
+        }))
+
+        // Update essay with both results - no socraticData for custom drafts
+        // NOTE: Content is NOT modified, only analysis results are added
         const updatedEssay: EssayData = {
           id: essay.id,
           scholarshipId: essay.scholarshipId,
-          content: contentToAnalyze, // Use the potentially updated content
+          content: essay.content, // Content unchanged - only analysis is done
           maxWordCount: essay.maxWordCount,
-          highlightedSections: socraticResult.highlightedSections,
-          socraticData: socraticResult.socraticData,
+          highlightedSections: highlightedSections,
+          socraticData: {}, // No questions for custom drafts
           customDraftAnalysis: customDraftResult,
           lastEditedAt: Date.now(),
           isCustomDraft: essay.isCustomDraft,
