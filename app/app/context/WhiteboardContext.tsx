@@ -9,7 +9,7 @@ import {
   useRef,
   ReactNode,
 } from 'react'
-import { FeedbackData } from '../lib/dynamicFeedback'
+import { FeedbackData } from '../lib/dynamicFeedback/types'
 import {
   saveFeedbackDraft,
   loadFeedbackDraft,

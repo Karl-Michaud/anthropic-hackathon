@@ -5,12 +5,14 @@ import {
   useContext,
   useState,
   useLayoutEffect,
+  useEffect,
   ReactNode,
 } from 'react'
 
 interface DarkModeContextType {
   isDarkMode: boolean
   toggleDarkMode: () => void
+  isMounted: boolean
 }
 
 const DarkModeContext = createContext<DarkModeContextType | undefined>(
@@ -18,33 +20,38 @@ const DarkModeContext = createContext<DarkModeContextType | undefined>(
 )
 
 export function DarkModeProvider({ children }: { children: ReactNode }) {
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    if (typeof window === 'undefined') {
-      return false
-    }
+  // Always start with false to match server rendering
+  const [isDarkMode, setIsDarkMode] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
+
+  // After mounting on client, read the actual preference
+  useEffect(() => {
+    setIsMounted(true)
     const saved = localStorage.getItem('darkMode')
     if (saved !== null) {
-      return JSON.parse(saved)
+      setIsDarkMode(JSON.parse(saved))
+    } else {
+      setIsDarkMode(window.matchMedia('(prefers-color-scheme: dark)').matches)
     }
-    return window.matchMedia('(prefers-color-scheme: dark)').matches
-  })
+  }, [])
 
   // Update DOM and localStorage when dark mode changes
   useLayoutEffect(() => {
+    if (!isMounted) return
     localStorage.setItem('darkMode', JSON.stringify(isDarkMode))
     if (isDarkMode) {
       document.documentElement.classList.add('dark')
     } else {
       document.documentElement.classList.remove('dark')
     }
-  }, [isDarkMode])
+  }, [isDarkMode, isMounted])
 
   const toggleDarkMode = () => {
     setIsDarkMode((prev: boolean) => !prev)
   }
 
   return (
-    <DarkModeContext.Provider value={{ isDarkMode, toggleDarkMode }}>
+    <DarkModeContext.Provider value={{ isDarkMode, toggleDarkMode, isMounted }}>
       {children}
     </DarkModeContext.Provider>
   )

@@ -12,7 +12,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import NextLink from 'next/link'
-import { useState, useRef, useEffect, ChangeEvent, DragEvent } from 'react'
+import { useState, useRef, ChangeEvent, DragEvent } from 'react'
 import { useWhiteboard } from '../context/WhiteboardContext'
 import { useDarkMode } from '../context/DarkModeContext'
 import { useAuth } from './auth/AuthProvider'
@@ -23,48 +23,42 @@ import {
 } from '../lib/dbUtils'
 import { extractScholarshipInfo } from '../lib/claudeApi'
 import { requestClaude } from '../lib/request'
-import type { FeedbackData } from '../lib/dynamicFeedback'
+import { parseFileContent, getFileType } from '../lib/fileParser'
+import type { FeedbackData } from '../lib/dynamicFeedback/types'
 import { IPromptWeights } from '../types/interfaces'
 
 const navItems = [{ href: '/', icon: Home, label: 'Home' }]
 
 // DarkModeToggle component
 function DarkModeToggle() {
-  const { isDarkMode, toggleDarkMode } = useDarkMode()
-  const [isMounted, setIsMounted] = useState(false)
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setIsMounted(true)
-  }, [])
+  const { isDarkMode, toggleDarkMode, isMounted } = useDarkMode()
 
   return (
     <button
       onClick={toggleDarkMode}
-      suppressHydrationWarning
       className={`group relative p-2 rounded-xl transition-all duration-200 hover:scale-105 cursor-pointer ${
         isDarkMode
           ? 'hover:bg-gray-600/40 text-yellow-300'
           : 'hover:bg-white/40 text-gray-500 group-hover:text-gray-600'
       }`}
       aria-label="Toggle dark mode"
+      suppressHydrationWarning
     >
-      {isMounted ? (
-        isDarkMode ? (
-          <Sun size={28} />
-        ) : (
-          <Moon size={28} />
-        )
+      {!isMounted ? (
+        // Show Moon icon during SSR and initial render to match server output
+        <Moon size={28} />
+      ) : isDarkMode ? (
+        <Sun size={28} />
       ) : (
         <Moon size={28} />
       )}
       <span
-        suppressHydrationWarning
         className={`absolute left-12 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 text-xs rounded-md px-2 py-1 transition-all duration-200 ${
           isDarkMode ? 'bg-gray-900 text-yellow-100' : 'bg-gray-900 text-white'
         }`}
+        suppressHydrationWarning
       >
-        {isMounted ? (isDarkMode ? 'Light Mode' : 'Dark Mode') : 'Dark Mode'}
+        {isDarkMode ? 'Light Mode' : 'Dark Mode'}
       </span>
     </button>
   )
@@ -372,9 +366,27 @@ function ScholarshipUploadPopup({
     setError(null)
 
     try {
-      const content = await readFileContent(file)
+      // Validate file size (max 10MB)
+      const maxFileSize = 10 * 1024 * 1024 // 10MB
+      if (file.size > maxFileSize) {
+        setError('File is too large. Maximum file size is 10MB.')
+        setIsProcessing(false)
+        return
+      }
 
-      const result = await extractScholarshipInfo(content)
+      const rawContent = await readFileContent(file)
+      const fileType = await getFileType(file.name)
+
+      if (!fileType) {
+        setError(
+          'Unable to determine file type. Please use TXT, JSON, or PDF files.',
+        )
+        setIsProcessing(false)
+        return
+      }
+
+      const parsedContent = await parseFileContent(rawContent, fileType)
+      const result = await extractScholarshipInfo(parsedContent)
 
       if (result && result.ScholarshipName) {
         const getValue = (extracted: string, fallback: string) =>
@@ -398,7 +410,9 @@ function ScholarshipUploadPopup({
         )
 
         // Fetch the analysis data from the database
-        const dbScholarship = await getScholarshipFromDB(scholarship.id)
+        const dbScholarship = (await getScholarshipFromDB(
+          scholarship.id,
+        )) as any
 
         const weights = await requestClaude<IPromptWeights>(
           'promptWeights',
@@ -449,7 +463,7 @@ function ScholarshipUploadPopup({
       )
 
       // Fetch the analysis data from the database
-      const dbScholarship = await getScholarshipFromDB(scholarship.id)
+      const dbScholarship = (await getScholarshipFromDB(scholarship.id)) as any
 
       const prompt = prompts[0] || ''
       const weights = await requestClaude<IPromptWeights>(
@@ -627,6 +641,7 @@ export default function Navigation() {
   return (
     <>
       <div
+        suppressHydrationWarning
         className={`fixed left-6 top-6 bottom-6 z-50 rounded-2xl backdrop-blur-md shadow-lg p-2 flex flex-col items-center transition-colors duration-200 ${
           isDarkMode
             ? 'bg-gray-700/80 border border-gray-600/80'

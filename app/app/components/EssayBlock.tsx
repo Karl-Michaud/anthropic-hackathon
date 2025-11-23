@@ -1,7 +1,16 @@
 'use client'
 
 import { useState, useMemo, useRef, useEffect } from 'react'
-import { Loader2, MoreVertical, Trash2 } from 'lucide-react'
+import {
+  Loader2,
+  MoreVertical,
+  Trash2,
+  Download,
+  FileText,
+  FileType,
+  File,
+} from 'lucide-react'
+import { exportEssay, ExportFormat } from '../lib/exportUtils'
 import { useEditing } from '../context/EditingContext'
 import { useDarkMode } from '../context/DarkModeContext'
 import { EssayData, HighlightedSection } from '../context/WhiteboardContext'
@@ -226,6 +235,90 @@ function EssayMenu({
             <Trash2 size={14} />
             Delete Draft
           </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ExportMenu component
+function ExportMenu({
+  content,
+  filename,
+  title,
+  disabled,
+}: {
+  content: string
+  filename: string
+  title?: string
+  disabled?: boolean
+}) {
+  const [showMenu, setShowMenu] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowMenu(false)
+      }
+    }
+    if (showMenu) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showMenu])
+
+  const handleExport = async (format: ExportFormat) => {
+    setIsExporting(true)
+    try {
+      await exportEssay(content, filename, format, title)
+    } catch (error) {
+      console.error(`Error exporting as ${format}:`, error)
+    } finally {
+      setIsExporting(false)
+      setShowMenu(false)
+    }
+  }
+
+  const exportOptions = [
+    { format: 'txt' as ExportFormat, label: 'Text (.txt)', icon: FileText },
+    { format: 'pdf' as ExportFormat, label: 'PDF (.pdf)', icon: File },
+    { format: 'docx' as ExportFormat, label: 'Word (.docx)', icon: FileType },
+  ]
+
+  return (
+    <div className="relative" ref={menuRef}>
+      <button
+        onClick={() => setShowMenu(!showMenu)}
+        disabled={disabled || !content.trim()}
+        className={`p-1 rounded transition-colors cursor-pointer ${
+          disabled || !content.trim()
+            ? 'text-neutral-300 cursor-not-allowed'
+            : 'hover:bg-neutral-200 text-neutral-400'
+        }`}
+        title="Export essay"
+      >
+        {isExporting ? (
+          <Loader2 size={16} className="animate-spin" />
+        ) : (
+          <Download size={16} />
+        )}
+      </button>
+
+      {showMenu && (
+        <div className="absolute top-8 right-0 bg-white rounded-lg shadow-xl border border-neutral-200 py-2 z-50 min-w-[160px]">
+          {exportOptions.map(({ format, label, icon: Icon }) => (
+            <button
+              key={format}
+              onClick={() => handleExport(format)}
+              disabled={isExporting}
+              className="w-full px-3 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100 flex items-center gap-2 cursor-pointer disabled:opacity-50"
+            >
+              <Icon size={14} />
+              {label}
+            </button>
+          ))}
         </div>
       )}
     </div>
@@ -466,6 +559,16 @@ export default function EssayBlock({
         </div>
         <div className="flex items-center gap-3">
           <WordCounter currentCount={wordCount} maxCount={data.maxWordCount} />
+          <ExportMenu
+            content={data.content}
+            filename={
+              scholarshipTitle ? `essay_${scholarshipTitle}` : 'essay_draft'
+            }
+            title={
+              scholarshipTitle ? `Draft for ${scholarshipTitle}` : 'Essay Draft'
+            }
+            disabled={isGenerating}
+          />
           <EssayMenu
             maxWords={maxWords}
             onMaxWordsChange={handleMaxWordsChange}

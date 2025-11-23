@@ -26,6 +26,7 @@ export const Default: Story = {
   args: {
     cell: mockCell,
     isDragging: false,
+    zoom: 1,
     onMouseDown: () => {},
     onTextChange: () => {},
     onDelete: () => {},
@@ -36,6 +37,7 @@ export const Yellow: Story = {
   args: {
     cell: { ...mockCell, color: 'yellow' },
     isDragging: false,
+    zoom: 1,
     onMouseDown: () => {},
     onTextChange: () => {},
     onDelete: () => {},
@@ -46,6 +48,7 @@ export const Blue: Story = {
   args: {
     cell: { ...mockCell, color: 'blue' },
     isDragging: false,
+    zoom: 1,
     onMouseDown: () => {},
     onTextChange: () => {},
     onDelete: () => {},
@@ -56,6 +59,7 @@ export const Pink: Story = {
   args: {
     cell: { ...mockCell, color: 'pink' },
     isDragging: false,
+    zoom: 1,
     onMouseDown: () => {},
     onTextChange: () => {},
     onDelete: () => {},
@@ -66,6 +70,7 @@ export const Green: Story = {
   args: {
     cell: { ...mockCell, color: 'green' },
     isDragging: false,
+    zoom: 1,
     onMouseDown: () => {},
     onTextChange: () => {},
     onDelete: () => {},
@@ -76,6 +81,7 @@ export const Purple: Story = {
   args: {
     cell: { ...mockCell, color: 'purple' },
     isDragging: false,
+    zoom: 1,
     onMouseDown: () => {},
     onTextChange: () => {},
     onDelete: () => {},
@@ -86,6 +92,7 @@ export const Orange: Story = {
   args: {
     cell: { ...mockCell, color: 'orange' },
     isDragging: false,
+    zoom: 1,
     onMouseDown: () => {},
     onTextChange: () => {},
     onDelete: () => {},
@@ -96,6 +103,7 @@ export const Dragging: Story = {
   args: {
     cell: mockCell,
     isDragging: true,
+    zoom: 1,
     onMouseDown: () => {},
     onTextChange: () => {},
     onDelete: () => {},
@@ -109,6 +117,7 @@ export const LongText: Story = {
       text: 'This is a longer note that might wrap to multiple lines',
     },
     isDragging: false,
+    zoom: 1,
     onMouseDown: () => {},
     onTextChange: () => {},
     onDelete: () => {},

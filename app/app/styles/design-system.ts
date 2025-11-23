@@ -8,19 +8,39 @@
 // COLOR PALETTE - LIGHT MODE
 // ============================================================================
 
+export const brandColors = {
+  foreground: '#3D2219',
+  foregroundDark: '#FAF9F5',
+  background: '#F4F3EE',
+  backgroundDark: '#1F1E1D',
+  componentBackground: '#FDFBF9',
+  componentBackgroundDark: '#1F1E1D',
+  teal: '#008080',
+  crail: '#C15F3C',
+  navy: '#000080',
+  mustard: '#FFDB58',
+  olive: '#808000',
+  clay: '#804000',
+  maroon: '#800000',
+  magenta: '#800031',
+  purple: '#710080',
+  pampas: '#F4F3EE',
+  cloudy: '#B1ADA1',
+}
+
 export const colorsLight = {
-  // Primary - Sophisticated Blue
+  // Primary - Sophisticated Blue // replaced with brandColors.teal
   primary: {
-    50: '#f0f7ff',
-    100: '#e0efff',
-    200: '#bae6fd',
-    300: '#7dd3fc',
-    400: '#38bdf8',
-    500: '#0ea5e9', // Main primary
-    600: '#0284c7',
-    700: '#0369a1',
-    800: '#075985',
-    900: '#0c3d66',
+    50: '#dff7f6',
+    100: '#b1eae8',
+    200: '#80dddb',
+    300: '#4dcecf',
+    400: '#26c3c7',
+    500: '#00b9c1',
+    600: '#00a9af',
+    700: '#009497',
+    800: '#008080', // Main primary
+    900: '#055d57',
   },
 
   // Accent - Vibrant Teal

@@ -118,11 +118,12 @@ export default function SocraticPanel({
   return (
     <div
       ref={panelRef}
-      className={`w-[500px] rounded-xl shadow-2xl border flex flex-col max-h-[700px] fixed right-8 top-1/2 transform -translate-y-1/2 z-40 ${
-        isDarkMode
-          ? 'bg-gray-800 border-gray-700'
-          : 'bg-white border-neutral-200'
+      className={`w-[500px] rounded-2xl shadow-2xl border flex flex-col max-h-[700px] fixed right-8 top-1/2 transform -translate-y-1/2 z-40 ${
+        isDarkMode ? 'bg-gray-800 border-gray-700' : 'border-[#B1ADA1]'
       }`}
+      style={{
+        backgroundColor: isDarkMode ? undefined : '#FDFBF9',
+      }}
     >
       <div
         className={`p-6 border-b shrink-0 relative ${
@@ -177,7 +178,13 @@ export default function SocraticPanel({
         <button
           onClick={handleSubmit}
           disabled={!allQuestionsAnswered || isSubmitting.current}
-          className="w-full bg-primary-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-primary-700 disabled:bg-neutral-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+          className="w-full text-white px-6 py-3 rounded-lg font-medium disabled:bg-neutral-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+          style={{
+            backgroundColor:
+              allQuestionsAnswered && !isSubmitting.current
+                ? '#C15F3C'
+                : undefined,
+          }}
         >
           {isSubmitting.current ? (
             <>

@@ -10,8 +10,8 @@ import EssayBlock from './EssayBlock'
 import {
   submitFeedbackAnswers,
   analyzeSocraticQuestions,
-} from '../lib/dynamicFeedback'
-import { FeedbackPanel } from '../lib/dynamicFeedback'
+} from '../lib/dynamicFeedback/feedbackApi'
+import FeedbackPanel from './FeedbackPanel'
 import { useWhiteboard } from '../context/WhiteboardContext'
 import { useEditing } from '../context/EditingContext'
 import { useDarkMode } from '../context/DarkModeContext'
@@ -26,6 +26,7 @@ import type {
   JsonOutputData,
 } from '../context/WhiteboardContext'
 import type { FeedbackData } from '../lib/dynamicFeedback'
+import { brandColors } from '../styles/design-system'
 
 const ZOOM_MIN = 0.06
 const ZOOM_MAX = 1.0
@@ -1238,22 +1239,24 @@ export default function Whiteboard() {
 
   const dotOpacity = zoom
   const dotColor = isDarkMode
-    ? `rgba(107, 114, 128, ${dotOpacity})`
-    : `rgba(208, 201, 184, ${dotOpacity})`
+    ? `rgba(255, 255, 255, ${dotOpacity * 0.25})`
+    : `rgba(61, 34, 25, ${dotOpacity * 0.25})`
   const dotSize = 24 * zoom
+  const backgroundColor = isDarkMode
+    ? brandColors.backgroundDark
+    : brandColors.background
 
   return (
     <div
       ref={containerRef}
-      className={`fixed inset-0 overflow-hidden select-none transition-colors duration-200 ${
-        isDarkMode ? 'bg-gray-900' : 'bg-neutral-50'
-      }`}
+      className="fixed inset-0 overflow-hidden select-none transition-colors duration-200"
       onMouseDown={handleCanvasMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
       onContextMenu={(e) => handleContextMenu(e)}
       style={{
+        backgroundColor,
         backgroundImage: `radial-gradient(circle, ${dotColor} 1px, transparent 1px)`,
         backgroundSize: `${dotSize}px ${dotSize}px`,
         backgroundPosition: `${position.x % dotSize}px ${position.y % dotSize}px`,
