@@ -23,11 +23,15 @@ export function LandingPage() {
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center px-4 transition-colors duration-200"
+      className="h-screen w-screen flex flex-col items-center justify-center px-4 transition-colors duration-200"
       style={{
         backgroundColor: colors.background.default,
         backgroundImage: `radial-gradient(circle, ${dotColor} 1px, transparent 1px)`,
         backgroundSize: `${dotSize}px ${dotSize}px`,
+        overflow: 'hidden',
+        position: 'fixed',
+        top: 0,
+        left: 0,
       }}
     >
       {/* Logo/Title */}
