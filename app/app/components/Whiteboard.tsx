@@ -473,6 +473,7 @@ export default function Whiteboard() {
         const analysisResult = await analyzeSocraticQuestions(
           essay.content,
           scholarship?.title,
+          user?.id,
         )
 
         updateEssay({
@@ -484,7 +485,7 @@ export default function Whiteboard() {
         console.error('Failed to generate Socratic questions:', error)
       }
     },
-    [essays, scholarships, updateEssay],
+    [essays, scholarships, updateEssay, user?.id],
   )
 
   // Auto-generate Socratic questions for new essays without highlights
@@ -1469,6 +1470,7 @@ export default function Whiteboard() {
                 onDelete={deleteEssay}
                 isGenerating={generatingEssayFor === essay.scholarshipId}
                 onGenerateSocraticQuestions={handleGenerateSocraticQuestions}
+                userId={user?.id}
               />
             </DraggableBlock>
           )
@@ -1554,6 +1556,7 @@ export default function Whiteboard() {
                     const updatedEssayContent = await submitFeedbackAnswers(
                       feedbackData,
                       essay.content,
+                      user?.id,
                     )
 
                     // Update the essay with the enhanced content

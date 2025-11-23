@@ -480,7 +480,7 @@ ${analysisData.userProfile.cvResumeSummary}
     }
   }
 
-  return `You are an expert scholarship essay writer. Your task is to write a compelling, personalized essay that maximizes the applicant's chances of winning this scholarship.
+  return `You are an expert scholarship essay writer. Your task is to write a compelling, personalized essay that maximizes the applicant's chances of winning this scholarship. Do NOT fabricate any information; use only the provided applicant profile details.
 
 ---
 
@@ -515,7 +515,7 @@ Write a draft essay that:
 6. ${analysisData?.personality ? `Follows the recommended essay focus: ${analysisData.personality.recommendedEssayFocus}` : 'Has a clear narrative focus'}
 7. ${analysisData?.userProfile ? `Incorporates specific experiences, achievements, and details from ${analysisData.userProfile.firstName}'s profile to create a personalized, authentic essay` : 'Uses placeholder experiences that the applicant can fill in later'}
 
-The essay should be approximately 500-750 words, well-structured with clear paragraphs, and compelling throughout.
+The essay should be approximately 500-750 words (or the specified word count if included in the scholarship description), well-structured with clear paragraphs, and compelling throughout. Do NOT fabricate any information; use only the provided applicant profile details. Do NOT hallucinate.
 
 CRITICAL: Return ONLY valid JSON. Do NOT use markdown code blocks. Do NOT add explanatory text.
 

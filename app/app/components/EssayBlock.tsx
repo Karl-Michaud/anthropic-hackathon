@@ -415,6 +415,7 @@ interface EssayBlockProps {
   onDelete: (essayId: string) => void
   isGenerating?: boolean
   onGenerateSocraticQuestions?: (essayId: string) => Promise<void>
+  userId?: string
 }
 
 export default function EssayBlock({
@@ -424,6 +425,7 @@ export default function EssayBlock({
   onDelete,
   isGenerating = false,
   onGenerateSocraticQuestions,
+  userId,
 }: EssayBlockProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [maxWords, setMaxWords] = useState<string>(
@@ -548,6 +550,7 @@ export default function EssayBlock({
         data.content,
         selectedSection.id,
         answers,
+        userId,
       )
 
       // Clear the selected section

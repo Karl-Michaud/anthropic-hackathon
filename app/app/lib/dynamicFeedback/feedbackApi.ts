@@ -25,9 +25,10 @@ interface SocraticAnalysisResult {
 export async function analyzeSocraticQuestions(
   essayContent: string,
   scholarshipTitle?: string,
+  userId?: string,
 ): Promise<SocraticAnalysisResult> {
   try {
-    const result = await analyzeSocratic(essayContent, scholarshipTitle)
+    const result = await analyzeSocratic(essayContent, scholarshipTitle, userId)
     return {
       highlightedSections: result.highlightedSections || [],
       socraticData: result.socraticData || {},
@@ -48,9 +49,10 @@ export async function submitSocraticAnswers(
   essayContent: string,
   sectionId: string,
   answers: Record<string, string>,
+  userId?: string,
 ): Promise<string> {
   try {
-    const updatedEssay = await submitSocraticLib(essayContent, answers)
+    const updatedEssay = await submitSocraticLib(essayContent, answers, userId)
     return updatedEssay || essayContent
   } catch (error) {
     console.error('Error submitting Socratic answers:', error)
@@ -66,6 +68,7 @@ export async function analyzeFeedback(
   essayId: string,
   scholarshipId: string,
   scholarshipTitle?: string,
+  userId?: string,
 ): Promise<FeedbackData | null> {
   try {
     const feedbackData = await analyzeFeedbackLib({
@@ -73,6 +76,7 @@ export async function analyzeFeedback(
       essayId,
       scholarshipId,
       scholarshipTitle,
+      userId,
     })
     return feedbackData || null
   } catch (error) {
@@ -87,9 +91,14 @@ export async function analyzeFeedback(
 export async function submitFeedbackAnswers(
   feedbackData: FeedbackData,
   essayContent: string,
+  userId?: string,
 ): Promise<string> {
   try {
-    const updatedEssay = await submitFeedbackLib(essayContent, feedbackData)
+    const updatedEssay = await submitFeedbackLib(
+      essayContent,
+      feedbackData,
+      userId,
+    )
     return updatedEssay || essayContent
   } catch (error) {
     console.error('Error submitting feedback answers:', error)

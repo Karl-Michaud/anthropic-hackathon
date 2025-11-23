@@ -5,6 +5,8 @@ import {
   HighlightedSection,
   SocraticQuestion,
 } from '@/app/context/WhiteboardContext'
+import { createClient as createServerClient } from '@/app/utils/supabase/server'
+import { IUserProfile } from '@/app/types/user-profile'
 
 const client = new Anthropic()
 
@@ -24,6 +26,7 @@ const HIGHLIGHT_COLORS: Array<'amber' | 'cyan' | 'pink' | 'lime' | 'purple'> = [
 export async function analyzeSocratic(
   essayContent: string,
   scholarshipTitle?: string,
+  userId?: string,
 ): Promise<SocraticAnalysisResponse> {
   if (!essayContent || essayContent.trim().length === 0) {
     throw new Error('Essay content is required')
@@ -40,6 +43,45 @@ export async function analyzeSocratic(
     }
   }
 
+  // Fetch user profile if userId is provided
+  let userProfile: IUserProfile | null = null
+  if (userId) {
+    try {
+      const supabase = await createServerClient()
+      const { data } = await supabase
+        .from('whiteboard_data')
+        .select('user_profile')
+        .eq('user_id', userId)
+        .single()
+
+      if (data?.user_profile) {
+        userProfile = data.user_profile as IUserProfile
+        console.log('✅ User profile loaded for Socratic analysis:', {
+          name: `${userProfile.firstName} ${userProfile.lastName}`,
+        })
+      }
+    } catch (error) {
+      console.warn('Could not load user profile for Socratic analysis:', error)
+    }
+  }
+
+  // Build user context section
+  const userContext = userProfile
+    ? `
+
+### APPLICANT PROFILE
+Use this information to craft personalized questions that help the student elaborate on their actual experiences. Do NOT make up any details. Do not hallucinate information.
+
+**Name**: ${userProfile.firstName} ${userProfile.lastName}
+
+**Background Summary**:
+${userProfile.userSummary}
+
+**CV/Resume Highlights**:
+${userProfile.cvResumeSummary}
+`
+    : ''
+
   // Use Claude to analyze the essay and identify areas for elaboration
   const sectionCount =
     essayContent.length > 500
@@ -51,6 +93,7 @@ export async function analyzeSocratic(
   const analysisPrompt = `You are an expert essay editor analyzing a student essay${
     scholarshipTitle ? ` for the "${scholarshipTitle}" scholarship` : ''
   }.
+${userContext}
 
 Your task: Identify ${sectionCount} key sections that would benefit from elaboration or improvement.
 
@@ -201,6 +244,7 @@ Rules:
 export async function submitSocraticAnswers(
   essayContent: string,
   answers: Record<string, string>,
+  userId?: string,
 ): Promise<string> {
   if (!essayContent) {
     throw new Error('Essay content is required')
@@ -219,8 +263,48 @@ export async function submitSocraticAnswers(
     throw new Error('No answers provided')
   }
 
+  // Fetch user profile if userId is provided
+  let userProfile: IUserProfile | null = null
+  if (userId) {
+    try {
+      const supabase = await createServerClient()
+      const { data } = await supabase
+        .from('whiteboard_data')
+        .select('user_profile')
+        .eq('user_id', userId)
+        .single()
+
+      if (data?.user_profile) {
+        userProfile = data.user_profile as IUserProfile
+        console.log('✅ User profile loaded for Socratic submission:', {
+          name: `${userProfile.firstName} ${userProfile.lastName}`,
+        })
+      }
+    } catch (error) {
+      console.warn('Could not load user profile for Socratic submission:', error)
+    }
+  }
+
+  // Build user context section
+  const userContext = userProfile
+    ? `
+
+### APPLICANT PROFILE
+Use this to ensure improvements align with the student's actual background:
+
+**Name**: ${userProfile.firstName} ${userProfile.lastName}
+
+**Background Summary**:
+${userProfile.userSummary}
+
+**CV/Resume Highlights**:
+${userProfile.cvResumeSummary}
+`
+    : ''
+
   // Use Claude to enhance the essay based on the student's responses
   const updatePrompt = `You are an expert essay editor. A student has provided the following elaborations to improve their essay.
+${userContext}
 
 Original Essay:
 ${essayContent}
