@@ -26,6 +26,7 @@ import type {
   ScholarshipData,
   EssayData,
   JsonOutputData,
+  HighlightedSection,
 } from '../context/WhiteboardContext'
 import type { FeedbackData } from '../lib/dynamicFeedback'
 import { brandColors } from '../styles/design-system'
@@ -649,7 +650,7 @@ export default function Whiteboard() {
         })))
 
         // Filter out invalid and overlapping sections
-        const validSections = []
+        const validSections: typeof highlightResult.sections = []
         const sortedSections = [...highlightResult.sections].sort((a, b) => a.startIndex - b.startIndex)
 
         for (const section of sortedSections) {
