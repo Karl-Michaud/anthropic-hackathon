@@ -22,7 +22,7 @@ import {
   saveUserProfile as saveUserProfileToDb,
   getUserProfile,
   isFirstTimeUser as checkFirstTimeUser,
-} from '../lib/supabase/queries'
+} from '../lib/dbUtils'
 
 const STORAGE_KEY_PREFIX = 'whiteboard-data'
 const DEBOUNCE_MS = 500
@@ -145,6 +145,7 @@ interface WhiteboardState {
   essays: EssayData[]
   jsonOutputs: JsonOutputData[]
   blockPositions: BlockPosition[]
+  userProfile?: IUserProfile | null
 }
 
 interface WhiteboardContextType {
@@ -311,6 +312,9 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
           setEssays(dbData.essays as EssayData[])
           setJsonOutputs(dbData.jsonOutputs as JsonOutputData[])
           setBlockPositions(dbData.blockPositions as BlockPosition[])
+          if (dbData.userProfile) {
+            setUserProfileState(dbData.userProfile as IUserProfile)
+          }
           setIsLoaded(true)
         }
       }
@@ -321,7 +325,7 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
           getUserProfile(user.id),
           checkFirstTimeUser(user.id),
         ])
-        setUserProfileState(profile)
+        setUserProfileState(profile as IUserProfile | null)
         setIsFirstTimeUser(firstTime)
         setHasCheckedFirstTimeUser(true)
 
@@ -344,6 +348,11 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
       setEssays(stored.essays)
       setJsonOutputs(stored.jsonOutputs)
       setBlockPositions(stored.blockPositions)
+
+      // Load userProfile from localStorage if not already loaded from DB
+      if (stored.userProfile && !userProfile) {
+        setUserProfileState(stored.userProfile)
+      }
 
       // Load feedback panel drafts separately
       const feedbackDrafts: FeedbackData[] = []
@@ -374,6 +383,7 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
       essays,
       jsonOutputs,
       blockPositions,
+      userProfile,
     }
 
     saveTimeoutRef.current = setTimeout(() => {
@@ -391,7 +401,7 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
         clearTimeout(saveTimeoutRef.current)
       }
     }
-  }, [cells, scholarships, essays, jsonOutputs, blockPositions, isLoaded, user])
+  }, [cells, scholarships, essays, jsonOutputs, blockPositions, userProfile, isLoaded, user])
 
   // Cell actions
   const addCell = useCallback((cell: Omit<CellData, 'id'>) => {
@@ -567,16 +577,26 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
   // User profile actions
   const setUserProfile = useCallback(
     async (profile: IUserProfile) => {
+      console.log('🔐 [setUserProfile] Starting profile save...')
+      console.log('  User ID:', user?.id)
+      console.log('  Profile:', profile)
+
       setUserProfileState(profile)
       setIsFirstTimeUser(false)
 
       // Save to database if user is logged in
       if (user?.id) {
         try {
+          console.log('  Saving to database...')
           await saveUserProfileToDb(user.id, profile)
+          console.log('  ✅ Database save successful')
         } catch (error) {
-          console.error('Error saving user profile to database:', error)
+          console.error('  ❌ Error saving user profile to database:', error)
+          alert('Failed to save profile to database. Please check your connection and try again.')
+          throw error // Re-throw to prevent silent failures
         }
+      } else {
+        console.warn('  ⚠️ No user ID - cannot save to database')
       }
 
       // Also save to localStorage
@@ -587,10 +607,13 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
           const data = stored ? JSON.parse(stored) : defaultState
           data.userProfile = profile
           localStorage.setItem(key, JSON.stringify(data))
+          console.log('  ✅ localStorage save successful')
         } catch (error) {
-          console.error('Error saving user profile to localStorage:', error)
+          console.error('  ❌ Error saving user profile to localStorage:', error)
         }
       }
+
+      console.log('🔐 [setUserProfile] Complete!')
     },
     [user?.id],
   )

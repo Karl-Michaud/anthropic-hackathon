@@ -5,7 +5,8 @@
       "Bash(npx prisma generate:*)",
       "Bash(npm run dev)",
       "Bash(lsof:*)",
-      "Bash(xargs kill:*)"
+      "Bash(xargs kill:*)",
+      "Bash(npx tsx:*)"
     ]
   },
   "disabledMcpjsonServers": [

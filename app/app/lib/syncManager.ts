@@ -99,6 +99,7 @@ class SyncManager {
         essays: data.essays || [],
         jsonOutputs: data.jsonOutputs || [],
         blockPositions: data.blockPositions || [],
+        userProfile: data.userProfile || null,
       }
     } catch (error) {
       console.error('Error loading from database:', error)

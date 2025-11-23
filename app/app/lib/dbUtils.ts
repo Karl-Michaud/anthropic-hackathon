@@ -373,6 +373,7 @@ export interface WhiteboardData {
   essays: unknown[]
   jsonOutputs: unknown[]
   blockPositions: unknown[]
+  userProfile?: unknown | null
 }
 
 export interface WhiteboardDatabaseRow {
@@ -384,6 +385,7 @@ export interface WhiteboardDatabaseRow {
   jsonOutputs: unknown[]
   blockPositions: unknown[]
   isFirstTimeUser: boolean
+  userProfile?: unknown | null
   createdAt: string
   updatedAt: string
 }
@@ -415,6 +417,7 @@ export async function getWhiteboardData(
         ? data.blockPositions
         : [],
       isFirstTimeUser: data.isFirstTimeUser,
+      userProfile: data.userProfile,
       createdAt: data.createdAt.toISOString(),
       updatedAt: data.updatedAt.toISOString(),
     }
@@ -440,6 +443,15 @@ export async function saveWhiteboardData(
       essaysCount: whiteboardData.essays.length,
     })
 
+    // Check if user profile exists to determine first-time status
+    const existing = await prisma.whiteboardData.findUnique({
+      where: { userId },
+      select: { userProfile: true, isFirstTimeUser: true },
+    })
+
+    // If profile exists, preserve the current first-time status (don't override)
+    const isFirstTimeUser = existing?.userProfile ? false : (existing?.isFirstTimeUser ?? true)
+
     await prisma.whiteboardData.upsert({
       where: { userId },
       update: {
@@ -449,6 +461,10 @@ export async function saveWhiteboardData(
         jsonOutputs: whiteboardData.jsonOutputs as any,
         blockPositions: whiteboardData.blockPositions as any,
         updatedAt: new Date(),
+        // Preserve first-time status if profile exists
+        ...(existing?.userProfile && { isFirstTimeUser: false }),
+        // Update user profile if provided
+        ...(whiteboardData.userProfile !== undefined && { userProfile: whiteboardData.userProfile as any }),
       },
       create: {
         userId,
@@ -457,6 +473,8 @@ export async function saveWhiteboardData(
         essays: whiteboardData.essays as any,
         jsonOutputs: whiteboardData.jsonOutputs as any,
         blockPositions: whiteboardData.blockPositions as any,
+        userProfile: whiteboardData.userProfile as any,
+        isFirstTimeUser,
         updatedAt: new Date(),
       },
     })
@@ -482,5 +500,66 @@ export async function markUserAsReturning(userId: string): Promise<void> {
   } catch (error) {
     console.error('Error marking user as returning:', error)
     // Don't throw - this is not critical
+  }
+}
+
+/**
+ * Get user profile
+ */
+export async function getUserProfile(userId: string): Promise<unknown | null> {
+  try {
+    const data = await prisma.whiteboardData.findUnique({
+      where: { userId },
+      select: { userProfile: true },
+    })
+    return data?.userProfile || null
+  } catch (error) {
+    console.error('Error fetching user profile:', error)
+    return null
+  }
+}
+
+/**
+ * Check if user is first-time user
+ */
+export async function isFirstTimeUser(userId: string): Promise<boolean> {
+  try {
+    const data = await prisma.whiteboardData.findUnique({
+      where: { userId },
+      select: { isFirstTimeUser: true },
+    })
+    // If no row exists, user is first-time
+    return data?.isFirstTimeUser ?? true
+  } catch (error) {
+    console.error('Error checking first-time user status:', error)
+    return true // Default to first-time if error
+  }
+}
+
+/**
+ * Save user profile
+ */
+export async function saveUserProfile(
+  userId: string,
+  profile: unknown,
+): Promise<void> {
+  try {
+    await prisma.whiteboardData.upsert({
+      where: { userId },
+      update: {
+        userProfile: profile as any,
+        isFirstTimeUser: false,
+        updatedAt: new Date(),
+      },
+      create: {
+        userId,
+        userProfile: profile as any,
+        isFirstTimeUser: false,
+        updatedAt: new Date(),
+      },
+    })
+  } catch (error) {
+    console.error('Error saving user profile:', error)
+    throw new Error(`Failed to save user profile: ${error instanceof Error ? error.message : 'Unknown error'}`)
   }
 }

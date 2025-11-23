@@ -29,7 +29,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Check active sessions and sets the user
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.error('Session error:', error)
+        // Clear invalid session
+        setUser(null)
+        setLoading(false)
+        return
+      }
       setUser(session?.user ?? null)
       setLoading(false)
     })
