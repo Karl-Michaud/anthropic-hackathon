@@ -9,12 +9,15 @@ import {
   FileText,
   Moon,
   Sun,
+  LogOut,
   type LucideIcon,
 } from 'lucide-react'
 import NextLink from 'next/link'
 import { useState, useRef, ChangeEvent, DragEvent } from 'react'
+import { useRouter } from 'next/navigation'
 import { useWhiteboard } from '../context/WhiteboardContext'
 import { useDarkMode } from '../context/DarkModeContext'
+import { useAuth } from './auth/AuthProvider'
 import {
   saveScholarshipToDB,
   generateAndSavePromptAnalysis,
@@ -203,6 +206,51 @@ function AccountButton({ isDarkMode = false }: { isDarkMode?: boolean }) {
         Profile
       </span>
     </NextLink>
+  )
+}
+
+// LogoutButton component
+function LogoutButton({ isDarkMode = false }: { isDarkMode?: boolean }) {
+  const { signOut } = useAuth()
+  const router = useRouter()
+  const colors = isDarkMode ? colorsDark : colorsLight
+
+  const handleLogout = async () => {
+    await signOut()
+    router.push('/')
+  }
+
+  return (
+    <button
+      onClick={handleLogout}
+      className="cursor-pointer group relative p-2 rounded-xl transition-all duration-200 hover:scale-105"
+      style={{
+        color: colors.text.secondary,
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.backgroundColor = isDarkMode
+          ? `${brandColors.backgroundDark}66`
+          : `${brandColors.pampas}66`
+        e.currentTarget.style.color = colors.text.primary
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.backgroundColor = 'transparent'
+        e.currentTarget.style.color = colors.text.secondary
+      }}
+    >
+      <LogOut size={28} />
+      <span
+        className="absolute left-12 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 text-xs rounded-md px-2 py-1 transition-all duration-200 whitespace-nowrap"
+        style={{
+          backgroundColor: isDarkMode
+            ? colorsDark.background.elevated
+            : brandColors.backgroundDark,
+          color: brandColors.foregroundDark,
+        }}
+      >
+        Logout
+      </span>
+    </button>
   )
 }
 
@@ -901,6 +949,8 @@ export default function Navigation() {
               isDarkMode={isDarkMode}
             />
           ))}
+          <AccountButton isDarkMode={isDarkMode} />
+          <LogoutButton isDarkMode={isDarkMode} />
         </nav>
 
         {/* Spacer to push bottom items down */}
@@ -908,12 +958,11 @@ export default function Navigation() {
 
         {/* Bottom buttons */}
         <div className="flex flex-col gap-4 items-center py-4">
-          <DarkModeToggle />
           <ScholarshipUploadButton
             onClick={() => setIsPopupOpen(true)}
             isDarkMode={isDarkMode}
           />
-          <AccountButton isDarkMode={isDarkMode} />
+          <DarkModeToggle />
         </div>
       </div>
 
