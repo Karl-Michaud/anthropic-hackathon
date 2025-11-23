@@ -384,8 +384,6 @@ export interface WhiteboardDatabaseRow {
   jsonOutputs: unknown[]
   blockPositions: unknown[]
   isFirstTimeUser: boolean
-  createdAt: string
-  updatedAt: string
 }
 
 /**
@@ -415,8 +413,6 @@ export async function getWhiteboardData(
         ? data.blockPositions
         : [],
       isFirstTimeUser: data.isFirstTimeUser,
-      createdAt: data.createdAt.toISOString(),
-      updatedAt: data.updatedAt.toISOString(),
     }
   } catch (error) {
     console.error('Error fetching whiteboard data:', error)
@@ -454,7 +450,6 @@ export async function saveWhiteboardData(
         jsonOutputs: whiteboardData.jsonOutputs as any,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         blockPositions: whiteboardData.blockPositions as any,
-        updatedAt: new Date(),
       },
       create: {
         userId,
@@ -468,7 +463,6 @@ export async function saveWhiteboardData(
         jsonOutputs: whiteboardData.jsonOutputs as any,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         blockPositions: whiteboardData.blockPositions as any,
-        updatedAt: new Date(),
       },
     })
 
