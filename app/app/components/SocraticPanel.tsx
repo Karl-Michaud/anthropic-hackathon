@@ -146,7 +146,7 @@ export default function SocraticPanel({
           <X size={24} />
         </button>
         {/* Property Type and Value Display */}
-        {(data.propertyType && data.propertyValue) && (
+        {data.propertyType && data.propertyValue && (
           <div className="mb-3">
             <div className="flex items-center gap-2">
               <span
@@ -243,16 +243,18 @@ export default function SocraticPanel({
         )}
 
         {/* Display questions for auto-generated essays */}
-        {data.questions && data.questions.length > 0 && data.questions.map((question) => (
-          <Question
-            key={question.id}
-            question={question.text}
-            value={question.answer}
-            onChange={(value) => onAnswerChange(question.id, value)}
-            tags={question.tags}
-            isDarkMode={isDarkMode}
-          />
-        ))}
+        {data.questions &&
+          data.questions.length > 0 &&
+          data.questions.map((question) => (
+            <Question
+              key={question.id}
+              question={question.text}
+              value={question.answer}
+              onChange={(value) => onAnswerChange(question.id, value)}
+              tags={question.tags}
+              isDarkMode={isDarkMode}
+            />
+          ))}
 
         {/* Display areas of improvement for custom drafts */}
         {data.areasOfImprovement && data.areasOfImprovement.length > 0 && (

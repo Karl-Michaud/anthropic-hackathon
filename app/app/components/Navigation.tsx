@@ -407,7 +407,10 @@ function FileUploadArea({
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-center" style={{ color: colors.text.secondary }}>
+              <p
+                className="text-sm text-center"
+                style={{ color: colors.text.secondary }}
+              >
                 Supports TXT, JSON, and PDF files
               </p>
             )}
@@ -436,7 +439,9 @@ function FileUploadArea({
         }
 
         @keyframes bounce {
-          0%, 80%, 100% {
+          0%,
+          80%,
+          100% {
             transform: translateY(0);
           }
           40% {
@@ -755,7 +760,7 @@ function ScholarshipUploadPopup({
         // Fetch the analysis data from the database
         const dbScholarship = (await getScholarshipFromDB(
           scholarship.id,
-        )) as any
+        )) as Record<string, unknown> | null
 
         const weights = await requestClaude<IPromptWeights>(
           'promptWeights',
@@ -770,9 +775,15 @@ function ScholarshipUploadPopup({
           description,
           prompt: prompt,
           weights: weights as Record<string, unknown>,
-          personality: dbScholarship?.promptPersonality || undefined,
-          priorities: dbScholarship?.promptPriority || undefined,
-          values: dbScholarship?.promptValue || undefined,
+          personality:
+            (dbScholarship?.promptPersonality as Record<string, unknown>) ||
+            undefined,
+          priorities:
+            (dbScholarship?.promptPriority as Record<string, unknown>) ||
+            undefined,
+          values:
+            (dbScholarship?.promptValue as Record<string, unknown>) ||
+            undefined,
         })
         onClose()
       } else {
@@ -806,7 +817,9 @@ function ScholarshipUploadPopup({
       )
 
       // Fetch the analysis data from the database
-      const dbScholarship = (await getScholarshipFromDB(scholarship.id)) as any
+      const dbScholarship = (await getScholarshipFromDB(
+        scholarship.id,
+      )) as Record<string, unknown> | null
 
       const weights = await requestClaude<IPromptWeights>(
         'promptWeights',
@@ -821,9 +834,14 @@ function ScholarshipUploadPopup({
         description,
         prompt,
         weights: weights as Record<string, unknown>,
-        personality: dbScholarship?.promptPersonality || undefined,
-        priorities: dbScholarship?.promptPriority || undefined,
-        values: dbScholarship?.promptValue || undefined,
+        personality:
+          (dbScholarship?.promptPersonality as Record<string, unknown>) ||
+          undefined,
+        priorities:
+          (dbScholarship?.promptPriority as Record<string, unknown>) ||
+          undefined,
+        values:
+          (dbScholarship?.promptValue as Record<string, unknown>) || undefined,
       })
       onClose()
     } catch (err) {

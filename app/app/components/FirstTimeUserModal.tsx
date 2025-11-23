@@ -59,7 +59,7 @@ export function FirstTimeUserModal({ onComplete }: FirstTimeUserModalProps) {
 
         {/* Form */}
         <div className="p-6">
-          <UserProfileForm onSubmit={onComplete} isModal />
+          <UserProfileForm onSubmit={onComplete} />
         </div>
       </div>
     </div>

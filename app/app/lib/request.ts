@@ -914,7 +914,9 @@ export async function generateDraftWithAnalysis(
         console.warn('⚠️ No user profile found for userId:', userId)
       }
     } else {
-      console.warn('⚠️ No userId provided - essay will be generated without user context')
+      console.warn(
+        '⚠️ No userId provided - essay will be generated without user context',
+      )
     }
 
     if (scholarship.promptPersonality) {
@@ -1196,7 +1198,10 @@ export async function analyzeCustomDraftWithAnalysis(
     const parsedResponse = JSON.parse(jsonText) as ICustomDraftAnalysis
 
     console.log('✅ Custom draft analysis complete')
-    console.log('Overall alignment score:', parsedResponse.overall_alignment_score)
+    console.log(
+      'Overall alignment score:',
+      parsedResponse.overall_alignment_score,
+    )
     console.log('Summary:', parsedResponse.summary)
 
     return parsedResponse

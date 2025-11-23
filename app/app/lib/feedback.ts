@@ -230,7 +230,10 @@ export async function submitFeedback(
         })
       }
     } catch (error) {
-      console.warn('Could not load user profile for feedback submission:', error)
+      console.warn(
+        'Could not load user profile for feedback submission:',
+        error,
+      )
     }
   }
 

@@ -16,7 +16,10 @@ import { useWhiteboard } from '../context/WhiteboardContext'
 import { useEditing } from '../context/EditingContext'
 import { useDarkMode } from '../context/DarkModeContext'
 import { saveEssayDraftToDB } from '../lib/dbUtils'
-import { generateDraftWithAnalysis, analyzeCustomDraftWithAnalysis } from '../lib/request'
+import {
+  generateDraftWithAnalysis,
+  analyzeCustomDraftWithAnalysis,
+} from '../lib/request'
 import { useAuth } from './auth/AuthProvider'
 import { SyncStatusIndicator } from './SyncStatusIndicator'
 import { FirstTimeUserModal } from './FirstTimeUserModal'
@@ -87,9 +90,6 @@ export default function Whiteboard() {
     currentY: number
   } | null>(null)
   const [zIndexStack, setZIndexStack] = useState<string[]>([])
-  const [blockDimensions, setBlockDimensions] = useState<
-    Map<string, { width: number; height: number }>
-  >(new Map())
 
   const {
     cells,
@@ -399,7 +399,10 @@ export default function Whiteboard() {
 
       const scholarship = scholarships.find((s) => s.id === scholarshipId)
       if (!scholarship) {
-        console.error('❌ [Whiteboard.handleGenerateEssay] Scholarship not found!', scholarshipId)
+        console.error(
+          '❌ [Whiteboard.handleGenerateEssay] Scholarship not found!',
+          scholarshipId,
+        )
         return
       }
 
@@ -465,7 +468,10 @@ export default function Whiteboard() {
 
       const scholarship = scholarships.find((s) => s.id === scholarshipId)
       if (!scholarship) {
-        console.error('❌ [Whiteboard.handleCustomDraft] Scholarship not found!', scholarshipId)
+        console.error(
+          '❌ [Whiteboard.handleCustomDraft] Scholarship not found!',
+          scholarshipId,
+        )
         return
       }
 
@@ -492,7 +498,9 @@ export default function Whiteboard() {
       console.log('  - ✅ Essay positioned')
 
       console.log('🏁 [Whiteboard.handleCustomDraft] COMPLETED')
-      console.log('  - New essay should be visible to the right of the scholarship')
+      console.log(
+        '  - New essay should be visible to the right of the scholarship',
+      )
     },
     [scholarships, addEssay, getBlockPosition, updateBlockPosition],
   )
@@ -517,7 +525,9 @@ export default function Whiteboard() {
 
       if (essay.isCustomDraft) {
         console.warn('  - ⚠️ WARNING: Attempting to analyze custom draft!')
-        console.warn('  - This should NOT happen - custom drafts should use manual submission')
+        console.warn(
+          '  - This should NOT happen - custom drafts should use manual submission',
+        )
         console.warn('  - Aborting auto-analysis')
         return
       }
@@ -545,7 +555,10 @@ export default function Whiteboard() {
           socraticData: analysisResult.socraticData,
         })
       } catch (error) {
-        console.error('❌ [Whiteboard.handleGenerateSocraticQuestions] Error:', error)
+        console.error(
+          '❌ [Whiteboard.handleGenerateSocraticQuestions] Error:',
+          error,
+        )
         if (error instanceof Error) {
           console.error('  - Error message:', error.message)
           console.error('  - Error stack:', error.stack)
@@ -553,40 +566,6 @@ export default function Whiteboard() {
       }
     },
     [essays, scholarships, updateEssay, user?.id],
-  )
-
-  const handleAnalyzeCustomDraft = useCallback(
-    async (essayId: string) => {
-      const essay = essays.find((e) => e.id === essayId)
-      if (!essay || !essay.isCustomDraft) return
-
-      // Only analyze if essay has sufficient content
-      const wordCount = essay.content.trim().split(/\s+/).length
-      if (wordCount < 50) {
-        console.log('Essay too short for comprehensive analysis:', { wordCount })
-        throw new Error(
-          `Essay too short for analysis. Please write at least 50 words (currently ${wordCount} words).`,
-        )
-      }
-
-      try {
-        console.log('🔍 Analyzing custom draft for essay:', essayId)
-        const analysisResult = await analyzeCustomDraftWithAnalysis(
-          essay.scholarshipId,
-          essay.content,
-        )
-
-        console.log('✅ Analysis complete, updating essay with results')
-        updateEssay({
-          ...essay,
-          customDraftAnalysis: analysisResult,
-        })
-      } catch (error) {
-        console.error('Failed to analyze custom draft:', error)
-        throw error // Re-throw to let caller handle it
-      }
-    },
-    [essays, updateEssay],
   )
 
   // Combined handler for submitting drafts (both custom and AI-generated) for review
@@ -612,16 +591,22 @@ export default function Whiteboard() {
         // Validate content length for analysis
         const wordCount = essay.content.trim().split(/\s+/).length
         if (wordCount < 50) {
-          console.log('Essay too short for comprehensive analysis:', { wordCount })
+          console.log('Essay too short for comprehensive analysis:', {
+            wordCount,
+          })
           throw new Error(
             `Essay too short for analysis. Please write at least 50 words (currently ${wordCount} words).`,
           )
         }
 
         // Run both analyses in parallel (NO content modification, only analysis)
-        console.log('  - Running custom draft analysis and highlighting in parallel...')
+        console.log(
+          '  - Running custom draft analysis and highlighting in parallel...',
+        )
 
-        const { analyzeCustomDraftHighlights } = await import('@/app/lib/request')
+        const { analyzeCustomDraftHighlights } = await import(
+          '@/app/lib/request'
+        )
 
         const [customDraftResult, highlightResult] = await Promise.all([
           analyzeCustomDraftWithAnalysis(essay.scholarshipId, essay.content),
@@ -632,22 +617,42 @@ export default function Whiteboard() {
 
         // Convert highlighted sections from analysis to HighlightedSection format
         const HIGHLIGHT_COLORS = [
-          { color: 'bg-amber-200/50 dark:bg-amber-500/30', colorName: 'amber' as const },
-          { color: 'bg-cyan-200/50 dark:bg-cyan-500/30', colorName: 'cyan' as const },
-          { color: 'bg-pink-200/50 dark:bg-pink-500/30', colorName: 'pink' as const },
-          { color: 'bg-lime-200/50 dark:bg-lime-500/30', colorName: 'lime' as const },
-          { color: 'bg-purple-200/50 dark:bg-purple-500/30', colorName: 'purple' as const },
+          {
+            color: 'bg-amber-200/50 dark:bg-amber-500/30',
+            colorName: 'amber' as const,
+          },
+          {
+            color: 'bg-cyan-200/50 dark:bg-cyan-500/30',
+            colorName: 'cyan' as const,
+          },
+          {
+            color: 'bg-pink-200/50 dark:bg-pink-500/30',
+            colorName: 'pink' as const,
+          },
+          {
+            color: 'bg-lime-200/50 dark:bg-lime-500/30',
+            colorName: 'lime' as const,
+          },
+          {
+            color: 'bg-purple-200/50 dark:bg-purple-500/30',
+            colorName: 'purple' as const,
+          },
         ]
 
-        console.log('  - Raw sections from AI:', highlightResult.sections.map(s => ({
-          start: s.startIndex,
-          end: s.endIndex,
-          title: s.title,
-        })))
+        console.log(
+          '  - Raw sections from AI:',
+          highlightResult.sections.map((s) => ({
+            start: s.startIndex,
+            end: s.endIndex,
+            title: s.title,
+          })),
+        )
 
         // Filter out invalid and overlapping sections
         const validSections: typeof highlightResult.sections = []
-        const sortedSections = [...highlightResult.sections].sort((a, b) => a.startIndex - b.startIndex)
+        const sortedSections = [...highlightResult.sections].sort(
+          (a, b) => a.startIndex - b.startIndex,
+        )
 
         for (const section of sortedSections) {
           // Validate indices
@@ -656,19 +661,29 @@ export default function Whiteboard() {
             section.endIndex > essay.content.length ||
             section.startIndex >= section.endIndex
           ) {
-            console.warn('  - ⚠️ Skipping invalid section:', { start: section.startIndex, end: section.endIndex })
+            console.warn('  - ⚠️ Skipping invalid section:', {
+              start: section.startIndex,
+              end: section.endIndex,
+            })
             continue
           }
 
           // Check for overlap with existing valid sections
-          const hasOverlap = validSections.some(existing =>
-            (section.startIndex >= existing.startIndex && section.startIndex < existing.endIndex) ||
-            (section.endIndex > existing.startIndex && section.endIndex <= existing.endIndex) ||
-            (section.startIndex <= existing.startIndex && section.endIndex >= existing.endIndex)
+          const hasOverlap = validSections.some(
+            (existing) =>
+              (section.startIndex >= existing.startIndex &&
+                section.startIndex < existing.endIndex) ||
+              (section.endIndex > existing.startIndex &&
+                section.endIndex <= existing.endIndex) ||
+              (section.startIndex <= existing.startIndex &&
+                section.endIndex >= existing.endIndex),
           )
 
           if (hasOverlap) {
-            console.warn('  - ⚠️ Skipping overlapping section:', { start: section.startIndex, end: section.endIndex })
+            console.warn('  - ⚠️ Skipping overlapping section:', {
+              start: section.startIndex,
+              end: section.endIndex,
+            })
             continue
           }
 
@@ -677,36 +692,53 @@ export default function Whiteboard() {
 
         console.log('  - Valid non-overlapping sections:', validSections.length)
 
-        const highlightedSections: HighlightedSection[] = validSections.map((section, i) => {
-          // Determine color based on property type
-          let colorIndex = i % HIGHLIGHT_COLORS.length
-          const propertyType = (section as any).propertyType as 'personality' | 'value' | 'weight' | 'priority' | undefined
+        const highlightedSections: HighlightedSection[] = validSections.map(
+          (section, i) => {
+            // Determine color based on property type
+            let colorIndex = i % HIGHLIGHT_COLORS.length
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const propertyType = (section as any).propertyType as
+              | 'personality'
+              | 'value'
+              | 'weight'
+              | 'priority'
+              | undefined
 
-          // Map property types to specific color indices
-          if (propertyType === 'personality') {
-            colorIndex = 1 // cyan for personality traits
-          } else if (propertyType === 'value') {
-            colorIndex = 2 // pink for values
-          } else if (propertyType === 'weight') {
-            colorIndex = 3 // lime for hidden requirements
-          } else if (propertyType === 'priority') {
-            colorIndex = 4 // purple for priorities
-          }
-          // Otherwise use cycling colors for backward compatibility
+            // Map property types to specific color indices
+            if (propertyType === 'personality') {
+              colorIndex = 1 // cyan for personality traits
+            } else if (propertyType === 'value') {
+              colorIndex = 2 // pink for values
+            } else if (propertyType === 'weight') {
+              colorIndex = 3 // lime for hidden requirements
+            } else if (propertyType === 'priority') {
+              colorIndex = 4 // purple for priorities
+            }
+            // Otherwise use cycling colors for backward compatibility
 
-          return {
-            id: `section-${Date.now()}-${i}`,
-            startIndex: section.startIndex,
-            endIndex: section.endIndex,
-            title: section.title,
-            explanation: section.reasons, // Store reasons in explanation field
-            color: HIGHLIGHT_COLORS[colorIndex].color,
-            colorName: HIGHLIGHT_COLORS[colorIndex].colorName,
-            areasOfImprovement: section.areasOfImprovement, // Add this for custom drafts
-            propertyType: (section as any).propertyType as 'personality' | 'value' | 'weight' | 'priority' | undefined,
-            propertyValue: (section as any).propertyValue as string | undefined,
-          }
-        })
+            return {
+              id: `section-${Date.now()}-${i}`,
+              startIndex: section.startIndex,
+              endIndex: section.endIndex,
+              title: section.title,
+              explanation: section.reasons, // Store reasons in explanation field
+              color: HIGHLIGHT_COLORS[colorIndex].color,
+              colorName: HIGHLIGHT_COLORS[colorIndex].colorName,
+              areasOfImprovement: section.areasOfImprovement, // Add this for custom drafts
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              propertyType: (section as any).propertyType as
+                | 'personality'
+                | 'value'
+                | 'weight'
+                | 'priority'
+                | undefined,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              propertyValue: (section as any).propertyValue as
+                | string
+                | undefined,
+            }
+          },
+        )
 
         // Update essay with both results - no socraticData for custom drafts
         // NOTE: Content is NOT modified, only analysis results are added
@@ -732,13 +764,18 @@ export default function Whiteboard() {
 
         updateEssay(updatedEssay)
 
-        console.log('🏁 [Whiteboard.handleSubmitCustomDraftForReview] COMPLETED')
+        console.log(
+          '🏁 [Whiteboard.handleSubmitCustomDraftForReview] COMPLETED',
+        )
       } catch (error) {
-        console.error('❌ [Whiteboard.handleSubmitCustomDraftForReview] Error:', error)
+        console.error(
+          '❌ [Whiteboard.handleSubmitCustomDraftForReview] Error:',
+          error,
+        )
         throw error
       }
     },
-    [essays, scholarships, updateEssay, handleAnalyzeCustomDraft, user?.id],
+    [essays, updateEssay],
   )
 
   // Auto-generate Socratic questions for new essays without highlights
@@ -1271,7 +1308,10 @@ export default function Whiteboard() {
   const handleContextMenu = useCallback(
     (e: MouseEvent<HTMLDivElement>, blockId?: string) => {
       // Don't show context menu if in hand tool mode or if modal is open
-      if (activeTool === 'hand' || (hasCheckedFirstTimeUser && isFirstTimeUser)) {
+      if (
+        activeTool === 'hand' ||
+        (hasCheckedFirstTimeUser && isFirstTimeUser)
+      ) {
         return
       }
 
@@ -1290,7 +1330,14 @@ export default function Whiteboard() {
 
       setContextMenu({ x: e.clientX, y: e.clientY })
     },
-    [selectedIds, activeTool, hasCheckedFirstTimeUser, isFirstTimeUser, position, zoom],
+    [
+      selectedIds,
+      activeTool,
+      hasCheckedFirstTimeUser,
+      isFirstTimeUser,
+      position,
+      zoom,
+    ],
   )
 
   const handleCopy = useCallback(() => {
@@ -1355,12 +1402,12 @@ export default function Whiteboard() {
 
     clipboard.forEach((item) => {
       if (item.type === 'cell') {
-        const cellData = item.data as any
+        const cellData = item.data as CellData
         totalX += cellData.x
         totalY += cellData.y
         count++
       } else if (item.type === 'scholarship' || item.type === 'essay') {
-        const blockData = item.data as any
+        const blockData = item.data as ScholarshipData | EssayData
         const pos = getBlockPosition(blockData.id)
         totalX += pos.x
         totalY += pos.y

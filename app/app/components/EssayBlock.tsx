@@ -14,7 +14,11 @@ import {
 import { exportEssay, ExportFormat } from '../lib/exportUtils'
 import { useEditing } from '../context/EditingContext'
 import { useDarkMode } from '../context/DarkModeContext'
-import { EssayData, HighlightedSection, CustomDraftAnalysis } from '../context/WhiteboardContext'
+import {
+  EssayData,
+  HighlightedSection,
+  CustomDraftAnalysis,
+} from '../context/WhiteboardContext'
 import { brandColors, typography, transitions } from '../styles/design-system'
 import SocraticPanel, { SocraticPanelData } from './SocraticPanel'
 import { submitSocraticAnswers } from '@/app/lib/dynamicFeedback'
@@ -417,7 +421,9 @@ function CustomDraftAnalysisDisplay({
           {/* Summary */}
           <div
             className={`p-3 rounded text-sm ${
-              isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-blue-50 text-gray-700'
+              isDarkMode
+                ? 'bg-gray-700 text-gray-300'
+                : 'bg-blue-50 text-gray-700'
             }`}
           >
             <p className="font-medium mb-1">Summary</p>
@@ -748,7 +754,9 @@ export default function EssayBlock({
         )
 
         // Keep highlight only if text is unchanged
-        return originalText === newText && highlight.endIndex <= newContent.length
+        return (
+          originalText === newText && highlight.endIndex <= newContent.length
+        )
       })
 
       // Check if highlights changed
@@ -756,7 +764,10 @@ export default function EssayBlock({
         // Remove socratic data for removed highlights
         if (data.socraticData) {
           const validSectionIds = new Set(validHighlights.map((h) => h.id))
-          const filteredSocraticData: Record<string, typeof data.socraticData[string]> = {}
+          const filteredSocraticData: Record<
+            string,
+            (typeof data.socraticData)[string]
+          > = {}
 
           Object.keys(data.socraticData).forEach((sectionId) => {
             if (validSectionIds.has(sectionId)) {
@@ -764,12 +775,14 @@ export default function EssayBlock({
             }
           })
 
-          updatedSocraticData = Object.keys(filteredSocraticData).length > 0
-            ? filteredSocraticData
-            : undefined
+          updatedSocraticData =
+            Object.keys(filteredSocraticData).length > 0
+              ? filteredSocraticData
+              : undefined
         }
 
-        updatedHighlights = validHighlights.length > 0 ? validHighlights : undefined
+        updatedHighlights =
+          validHighlights.length > 0 ? validHighlights : undefined
       }
     }
 
@@ -850,7 +863,9 @@ export default function EssayBlock({
 
       // If there are answered questions, submit them to improve the essay
       if (answeredCount > 0) {
-        console.log(`📤 [EssayBlock] Submitting ${answeredCount} answered questions`)
+        console.log(
+          `📤 [EssayBlock] Submitting ${answeredCount} answered questions`,
+        )
         updatedContent = await submitSocraticAnswers(
           data.content,
           '', // sectionId not needed when submitting all
@@ -859,7 +874,9 @@ export default function EssayBlock({
         )
         console.log('✅ Essay content updated with improvements')
       } else {
-        console.log('📤 [EssayBlock] No answers to submit, regenerating highlights only')
+        console.log(
+          '📤 [EssayBlock] No answers to submit, regenerating highlights only',
+        )
       }
 
       // Update the essay and clear highlights to regenerate
@@ -888,7 +905,6 @@ export default function EssayBlock({
       setIsSubmitting(false)
     }
   }
-
 
   const handleSubmitForReview = async () => {
     if (!onSubmitForReview) return
@@ -930,25 +946,26 @@ export default function EssayBlock({
   return (
     <div className="relative">
       <div
-        className={`w-[500px] rounded-xl shadow-lg transition-colors duration-200 ${
-          isDarkMode
-            ? 'bg-gray-800 border border-gray-700'
-            : 'bg-white border border-neutral-200'
+        className={`w-[550px] rounded-2xl p-6 relative transition-all border-2 ${
+          isDarkMode ? 'shadow-md' : 'shadow-md'
         }`}
+        style={{
+          backgroundColor: isDarkMode
+            ? brandColors.componentBackgroundDark
+            : brandColors.componentBackground,
+          borderColor: brandColors.cloudy,
+        }}
         ref={blockRef}
       >
-        <div
-          className={`flex items-center justify-between py-3 px-4 border-b rounded-t-xl transition-colors duration-200 ${
-            isDarkMode
-              ? 'bg-gray-700 border-gray-600'
-              : 'bg-neutral-50 border-neutral-200'
-          }`}
-        >
+        <div className="flex items-center justify-between mb-4">
           <div className="flex-1">
             <h3
-              className={`text-sm font-semibold m-0 ${
-                isDarkMode ? 'text-gray-100' : 'text-neutral-700'
-              }`}
+              className="text-lg font-semibold m-0"
+              style={{
+                color: isDarkMode
+                  ? brandColors.foregroundDark
+                  : brandColors.foreground,
+              }}
             >
               {scholarshipTitle
                 ? `Draft for ${scholarshipTitle}`
@@ -989,12 +1006,15 @@ export default function EssayBlock({
           />
         )}
 
-        <div className="p-4 relative">
+        <div className="relative">
           {isGenerating ? (
             <div className="flex items-center justify-center p-12 py-0">
               <Loader2 size={32} className="animate-spin text-primary-500" />
               <span
-                className={`ml-3 ${isDarkMode ? 'text-gray-400' : 'text-neutral-600'}`}
+                style={{
+                  color: isDarkMode ? '#999' : '#666',
+                  marginLeft: '0.75rem',
+                }}
               >
                 Generating essay...
               </span>
@@ -1010,21 +1030,26 @@ export default function EssayBlock({
               onBlur={handleTextareaBlur}
               onWheel={(e) => e.stopPropagation()}
               placeholder="Start writing your essay here..."
-              className={`w-full resize-none outline-none text-sm leading-relaxed border-0 p-0 transition-colors ${
-                isDarkMode
-                  ? 'bg-gray-800 text-gray-100 placeholder-gray-500'
-                  : 'bg-white text-neutral-800 placeholder-gray-400'
-              }`}
+              className="w-full resize-none outline-none text-sm leading-relaxed border-0 p-0 transition-colors"
               style={{
                 minHeight: '100px',
                 height: `${textareaHeight}px`,
+                backgroundColor: isDarkMode
+                  ? brandColors.componentBackgroundDark
+                  : brandColors.componentBackground,
+                color: isDarkMode
+                  ? brandColors.foregroundDark
+                  : brandColors.foreground,
               }}
             />
           ) : (
             <div
-              className={`w-full border-0 p-0 text-sm leading-relaxed transition-colors cursor-pointer opacity-75 ${
-                isDarkMode ? 'text-gray-100' : 'text-neutral-800'
-              }`}
+              className="w-full border-0 p-0 text-sm leading-relaxed transition-colors cursor-pointer opacity-75"
+              style={{
+                color: isDarkMode
+                  ? brandColors.foregroundDark
+                  : brandColors.foreground,
+              }}
               onDoubleClick={() => {
                 originalContentRef.current = data.content
                 setLocalContent(data.content)
@@ -1043,115 +1068,127 @@ export default function EssayBlock({
 
           {/* Submit Button - Always visible for AI-generated drafts */}
           {!data.isCustomDraft && !isGenerating && (
-              <div
-                className={`mt-4 pt-4 border-t ${
-                  isDarkMode ? 'border-gray-700' : 'border-gray-200'
-                }`}
-              >
-                {(() => {
-                  // Calculate answered questions if they exist
-                  let answeredCount = 0
-                  let totalCount = 0
-                  if (data.socraticData) {
-                    Object.values(data.socraticData).forEach((questions) => {
-                      questions.forEach((q) => {
-                        totalCount++
-                        if (q.answer && q.answer.trim().length > 0) {
-                          answeredCount++
-                        }
-                      })
+            <div
+              className="mt-4 pt-4 border-t"
+              style={{ borderTopColor: brandColors.cloudy }}
+            >
+              {(() => {
+                // Calculate answered questions if they exist
+                let answeredCount = 0
+                let totalCount = 0
+                if (data.socraticData) {
+                  Object.values(data.socraticData).forEach((questions) => {
+                    questions.forEach((q) => {
+                      totalCount++
+                      if (q.answer && q.answer.trim().length > 0) {
+                        answeredCount++
+                      }
                     })
-                  }
+                  })
+                }
 
-                  const hasQuestions = totalCount > 0
+                const hasQuestions = totalCount > 0
 
-                  return (
-                    <>
-                      <button
-                        onClick={handleSubmitAllSocraticAnswers}
-                        disabled={isSubmitting}
-                        className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all ${
-                          isSubmitting
-                            ? 'opacity-50 cursor-not-allowed'
-                            : 'hover:shadow-md cursor-pointer'
-                        }`}
+                return (
+                  <>
+                    <button
+                      onClick={handleSubmitAllSocraticAnswers}
+                      disabled={isSubmitting}
+                      className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all ${
+                        isSubmitting
+                          ? 'opacity-50 cursor-not-allowed'
+                          : 'hover:shadow-md cursor-pointer'
+                      }`}
+                      style={{
+                        backgroundColor: brandColors.teal,
+                        color: '#ffffff',
+                      }}
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 size={18} className="animate-spin" />
+                          Updating Essay...
+                        </>
+                      ) : hasQuestions ? (
+                        <>
+                          <Sparkles size={18} />
+                          Submit Answers & Regenerate ({answeredCount}/
+                          {totalCount})
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles size={18} />
+                          Generate New Highlights
+                        </>
+                      )}
+                    </button>
+                    {submitError && (
+                      <p className="mt-2 text-xs text-red-600">{submitError}</p>
+                    )}
+                    {hasQuestions && answeredCount === 0 && !submitError && (
+                      <p
+                        className="mt-2 text-xs text-center"
                         style={{
-                          backgroundColor: brandColors.teal,
-                          color: '#ffffff',
+                          color: isDarkMode ? '#999' : '#666',
                         }}
                       >
-                        {isSubmitting ? (
-                          <>
-                            <Loader2 size={18} className="animate-spin" />
-                            Updating Essay...
-                          </>
-                        ) : hasQuestions ? (
-                          <>
-                            <Sparkles size={18} />
-                            Submit Answers & Regenerate ({answeredCount}/{totalCount})
-                          </>
-                        ) : (
-                          <>
-                            <Sparkles size={18} />
-                            Generate New Highlights
-                          </>
-                        )}
-                      </button>
-                      {submitError && (
-                        <p className="mt-2 text-xs text-red-600">{submitError}</p>
-                      )}
-                      {hasQuestions && answeredCount === 0 && !submitError && (
+                        Click highlighted sections to answer questions, or
+                        submit to regenerate
+                      </p>
+                    )}
+                    {hasQuestions &&
+                      answeredCount > 0 &&
+                      answeredCount < totalCount &&
+                      !submitError && (
                         <p
-                          className={`mt-2 text-xs text-center ${
-                            isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                          }`}
+                          className="mt-2 text-xs text-center"
+                          style={{
+                            color: isDarkMode ? '#999' : '#666',
+                          }}
                         >
-                          Click highlighted sections to answer questions, or submit to regenerate
+                          {answeredCount} answered • Submit to improve essay and
+                          regenerate
                         </p>
                       )}
-                      {hasQuestions && answeredCount > 0 && answeredCount < totalCount && !submitError && (
+                    {hasQuestions &&
+                      answeredCount === totalCount &&
+                      !submitError && (
                         <p
-                          className={`mt-2 text-xs text-center ${
-                            isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                          }`}
-                        >
-                          {answeredCount} answered • Submit to improve essay and regenerate
-                        </p>
-                      )}
-                      {hasQuestions && answeredCount === totalCount && !submitError && (
-                        <p
-                          className={`mt-2 text-xs text-center ${
-                            isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                          }`}
+                          className="mt-2 text-xs text-center"
+                          style={{
+                            color: isDarkMode ? '#999' : '#666',
+                          }}
                         >
                           All questions answered • Submit to improve essay
                         </p>
                       )}
-                      {!hasQuestions && !submitError && (
-                        <p
-                          className={`mt-2 text-xs text-center ${
-                            isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                          }`}
-                        >
-                          Generate new highlights to find areas for improvement
-                        </p>
-                      )}
-                    </>
-                  )
-                })()}
-              </div>
-            )}
+                    {!hasQuestions && !submitError && (
+                      <p
+                        className="mt-2 text-xs text-center"
+                        style={{
+                          color: isDarkMode ? '#999' : '#666',
+                        }}
+                      >
+                        Generate new highlights to find areas for improvement
+                      </p>
+                    )}
+                  </>
+                )
+              })()}
+            </div>
+          )}
 
           {/* Submit for Review Button - Always visible for custom drafts */}
           {data.isCustomDraft && !isGenerating && onSubmitForReview && (
             <div
-              className={`mt-4 pt-4 border-t ${
-                isDarkMode ? 'border-gray-700' : 'border-gray-200'
-              }`}
+              className="mt-4 pt-4 border-t"
+              style={{ borderTopColor: brandColors.cloudy }}
             >
               <button
                 onClick={handleSubmitForReview}
-                disabled={isSubmitting || (data.isCustomDraft && wordCount < 50)}
+                disabled={
+                  isSubmitting || (data.isCustomDraft && wordCount < 50)
+                }
                 className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all ${
                   isSubmitting || (data.isCustomDraft && wordCount < 50)
                     ? 'opacity-50 cursor-not-allowed'
@@ -1165,16 +1202,23 @@ export default function EssayBlock({
                 {isSubmitting ? (
                   <>
                     <Loader2 size={18} className="animate-spin" />
-                    {data.isCustomDraft ? 'Submitting for Review...' : 'Refining Draft...'}
+                    {data.isCustomDraft
+                      ? 'Submitting for Review...'
+                      : 'Refining Draft...'}
                   </>
                 ) : (
                   <>
                     <Sparkles size={18} />
                     {data.isCustomDraft
-                      ? (data.customDraftAnalysis ? 'Resubmit for Review' : 'Submit for Review')
-                      : (data.customDraftAnalysis ? 'Refine Draft with Answers' : 'Submit Answers for Review')
-                    }{' '}
-                    {data.isCustomDraft && wordCount < 50 && `(${wordCount}/50 words)`}
+                      ? data.customDraftAnalysis
+                        ? 'Resubmit for Review'
+                        : 'Submit for Review'
+                      : data.customDraftAnalysis
+                        ? 'Refine Draft with Answers'
+                        : 'Submit Answers for Review'}{' '}
+                    {data.isCustomDraft &&
+                      wordCount < 50 &&
+                      `(${wordCount}/50 words)`}
                   </>
                 )}
               </button>
@@ -1183,9 +1227,10 @@ export default function EssayBlock({
               )}
               {data.isCustomDraft && wordCount < 50 && !submitError && (
                 <p
-                  className={`mt-2 text-xs ${
-                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                  }`}
+                  className="mt-2 text-xs"
+                  style={{
+                    color: isDarkMode ? '#999' : '#666',
+                  }}
                 >
                   Write at least 50 words to submit for comprehensive analysis
                 </p>
@@ -1198,19 +1243,23 @@ export default function EssayBlock({
                 >
                   {data.customDraftAnalysis
                     ? 'Answer questions in highlighted sections, then refine to improve your essay'
-                    : 'Submit your answers to the highlighted questions to refine your essay and see alignment analysis'
-                  }
+                    : 'Submit your answers to the highlighted questions to refine your essay and see alignment analysis'}
                 </p>
               )}
-              {data.isCustomDraft && data.customDraftAnalysis && data.socraticData && wordCount >= 50 && !submitError && (
-                <p
-                  className={`mt-2 text-xs ${
-                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                  }`}
-                >
-                  Answer questions in highlighted sections, then resubmit to refine your essay
-                </p>
-              )}
+              {data.isCustomDraft &&
+                data.customDraftAnalysis &&
+                data.socraticData &&
+                wordCount >= 50 &&
+                !submitError && (
+                  <p
+                    className={`mt-2 text-xs ${
+                      isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                    }`}
+                  >
+                    Answer questions in highlighted sections, then resubmit to
+                    refine your essay
+                  </p>
+                )}
             </div>
           )}
 

@@ -5,7 +5,6 @@ import {
   useContext,
   useState,
   useLayoutEffect,
-  useEffect,
   ReactNode,
 } from 'react'
 
@@ -25,14 +24,17 @@ export function DarkModeProvider({ children }: { children: ReactNode }) {
   const [isMounted, setIsMounted] = useState(false)
 
   // After mounting on client, read the actual preference
-  useEffect(() => {
-    setIsMounted(true)
-    const saved = localStorage.getItem('darkMode')
-    if (saved !== null) {
-      setIsDarkMode(JSON.parse(saved))
-    } else {
-      setIsDarkMode(window.matchMedia('(prefers-color-scheme: dark)').matches)
-    }
+  useLayoutEffect(() => {
+    // Defer state updates to avoid cascading renders
+    queueMicrotask(() => {
+      const saved = localStorage.getItem('darkMode')
+      if (saved !== null) {
+        setIsDarkMode(JSON.parse(saved))
+      } else {
+        setIsDarkMode(window.matchMedia('(prefers-color-scheme: dark)').matches)
+      }
+      setIsMounted(true)
+    })
   }, [])
 
   // Update DOM and localStorage when dark mode changes

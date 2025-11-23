@@ -368,11 +368,11 @@ export async function generateAndSavePromptAnalysis(
 
 // Whiteboard Data functions
 export interface WhiteboardData {
-  cells: unknown[]
-  scholarships: unknown[]
-  essays: unknown[]
-  jsonOutputs: unknown[]
-  blockPositions: unknown[]
+  cells: Record<string, unknown> | unknown[]
+  scholarships: Record<string, unknown> | unknown[]
+  essays: Record<string, unknown> | unknown[]
+  jsonOutputs: Record<string, unknown> | unknown[]
+  blockPositions: Record<string, unknown> | unknown[]
 }
 
 export interface WhiteboardDatabaseRow {
@@ -440,22 +440,33 @@ export async function saveWhiteboardData(
       essaysCount: whiteboardData.essays.length,
     })
 
+    // Prisma's strict JSON typing requires 'any' for flexible JSON data structures
     await prisma.whiteboardData.upsert({
       where: { userId },
       update: {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         cells: whiteboardData.cells as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         scholarships: whiteboardData.scholarships as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         essays: whiteboardData.essays as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         jsonOutputs: whiteboardData.jsonOutputs as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         blockPositions: whiteboardData.blockPositions as any,
         updatedAt: new Date(),
       },
       create: {
         userId,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         cells: whiteboardData.cells as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         scholarships: whiteboardData.scholarships as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         essays: whiteboardData.essays as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         jsonOutputs: whiteboardData.jsonOutputs as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         blockPositions: whiteboardData.blockPositions as any,
         updatedAt: new Date(),
       },

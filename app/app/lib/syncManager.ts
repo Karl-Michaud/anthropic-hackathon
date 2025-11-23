@@ -5,7 +5,7 @@ import {
   type WhiteboardData,
 } from './dbUtils'
 
-const DEBOUNCE_DELAY = 3000 // 3 seconds
+const DEBOUNCE_DELAY = 30000 // 30 seconds
 
 export type SyncStatus = 'idle' | 'syncing' | 'synced' | 'error'
 
