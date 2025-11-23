@@ -11,7 +11,7 @@ import {
   Clipboard,
   RotateCcw,
 } from 'lucide-react'
-import { colors } from '../styles/design-system'
+import { brandColors, colorsLight, colorsDark } from '../styles/design-system'
 import { useDarkMode } from '../context/DarkModeContext'
 
 type ToolbarPosition = 'top' | 'right' | 'bottom'
@@ -51,16 +51,30 @@ function ToolButton({
   onClick,
   isDarkMode = false,
 }: ToolButtonProps) {
+  const colors = isDarkMode ? colorsDark : colorsLight
+
   return (
     <button
       onClick={onClick}
-      className={`p-2 rounded-lg transition-colors ${
-        isActive
-          ? 'bg-blue-500 text-white'
-          : isDarkMode
-            ? 'text-gray-300 hover:bg-gray-700'
-            : 'text-neutral-700 hover:bg-neutral-100'
-      }`}
+      className="p-2 rounded-lg transition-colors"
+      style={{
+        backgroundColor: isActive ? brandColors.teal : 'transparent',
+        color: isActive
+          ? brandColors.foregroundDark
+          : colors.text.primary,
+      }}
+      onMouseEnter={(e) => {
+        if (!isActive) {
+          e.currentTarget.style.backgroundColor = isDarkMode
+            ? brandColors.backgroundDark
+            : brandColors.pampas
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!isActive) {
+          e.currentTarget.style.backgroundColor = 'transparent'
+        }
+      }}
       title={title}
     >
       {icon}
@@ -80,6 +94,7 @@ function ContextMenu({
   isDarkMode = false,
 }: ContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null)
+  const colors = isDarkMode ? colorsDark : colorsLight
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -106,14 +121,12 @@ function ContextMenu({
   return (
     <div
       ref={menuRef}
-      className={`fixed z-100 rounded-lg shadow-xl py-1.5 min-w-40 select-none border ${
-        isDarkMode
-          ? 'bg-neutral-800 border-neutral-700'
-          : 'bg-neutral-900 border-neutral-700'
-      }`}
+      className="fixed z-100 rounded-lg shadow-xl py-1.5 min-w-40 select-none border"
       style={{
         left: x,
         top: y,
+        backgroundColor: colors.background.elevated,
+        borderColor: brandColors.cloudy,
       }}
     >
       <button
@@ -126,11 +139,22 @@ function ContextMenu({
           onClose()
         }}
         disabled={!hasSelection}
-        className={`w-full px-4 py-2.5 text-left flex items-center gap-3 text-sm font-medium transition-colors ${
-          hasSelection
-            ? 'cursor-pointer text-neutral-100 bg-neutral-700/20'
-            : 'cursor-not-allowed text-neutral-500 bg-transparent'
-        }`}
+        className="w-full px-4 py-2.5 text-left flex items-center gap-3 text-sm font-medium transition-colors"
+        style={{
+          color: hasSelection ? colors.text.primary : colors.text.secondary,
+          cursor: hasSelection ? 'pointer' : 'not-allowed',
+          opacity: hasSelection ? 1 : 0.5,
+        }}
+        onMouseEnter={(e) => {
+          if (hasSelection) {
+            e.currentTarget.style.backgroundColor = isDarkMode
+              ? brandColors.backgroundDark
+              : brandColors.pampas
+          }
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = 'transparent'
+        }}
       >
         <Copy size={16} />
         Copy
@@ -142,12 +166,23 @@ function ContextMenu({
           onPaste()
           onClose()
         }}
-        className="w-full px-4 py-2.5 text-left flex items-center gap-3 text-sm font-medium transition-colors cursor-pointer text-neutral-100 bg-neutral-700/20"
+        className="w-full px-4 py-2.5 text-left flex items-center gap-3 text-sm font-medium transition-colors cursor-pointer"
+        style={{
+          color: colors.text.primary,
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = isDarkMode
+            ? brandColors.backgroundDark
+            : brandColors.pampas
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = 'transparent'
+        }}
       >
         <Clipboard size={16} />
         Paste
       </button>
-      <div className="border-t my-1 border-neutral-700" />
+      <div className="border-t my-1" style={{ borderColor: brandColors.cloudy }} />
       <button
         onMouseDown={(e) => {
           e.preventDefault()
@@ -158,11 +193,20 @@ function ContextMenu({
           onClose()
         }}
         disabled={!hasSelection}
-        className={`w-full px-4 py-2.5 text-left flex items-center gap-3 text-sm font-medium transition-colors ${
-          hasSelection
-            ? 'cursor-pointer text-red-400 bg-red-900/20'
-            : 'cursor-not-allowed text-neutral-600 bg-transparent'
-        }`}
+        className="w-full px-4 py-2.5 text-left flex items-center gap-3 text-sm font-medium transition-colors"
+        style={{
+          color: hasSelection ? brandColors.maroon : colors.text.secondary,
+          cursor: hasSelection ? 'pointer' : 'not-allowed',
+          opacity: hasSelection ? 1 : 0.5,
+        }}
+        onMouseEnter={(e) => {
+          if (hasSelection) {
+            e.currentTarget.style.backgroundColor = `${brandColors.maroon}33`
+          }
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = 'transparent'
+        }}
       >
         <Trash2 size={16} />
         Delete
@@ -259,40 +303,40 @@ export default function DraggableToolbar({
   const positionConfig = POSITIONS[position]
   const isVertical = position === 'right'
   const dividerClassName = isVertical ? 'h-px w-6' : 'w-px h-6'
+  const colors = isDarkMode ? colorsDark : colorsLight
 
   return (
     <div
       suppressHydrationWarning
-      className={`fixed z-50 flex items-center gap-1 p-2 backdrop-blur-md rounded-xl shadow-lg border ${
-        isDarkMode
-          ? 'bg-neutral-800/90 border-neutral-700'
-          : 'bg-white/90 border-neutral-200'
-      } ${isDragging ? 'cursor-grabbing' : ''} ${!isDragging ? `${positionConfig.className} transition-all duration-300` : ''}`}
+      className={`fixed z-50 flex items-center gap-1 p-2 backdrop-blur-md rounded-xl shadow-lg border ${isDragging ? 'cursor-grabbing' : ''} ${!isDragging ? `${positionConfig.className} transition-all duration-300` : ''}`}
       style={
         isDragging
           ? {
               left: dragPos.x - 40,
               top: dragPos.y - 20,
               transform: 'none',
+              backgroundColor: `${colors.background.paper}e6`,
+              borderColor: brandColors.cloudy,
             }
-          : {}
+          : {
+              backgroundColor: `${colors.background.paper}e6`,
+              borderColor: brandColors.cloudy,
+            }
       }
     >
       {/* Drag Handle */}
       <div
         onMouseDown={handleMouseDown}
-        className={`p-1 cursor-grab active:cursor-grabbing transition-colors ${
-          isDarkMode ? 'text-neutral-500' : 'text-neutral-400'
-        }`}
+        className="p-1 cursor-grab active:cursor-grabbing transition-colors"
+        style={{ color: colors.text.secondary }}
       >
         <GripHorizontal size={16} />
       </div>
 
       {/* Divider */}
       <div
-        className={`${dividerClassName} ${
-          isDarkMode ? 'bg-neutral-700' : 'bg-neutral-300'
-        }`}
+        className={dividerClassName}
+        style={{ backgroundColor: brandColors.cloudy }}
       />
 
       {/* Select Tool */}
@@ -315,19 +359,23 @@ export default function DraggableToolbar({
 
       {/* Divider */}
       <div
-        className={`${dividerClassName} ${
-          isDarkMode ? 'bg-neutral-700' : 'bg-neutral-300'
-        }`}
+        className={dividerClassName}
+        style={{ backgroundColor: brandColors.cloudy }}
       />
 
       {/* Add Cell Button */}
       <button
         onClick={onAddCell}
-        className={`p-2 rounded-lg transition-colors cursor-pointer ${
-          isDarkMode
-            ? 'text-neutral-300 hover:bg-neutral-700'
-            : 'text-neutral-700 hover:bg-neutral-100'
-        }`}
+        className="p-2 rounded-lg transition-colors cursor-pointer"
+        style={{ color: colors.text.primary }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = isDarkMode
+            ? brandColors.backgroundDark
+            : brandColors.pampas
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = 'transparent'
+        }}
         title="Add Cell"
       >
         <StickyNote size={20} />
@@ -335,19 +383,21 @@ export default function DraggableToolbar({
 
       {/* Divider */}
       <div
-        className={`${dividerClassName} ${
-          isDarkMode ? 'bg-neutral-700' : 'bg-neutral-300'
-        }`}
+        className={dividerClassName}
+        style={{ backgroundColor: brandColors.cloudy }}
       />
 
       {/* Clear Board Button */}
       <button
         onClick={onClearBoard}
-        className={`p-2 rounded-lg transition-colors cursor-pointer ${
-          isDarkMode
-            ? 'text-red-400 hover:bg-gray-700'
-            : 'text-red-600 hover:bg-red-100'
-        }`}
+        className="p-2 rounded-lg transition-colors cursor-pointer"
+        style={{ color: brandColors.cloudy }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = `${brandColors.cloudy}33`
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = 'transparent'
+        }}
         title="Clear Board"
       >
         <RotateCcw size={20} />

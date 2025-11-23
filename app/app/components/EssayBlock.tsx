@@ -14,41 +14,41 @@ import { exportEssay, ExportFormat } from '../lib/exportUtils'
 import { useEditing } from '../context/EditingContext'
 import { useDarkMode } from '../context/DarkModeContext'
 import { EssayData, HighlightedSection } from '../context/WhiteboardContext'
-import { colors, typography, transitions } from '../styles/design-system'
+import { brandColors, typography, transitions } from '../styles/design-system'
 import SocraticPanel, { SocraticPanelData } from './SocraticPanel'
 import { submitSocraticAnswers } from '@/app/lib/dynamicFeedback'
 
 export type { EssayData }
 
-// Highlight color map - vibrant colors for better visibility
+// Highlight color map - using brandColors for consistency
 const HIGHLIGHT_COLORS: Record<
   string,
   { bg: string; text: string; ring: string }
 > = {
-  amber: {
-    bg: 'bg-yellow-200',
-    text: 'text-amber-900',
-    ring: 'ring-yellow-500',
+  mustard: {
+    bg: brandColors.mustard,
+    text: brandColors.foreground,
+    ring: brandColors.clay,
   },
-  cyan: {
-    bg: 'bg-cyan-200',
-    text: 'text-cyan-900',
-    ring: 'ring-cyan-500',
+  teal: {
+    bg: brandColors.teal,
+    text: brandColors.foregroundDark,
+    ring: brandColors.navy,
   },
-  pink: {
-    bg: 'bg-pink-200',
-    text: 'text-pink-900',
-    ring: 'ring-pink-500',
+  crail: {
+    bg: brandColors.crail,
+    text: brandColors.foregroundDark,
+    ring: brandColors.maroon,
   },
-  lime: {
-    bg: 'bg-lime-300',
-    text: 'text-lime-900',
-    ring: 'ring-lime-500',
+  olive: {
+    bg: brandColors.olive,
+    text: brandColors.foregroundDark,
+    ring: brandColors.clay,
   },
   purple: {
-    bg: 'bg-purple-200',
-    text: 'text-purple-900',
-    ring: 'ring-purple-500',
+    bg: brandColors.purple,
+    text: brandColors.foregroundDark,
+    ring: brandColors.magenta,
   },
 }
 
@@ -79,7 +79,7 @@ function renderHighlightedText(
     }
 
     // Add highlighted text
-    const colorConfig = HIGHLIGHT_COLORS[section.colorName]
+    const colorConfig = HIGHLIGHT_COLORS[section.colorName] || HIGHLIGHT_COLORS.mustard
     elements.push(
       <mark
         key={`highlight-${section.id}`}
@@ -87,7 +87,19 @@ function renderHighlightedText(
           e.stopPropagation()
           onSectionClick(section)
         }}
-        className={`${colorConfig.bg} ${colorConfig.text} cursor-pointer px-1 rounded transition-all hover:ring-2 ${colorConfig.ring}`}
+        className="cursor-pointer transition-all"
+        style={{
+          backgroundColor: colorConfig.bg,
+          color: colorConfig.text,
+          padding: '0.25rem',
+          borderRadius: '0.25rem',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.boxShadow = `0 0 0 2px ${colorConfig.ring}`
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.boxShadow = 'none'
+        }}
         title={section.title}
       >
         {text.substring(section.startIndex, section.endIndex)}
@@ -118,11 +130,11 @@ function WordCounter({
   const isOverLimit = maxCount ? currentCount > maxCount : false
   const isNearLimit = maxCount ? currentCount > maxCount * 0.9 : false
 
-  let color = colors.neutral[400]
+  let color = brandColors.cloudy
   if (isOverLimit) {
-    color = colors.danger[500]
+    color = brandColors.maroon
   } else if (isNearLimit) {
-    color = colors.warning[500]
+    color = brandColors.mustard
   }
 
   const percentage = maxCount ? (currentCount / maxCount) * 100 : 0
@@ -143,7 +155,7 @@ function WordCounter({
       >
         {currentCount}
         {maxCount && (
-          <span style={{ color: colors.neutral[400] }}>/{maxCount}</span>
+          <span style={{ color: brandColors.cloudy }}>/{maxCount}</span>
         )}
       </span>
       {maxCount && (
@@ -151,7 +163,7 @@ function WordCounter({
           style={{
             width: '100%',
             height: '2px',
-            background: colors.neutral[200],
+            background: brandColors.cloudy,
             borderRadius: '9999px',
             overflow: 'hidden',
           }}
@@ -161,10 +173,10 @@ function WordCounter({
               height: '100%',
               width: `${Math.min(percentage, 100)}%`,
               background: isOverLimit
-                ? colors.danger[500]
+                ? brandColors.maroon
                 : isNearLimit
-                  ? colors.warning[500]
-                  : colors.primary[500],
+                  ? brandColors.mustard
+                  : brandColors.teal,
               transition: transitions.common.all,
             }}
           />

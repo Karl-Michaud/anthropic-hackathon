@@ -2,10 +2,11 @@
  * Modern, Sleek Design System
  * A cohesive, minimal design language with smooth interactions
  * Supports both light and dark modes
+ * Using brandColors as the foundation
  */
 
 // ============================================================================
-// COLOR PALETTE - LIGHT MODE
+// BRAND COLORS - Foundation
 // ============================================================================
 
 export const brandColors = {
@@ -28,185 +29,81 @@ export const brandColors = {
   cloudy: '#B1ADA1',
 }
 
+// ============================================================================
+// SEMANTIC COLOR MAPPINGS - Light Mode
+// ============================================================================
+
 export const colorsLight = {
-  // Primary - Sophisticated Blue // replaced with brandColors.teal
-  primary: {
-    50: '#dff7f6',
-    100: '#b1eae8',
-    200: '#80dddb',
-    300: '#4dcecf',
-    400: '#26c3c7',
-    500: '#00b9c1',
-    600: '#00a9af',
-    700: '#009497',
-    800: '#008080', // Main primary
-    900: '#055d57',
+  primary: brandColors.teal,
+  accent: brandColors.crail,
+  success: brandColors.olive,
+  warning: brandColors.mustard,
+  danger: brandColors.maroon,
+
+  text: {
+    primary: brandColors.foreground,
+    secondary: brandColors.cloudy,
+    inverse: brandColors.foregroundDark,
   },
 
-  // Accent - Vibrant Teal
-  accent: {
-    50: '#f0fdfa',
-    100: '#ccfbf1',
-    200: '#99f6e4',
-    300: '#5eead4',
-    400: '#2dd4bf',
-    500: '#14b8a6', // Main accent
-    600: '#0d9488',
-    700: '#0f766e',
-    800: '#134e4a',
-    900: '#0f2f2a',
+  background: {
+    default: brandColors.background,
+    paper: brandColors.componentBackground,
+    elevated: brandColors.pampas,
   },
 
-  // Success - Emerald
-  success: {
-    50: '#f0fdf4',
-    100: '#dcfce7',
-    200: '#bbf7d0',
-    400: '#4ade80',
-    500: '#22c55e',
-    600: '#16a34a',
-    700: '#15803d',
-    900: '#14532d',
+  border: {
+    default: brandColors.cloudy,
+    strong: brandColors.foreground,
   },
 
-  // Warning - Amber
-  warning: {
-    50: '#fffbeb',
-    100: '#fef3c7',
-    200: '#fde68a',
-    400: '#fbbf24',
-    500: '#f59e0b',
-    600: '#d97706',
-    700: '#b45309',
-    900: '#78350f',
-  },
-
-  // Danger - Rose
-  danger: {
-    50: '#fff5f7',
-    100: '#ffe4e6',
-    200: '#fecdd3',
-    400: '#fb7185',
-    500: '#f43f5e',
-    600: '#e11d48',
-    700: '#be185d',
-    900: '#881337',
-  },
-
-  // Neutral - Modern Gray
-  neutral: {
-    0: '#ffffff',
-    50: '#f9fafb',
-    100: '#f3f4f6',
-    200: '#e5e7eb',
-    300: '#d1d5db',
-    400: '#9ca3af',
-    500: '#6b7280',
-    600: '#4b5563',
-    700: '#374151',
-    800: '#1f2937',
-    900: '#111827',
-    950: '#030712',
-  },
-
-  // Gradients
-  gradients: {
-    primary: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)',
-    accent: 'linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)',
-    success: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+  // Sticky note colors (using brand palette)
+  sticky: {
+    mustard: { bg: brandColors.mustard, border: brandColors.clay },
+    teal: { bg: brandColors.teal, border: brandColors.navy },
+    crail: { bg: brandColors.crail, border: brandColors.maroon },
+    olive: { bg: brandColors.olive, border: brandColors.clay },
+    purple: { bg: brandColors.purple, border: brandColors.magenta },
+    navy: { bg: brandColors.navy, border: brandColors.teal },
   },
 }
 
 // ============================================================================
-// COLOR PALETTE - DARK MODE
+// SEMANTIC COLOR MAPPINGS - Dark Mode
 // ============================================================================
 
 export const colorsDark = {
-  // Primary - Sophisticated Blue (brighter for dark mode)
-  primary: {
-    50: '#0c3d66',
-    100: '#075985',
-    200: '#0369a1',
-    300: '#0284c7',
-    400: '#0ea5e9',
-    500: '#38bdf8', // Main primary
-    600: '#7dd3fc',
-    700: '#bae6fd',
-    800: '#e0efff',
-    900: '#f0f7ff',
+  primary: brandColors.teal,
+  accent: brandColors.crail,
+  success: brandColors.olive,
+  warning: brandColors.mustard,
+  danger: brandColors.maroon,
+
+  text: {
+    primary: brandColors.foregroundDark,
+    secondary: brandColors.cloudy,
+    inverse: brandColors.foreground,
   },
 
-  // Accent - Vibrant Teal (brighter for dark mode)
-  accent: {
-    50: '#0f2f2a',
-    100: '#134e4a',
-    200: '#0f766e',
-    300: '#0d9488',
-    400: '#14b8a6',
-    500: '#2dd4bf', // Main accent
-    600: '#5eead4',
-    700: '#99f6e4',
-    800: '#ccfbf1',
-    900: '#f0fdfa',
+  background: {
+    default: brandColors.backgroundDark,
+    paper: brandColors.componentBackgroundDark,
+    elevated: '#262624',
   },
 
-  // Success - Emerald (adjusted for dark mode)
-  success: {
-    50: '#14532d',
-    100: '#15803d',
-    200: '#16a34a',
-    400: '#4ade80',
-    500: '#22c55e',
-    600: '#86efac',
-    700: '#bbf7d0',
-    900: '#f0fdf4',
+  border: {
+    default: brandColors.cloudy,
+    strong: brandColors.foregroundDark,
   },
 
-  // Warning - Amber (adjusted for dark mode)
-  warning: {
-    50: '#78350f',
-    100: '#b45309',
-    200: '#d97706',
-    400: '#fbbf24',
-    500: '#f59e0b',
-    600: '#fde68a',
-    700: '#fef3c7',
-    900: '#fffbeb',
-  },
-
-  // Danger - Rose (adjusted for dark mode)
-  danger: {
-    50: '#881337',
-    100: '#be185d',
-    200: '#e11d48',
-    400: '#fb7185',
-    500: '#f43f5e',
-    600: '#fecdd3',
-    700: '#ffe4e6',
-    900: '#fff5f7',
-  },
-
-  // Neutral - Modern Gray (inverted for dark mode)
-  neutral: {
-    0: '#030712',
-    50: '#111827',
-    100: '#1f2937',
-    200: '#374151',
-    300: '#4b5563',
-    400: '#6b7280',
-    500: '#9ca3af',
-    600: '#d1d5db',
-    700: '#e5e7eb',
-    800: '#f3f4f6',
-    900: '#f9fafb',
-    950: '#ffffff',
-  },
-
-  // Gradients
-  gradients: {
-    primary: 'linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%)',
-    accent: 'linear-gradient(135deg, #2dd4bf 0%, #14b8a6 100%)',
-    success: 'linear-gradient(135deg, #4ade80 0%, #22c55e 100%)',
+  // Sticky note colors (darker variants for dark mode)
+  sticky: {
+    mustard: { bg: brandColors.clay, border: brandColors.mustard },
+    teal: { bg: brandColors.navy, border: brandColors.teal },
+    crail: { bg: brandColors.maroon, border: brandColors.crail },
+    olive: { bg: brandColors.clay, border: brandColors.olive },
+    purple: { bg: brandColors.magenta, border: brandColors.purple },
+    navy: { bg: brandColors.navy, border: brandColors.teal },
   },
 }
 
@@ -220,7 +117,8 @@ export const colors = colorsLight
 export const typography = {
   // Font families
   fonts: {
-    sans: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+    sans: '"Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+    serif: '"Noto Serif", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif',
     mono: 'ui-monospace, "Cascadia Code", "Source Code Pro", "Courier New", monospace',
   },
 
@@ -418,24 +316,24 @@ export const components = {
   card: {
     padding: spacing[6],
     borderRadius: borderRadius.xl,
-    background: colors.neutral[0],
+    background: brandColors.componentBackground,
     shadow: shadows.md,
-    border: `1px solid ${colors.neutral[200]}`,
+    border: `1px solid ${brandColors.cloudy}`,
   },
 
   // Surface variants
   surface: {
     primary: {
-      background: colors.primary[50],
-      border: `1px solid ${colors.primary[200]}`,
+      background: brandColors.componentBackground,
+      border: `1px solid ${brandColors.teal}`,
     },
     secondary: {
-      background: colors.neutral[50],
-      border: `1px solid ${colors.neutral[200]}`,
+      background: brandColors.pampas,
+      border: `1px solid ${brandColors.cloudy}`,
     },
     accent: {
-      background: colors.accent[50],
-      border: `1px solid ${colors.accent[200]}`,
+      background: brandColors.componentBackground,
+      border: `1px solid ${brandColors.crail}`,
     },
   },
 }
@@ -495,24 +393,24 @@ export const componentsDark = {
   card: {
     padding: spacing[6],
     borderRadius: borderRadius.xl,
-    background: colorsDark.neutral[100],
+    background: brandColors.componentBackgroundDark,
     shadow: shadows.md,
-    border: `1px solid ${colorsDark.neutral[200]}`,
+    border: `1px solid ${brandColors.cloudy}`,
   },
 
   // Surface variants (dark mode)
   surface: {
     primary: {
-      background: colorsDark.primary[100],
-      border: `1px solid ${colorsDark.primary[200]}`,
+      background: brandColors.componentBackgroundDark,
+      border: `1px solid ${brandColors.teal}`,
     },
     secondary: {
-      background: colorsDark.neutral[100],
-      border: `1px solid ${colorsDark.neutral[200]}`,
+      background: brandColors.backgroundDark,
+      border: `1px solid ${brandColors.cloudy}`,
     },
     accent: {
-      background: colorsDark.accent[100],
-      border: `1px solid ${colorsDark.accent[200]}`,
+      background: brandColors.componentBackgroundDark,
+      border: `1px solid ${brandColors.crail}`,
     },
   },
 }

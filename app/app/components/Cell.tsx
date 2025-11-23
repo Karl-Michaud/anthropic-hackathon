@@ -5,6 +5,7 @@ import { useEditing } from '../context/EditingContext'
 import { useDarkMode } from '../context/DarkModeContext'
 import { CellData } from '../context/WhiteboardContext'
 import DeleteButton from './common/DeleteButton'
+import { colorsLight, colorsDark } from '../styles/design-system'
 
 export type { CellData }
 
@@ -84,26 +85,21 @@ export default function Cell({
   }
 
   const getColorStyles = (color: string) => {
-    if (isDarkMode) {
-      const darkColorMap: Record<string, { bg: string; border: string }> = {
-        yellow: { bg: '#78350f', border: '#f59e0b' },
-        blue: { bg: '#1e3a8a', border: '#60a5fa' },
-        pink: { bg: '#500724', border: '#f472b6' },
-        green: { bg: '#134e4a', border: '#4ade80' },
-        purple: { bg: '#3f0f5c', border: '#d8b4fe' },
-        orange: { bg: '#7c2d12', border: '#fb923c' },
-      }
-      return darkColorMap[color] || { bg: '#374151', border: '#6b7280' }
+    const colors = isDarkMode ? colorsDark : colorsLight
+    const stickyColors = colors.sticky
+
+    // Map old color names to new sticky colors
+    const colorMapping: Record<string, keyof typeof stickyColors> = {
+      yellow: 'mustard',
+      blue: 'navy',
+      pink: 'crail',
+      green: 'olive',
+      purple: 'purple',
+      orange: 'teal',
     }
-    const colorMap: Record<string, { bg: string; border: string }> = {
-      yellow: { bg: '#fef3c7', border: '#fcd34d' },
-      blue: { bg: '#dbeafe', border: '#93c5fd' },
-      pink: { bg: '#fbf1f5', border: '#f472b6' },
-      green: { bg: '#f0fdf4', border: '#86efac' },
-      purple: { bg: '#f3e8ff', border: '#d8b4fe' },
-      orange: { bg: '#fef3c7', border: '#fdba74' },
-    }
-    return colorMap[color] || { bg: '#f3f4f6', border: '#e5e7eb' }
+
+    const mappedColor = colorMapping[color] || 'mustard'
+    return stickyColors[mappedColor] || stickyColors.mustard
   }
 
   // Calculate inverse-scaled border width (Figma-style)
@@ -111,6 +107,7 @@ export default function Cell({
   const outlineOffset = 2 / zoom
 
   const colorStyles = getColorStyles(cell.color)
+  const colors = isDarkMode ? colorsDark : colorsLight
 
   return (
     <div
@@ -122,7 +119,7 @@ export default function Cell({
         left: `${cell.x}px`,
         transform: `rotate(${cell.rotation}deg)`,
         cursor: isDragging ? 'grabbing' : isEditingLocal ? 'text' : 'grab',
-        outline: isSelected ? `${outlineWidth}px solid #3b82f6` : 'none',
+        outline: isSelected ? `${outlineWidth}px solid ${colors.primary}` : 'none',
         outlineOffset: `${outlineOffset}px`,
         zIndex,
       }}
@@ -148,17 +145,19 @@ export default function Cell({
           onChange={(e) => setEditText(e.target.value)}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
-          className={`w-full h-full text-sm bg-transparent border-0 outline-none resize-none ${
-            isDarkMode ? 'text-gray-100' : 'text-neutral-700'
-          }`}
+          style={{
+            color: colors.text.primary,
+          }}
+          className="w-full h-full text-sm bg-transparent border-0 outline-none resize-none"
           onClick={(e) => e.stopPropagation()}
           onMouseDown={(e) => e.stopPropagation()}
         />
       ) : (
         <p
-          className={`text-sm whitespace-pre-wrap wrap-break-word m-0 ${
-            isDarkMode ? 'text-gray-100' : 'text-neutral-700'
-          }`}
+          style={{
+            color: colors.text.primary,
+          }}
+          className="text-sm whitespace-pre-wrap wrap-break-word m-0"
         >
           {cell.text}
         </p>

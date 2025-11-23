@@ -4,7 +4,7 @@ import { X, Check, Loader2, Save, GripHorizontal } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useDarkMode } from '../context/DarkModeContext'
 import type { FeedbackData, Question } from '../lib/dynamicFeedback'
-import { colors } from '../styles/design-system'
+import { brandColors, colorsLight, colorsDark } from '../styles/design-system'
 
 // Question component - auto-resizing textarea with auto-save
 function Question({
@@ -50,18 +50,19 @@ function Question({
     }
   }, [value])
 
+  const colors = isDarkMode ? colorsDark : colorsLight
+
   return (
     <div className="mb-4">
       <div className="flex items-center justify-between mb-2">
         <label
-          className={`block text-sm font-medium ${
-            isDarkMode ? 'text-gray-300' : 'text-neutral-700'
-          }`}
+          className="block text-sm font-medium font-serif"
+          style={{ color: colors.text.primary }}
         >
           {question}
         </label>
         {isSaving && (
-          <div className="flex items-center gap-1 text-xs text-primary-600">
+          <div className="flex items-center gap-1 text-xs" style={{ color: brandColors.teal }}>
             <Save size={12} />
             Saving...
           </div>
@@ -72,23 +73,27 @@ function Question({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className={`w-full p-3 border rounded-lg resize-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all min-h-20 ${
-          isDarkMode
-            ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-500'
-            : 'bg-white border-neutral-300 text-neutral-900'
-        }`}
+        className="w-full p-3 border rounded-lg resize-none focus:ring-2 transition-all min-h-20"
+        style={{
+          backgroundColor: colors.background.paper,
+          borderColor: brandColors.cloudy,
+          color: colors.text.primary,
+        }}
+        onFocus={(e) => {
+          e.target.style.borderColor = brandColors.teal
+        }}
+        onBlur={(e) => {
+          e.target.style.borderColor = brandColors.cloudy
+        }}
         rows={3}
       />
       <div
-        className={`mt-1 text-xs ${
-          isDarkMode ? 'text-gray-400' : 'text-neutral-500'
-        }`}
+        className="mt-1 text-xs"
+        style={{ color: colors.text.secondary }}
       >
         {value.length} characters
         {value.length > 0 && value.length < 20 && (
-          <span
-            className={`ml-2 ${isDarkMode ? 'text-gray-500' : 'text-neutral-400'}`}
-          >
+          <span className="ml-2" style={{ color: colors.text.secondary }}>
             (add more details...)
           </span>
         )}
@@ -118,40 +123,35 @@ function FeedbackSection({
   const allQuestionsAnswered = questions.every(
     (q) => q.answer.trim().length > 0,
   )
+  const colors = isDarkMode ? colorsDark : colorsLight
 
   return (
     <div
-      className={`border rounded-lg p-5 mb-4 transition-all ${
-        isComplete
-          ? isDarkMode
-            ? 'border-primary-500 bg-gray-700'
-            : 'border-primary-500 bg-primary-50'
-          : isDarkMode
-            ? 'border-gray-600 bg-gray-800'
-            : 'border-neutral-300 bg-white'
-      }`}
+      className="border rounded-lg p-5 mb-4 transition-all"
+      style={{
+        borderColor: isComplete ? brandColors.teal : brandColors.cloudy,
+        backgroundColor: colors.background.paper,
+      }}
     >
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
           <h3
-            className={`text-lg font-semibold mb-1 ${
-              isDarkMode ? 'text-gray-100' : 'text-neutral-900'
-            }`}
+            className="text-lg font-semibold mb-1 font-serif"
+            style={{ color: colors.text.primary }}
           >
             {title}
           </h3>
           {description && (
             <p
-              className={`text-sm ${
-                isDarkMode ? 'text-gray-400' : 'text-neutral-600'
-              }`}
+              className="text-sm font-serif"
+              style={{ color: colors.text.secondary }}
             >
               {description}
             </p>
           )}
         </div>
         {isComplete && (
-          <div className="flex items-center gap-2 text-primary-600 ml-4">
+          <div className="flex items-center gap-2 ml-4" style={{ color: brandColors.teal }}>
             <Check size={20} />
             <span className="text-sm font-medium">Completed</span>
           </div>
@@ -175,9 +175,10 @@ function FeedbackSection({
         <button
           onClick={onComplete}
           disabled={!allQuestionsAnswered}
-          className="mt-4 w-full text-white px-4 py-2 rounded-lg font-medium disabled:bg-neutral-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+          className="mt-4 w-full px-4 py-2 rounded-lg font-medium disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
           style={{
-            backgroundColor: allQuestionsAnswered ? '#C15F3C' : undefined,
+            backgroundColor: allQuestionsAnswered ? brandColors.crail : brandColors.cloudy,
+            color: brandColors.foregroundDark,
           }}
         >
           <Check size={16} />
@@ -231,28 +232,29 @@ export default function FeedbackPanel({
     }
   }
 
+  const colors = isDarkMode ? colorsDark : colorsLight
+
   return (
     <div
-      className={`w-[600px] rounded-2xl shadow-lg flex flex-col max-h-[800px] transition-colors border ${
-        isDarkMode ? 'bg-gray-800 border-gray-700' : 'border-[#B1ADA1]'
-      }`}
+      className="w-[600px] rounded-2xl shadow-lg flex flex-col max-h-[800px] transition-colors border"
       style={{
-        backgroundColor: isDarkMode ? undefined : '#FDFBF9',
+        backgroundColor: colors.background.paper,
+        borderColor: brandColors.cloudy,
       }}
     >
       <div
-        className={`p-6 border-b shrink-0 relative flex items-center justify-between gap-4 group cursor-grab active:cursor-grabbing transition-colors ${
-          isDarkMode
-            ? 'bg-gray-800 border-gray-700'
-            : 'bg-white border-neutral-200'
-        }`}
+        className="p-6 border-b shrink-0 relative flex items-center justify-between gap-4 group cursor-grab active:cursor-grabbing transition-colors"
+        style={{
+          backgroundColor: colors.background.paper,
+          borderColor: brandColors.cloudy,
+        }}
       >
         {/* Drag Handle */}
         <div
           data-drag-handle
           className="flex items-center justify-center shrink-0 p-1 rounded transition-all hover:opacity-75"
           style={{
-            color: isDarkMode ? colors.neutral[400] : colors.neutral[500],
+            color: colors.text.secondary,
             cursor: 'grab',
           }}
           title="Drag to move this panel"
@@ -262,9 +264,8 @@ export default function FeedbackPanel({
 
         {/* Title */}
         <h2
-          className={`text-2xl font-bold flex-1 min-w-0 ${
-            isDarkMode ? 'text-gray-100' : 'text-neutral-900'
-          }`}
+          className="text-2xl font-bold flex-1 min-w-0"
+          style={{ color: colors.text.primary }}
         >
           {data.problemTitle}
         </h2>
@@ -272,11 +273,14 @@ export default function FeedbackPanel({
         {/* Close Button */}
         <button
           onClick={onClose}
-          className={`shrink-0 transition-colors ${
-            isDarkMode
-              ? 'text-gray-400 hover:text-gray-200'
-              : 'text-neutral-400 hover:text-neutral-600'
-          }`}
+          className="shrink-0 transition-colors"
+          style={{ color: colors.text.secondary }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = colors.text.primary
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = colors.text.secondary
+          }}
           aria-label="Close feedback panel"
         >
           <X size={24} />
@@ -284,9 +288,8 @@ export default function FeedbackPanel({
       </div>
 
       <div
-        className={`p-6 overflow-y-auto flex-1 transition-colors ${
-          isDarkMode ? 'bg-gray-800' : 'bg-white'
-        }`}
+        className="p-6 overflow-y-auto flex-1 transition-colors"
+        style={{ backgroundColor: colors.background.paper }}
       >
         {data.sections.map((section) => (
           <FeedbackSection
@@ -305,19 +308,20 @@ export default function FeedbackPanel({
       </div>
 
       <div
-        className={`p-6 border-t shrink-0 space-y-2 transition-colors ${
-          isDarkMode
-            ? 'bg-gray-800 border-gray-700'
-            : 'bg-white border-neutral-200'
-        }`}
+        className="p-6 border-t shrink-0 space-y-2 transition-colors"
+        style={{
+          backgroundColor: colors.background.paper,
+          borderColor: brandColors.cloudy,
+        }}
       >
         <button
           onClick={handleSubmit}
           disabled={!allSectionsComplete || isSubmitting}
-          className="w-full text-white px-6 py-3 rounded-lg font-medium disabled:bg-neutral-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+          className="w-full px-6 py-3 rounded-lg font-medium disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
           style={{
             backgroundColor:
-              allSectionsComplete && !isSubmitting ? '#C15F3C' : undefined,
+              allSectionsComplete && !isSubmitting ? brandColors.crail : brandColors.cloudy,
+            color: brandColors.foregroundDark,
           }}
         >
           {isSubmitting ? (
@@ -335,7 +339,7 @@ export default function FeedbackPanel({
           )}
         </button>
         {!allSectionsComplete && (
-          <p className="text-xs text-neutral-500 text-center">
+          <p className="text-xs text-center" style={{ color: colors.text.secondary }}>
             Complete all sections to submit
           </p>
         )}

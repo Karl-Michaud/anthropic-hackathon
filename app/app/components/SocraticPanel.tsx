@@ -3,6 +3,7 @@
 import { X, Loader2 } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { useDarkMode } from '../context/DarkModeContext'
+import { brandColors, colorsLight, colorsDark } from '../styles/design-system'
 
 export interface SocraticQuestion {
   id: string
@@ -36,6 +37,7 @@ function Question({
   isDarkMode?: boolean
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const colors = isDarkMode ? colorsDark : colorsLight
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -47,9 +49,8 @@ function Question({
   return (
     <div className="mb-4">
       <label
-        className={`block text-sm font-medium mb-2 ${
-          isDarkMode ? 'text-gray-200' : 'text-neutral-700'
-        }`}
+        className="block text-sm font-medium mb-2 font-serif"
+        style={{ color: colors.text.primary }}
       >
         {question}
       </label>
@@ -58,17 +59,23 @@ function Question({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Type your response here..."
-        className={`w-full p-3 border rounded-lg resize-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all min-h-20 ${
-          isDarkMode
-            ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-500'
-            : 'bg-white border-neutral-300 text-neutral-900 placeholder-gray-400'
-        }`}
+        className="w-full p-3 border rounded-lg resize-none focus:ring-2 transition-all min-h-20"
+        style={{
+          backgroundColor: colors.background.paper,
+          borderColor: brandColors.cloudy,
+          color: colors.text.primary,
+        }}
+        onFocus={(e) => {
+          e.target.style.borderColor = brandColors.teal
+        }}
+        onBlur={(e) => {
+          e.target.style.borderColor = brandColors.cloudy
+        }}
         rows={3}
       />
       <div
-        className={`mt-1 text-xs ${
-          isDarkMode ? 'text-gray-400' : 'text-neutral-500'
-        }`}
+        className="mt-1 text-xs"
+        style={{ color: colors.text.secondary }}
       >
         {value.length} characters
       </div>
@@ -115,47 +122,49 @@ export default function SocraticPanel({
     }
   }
 
+  const colors = isDarkMode ? colorsDark : colorsLight
+
   return (
     <div
       ref={panelRef}
-      className={`w-[500px] rounded-2xl shadow-2xl border flex flex-col max-h-[700px] fixed right-8 top-1/2 transform -translate-y-1/2 z-40 ${
-        isDarkMode ? 'bg-gray-800 border-gray-700' : 'border-[#B1ADA1]'
-      }`}
+      className="w-[500px] rounded-2xl shadow-2xl border flex flex-col max-h-[700px] fixed right-8 top-1/2 transform -translate-y-1/2 z-40"
       style={{
-        backgroundColor: isDarkMode ? undefined : '#FDFBF9',
+        backgroundColor: colors.background.paper,
+        borderColor: brandColors.cloudy,
       }}
     >
       <div
-        className={`p-6 border-b shrink-0 relative ${
-          isDarkMode
-            ? 'bg-gray-800 border-gray-700'
-            : 'bg-white border-neutral-200'
-        }`}
+        className="p-6 border-b shrink-0 relative"
+        style={{
+          backgroundColor: colors.background.paper,
+          borderColor: brandColors.cloudy,
+        }}
       >
         <button
           onClick={onClose}
-          className={`absolute top-4 right-4 transition-colors ${
-            isDarkMode
-              ? 'text-gray-500 hover:text-gray-400'
-              : 'text-neutral-400 hover:text-neutral-600'
-          }`}
+          className="absolute top-4 right-4 transition-colors"
+          style={{ color: colors.text.secondary }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = colors.text.primary
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = colors.text.secondary
+          }}
           aria-label="Close socratic panel"
         >
           <X size={24} />
         </button>
         <h2
-          className={`text-2xl font-bold pr-10 ${
-            isDarkMode ? 'text-gray-100' : 'text-neutral-900'
-          }`}
+          className="text-2xl font-bold pr-10 font-serif"
+          style={{ color: colors.text.primary }}
         >
           {data.title}
         </h2>
       </div>
 
       <div
-        className={`p-6 overflow-y-auto flex-1 ${
-          isDarkMode ? 'bg-gray-800' : 'bg-white'
-        }`}
+        className="p-6 overflow-y-auto flex-1"
+        style={{ backgroundColor: colors.background.paper }}
       >
         {data.questions.map((question) => (
           <Question
@@ -169,21 +178,22 @@ export default function SocraticPanel({
       </div>
 
       <div
-        className={`p-6 border-t shrink-0 ${
-          isDarkMode
-            ? 'bg-gray-800 border-gray-700'
-            : 'bg-white border-neutral-200'
-        }`}
+        className="p-6 border-t shrink-0"
+        style={{
+          backgroundColor: colors.background.paper,
+          borderColor: brandColors.cloudy,
+        }}
       >
         <button
           onClick={handleSubmit}
           disabled={!allQuestionsAnswered || isSubmitting.current}
-          className="w-full text-white px-6 py-3 rounded-lg font-medium disabled:bg-neutral-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+          className="w-full px-6 py-3 rounded-lg font-medium disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
           style={{
             backgroundColor:
               allQuestionsAnswered && !isSubmitting.current
-                ? '#C15F3C'
-                : undefined,
+                ? brandColors.crail
+                : brandColors.cloudy,
+            color: brandColors.foregroundDark,
           }}
         >
           {isSubmitting.current ? (

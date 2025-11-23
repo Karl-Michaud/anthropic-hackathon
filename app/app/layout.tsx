@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
+import { Inter, Noto_Serif } from 'next/font/google'
 import './globals.css'
 import { WhiteboardProvider } from './context/WhiteboardContext'
 import { EditingProvider } from './context/EditingContext'
@@ -7,14 +7,16 @@ import { DarkModeProvider } from './context/DarkModeContext'
 import { AuthProvider } from './components/auth/AuthProvider'
 import { ConditionalLayout } from './components/ConditionalLayout'
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
+const inter = Inter({
+  variable: '--font-inter',
   subsets: ['latin'],
+  display: 'swap',
 })
 
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
+const notoSerif = Noto_Serif({
+  variable: '--font-noto-serif',
   subsets: ['latin'],
+  display: 'swap',
 })
 
 export const metadata: Metadata = {
@@ -30,7 +32,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${inter.variable} ${notoSerif.variable} antialiased`}
       >
         <AuthProvider>
           <DarkModeProvider>

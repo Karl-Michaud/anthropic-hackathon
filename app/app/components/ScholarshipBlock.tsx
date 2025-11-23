@@ -7,6 +7,7 @@ import { useDarkMode } from '../context/DarkModeContext'
 import { ScholarshipData } from '../context/WhiteboardContext'
 import { requestClaude } from '../lib/request'
 import { IPromptWeights } from '../types/interfaces'
+import { brandColors } from '../styles/design-system'
 
 export type { ScholarshipData }
 
@@ -84,7 +85,7 @@ function PersonalityDisplay({
               <p className={`font-semibold mb-1 ${classes.heading}`}>
                 Core Identity:
               </p>
-              <p className={classes.text}>{spirit}</p>
+              <p className={`${classes.text} font-serif`}>{spirit}</p>
             </div>
           )}
           {toneStyle && (
@@ -92,7 +93,7 @@ function PersonalityDisplay({
               <p className={`font-semibold mb-1 ${classes.heading}`}>
                 Tone & Style:
               </p>
-              <p className={classes.text}>{toneStyle}</p>
+              <p className={`${classes.text} font-serif`}>{toneStyle}</p>
             </div>
           )}
           {valuesEmphasized && valuesEmphasized.length > 0 && (
@@ -104,7 +105,7 @@ function PersonalityDisplay({
                 {valuesEmphasized.map((value: string, idx: number) => (
                   <span
                     key={idx}
-                    className={`px-2 py-1 rounded text-xs ${
+                    className={`px-2 py-1 rounded text-xs font-serif ${
                       isDarkMode
                         ? 'bg-blue-900 text-blue-200'
                         : 'bg-blue-100 text-blue-700'
@@ -121,7 +122,7 @@ function PersonalityDisplay({
               <p className={`font-semibold mb-1 ${classes.heading}`}>
                 Recommended Essay Focus:
               </p>
-              <p className={classes.text}>{recommendedEssayFocus}</p>
+              <p className={`${classes.text} font-serif`}>{recommendedEssayFocus}</p>
             </div>
           )}
         </div>
@@ -444,13 +445,11 @@ function EditableField({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className={`w-full border-b-4 outline-none pb-2 transition-all ${
-            isDarkMode
-              ? 'bg-blue-900 text-blue-100 border-blue-500'
-              : 'text-gray-900 border-[#C15F3C]'
-          } ${className}`}
+          className={`w-full border-b-4 outline-none pb-2 transition-all ${className}`}
           style={{
-            backgroundColor: isDarkMode ? undefined : '#FDFBF9',
+            backgroundColor: isDarkMode ? '#1F1E1D' : '#FDFBF9',
+            color: isDarkMode ? '#FAF9F5' : '#3D2219',
+            borderColor: '#C15F3C',
           }}
         />
       )
@@ -462,13 +461,11 @@ function EditableField({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         rows={4}
-        className={`w-full border-2 rounded-lg p-3 outline-none resize-none leading-relaxed transition-all ${
-          isDarkMode
-            ? 'bg-blue-900 text-blue-100 border-blue-500'
-            : 'text-gray-900 border-[#C15F3C]'
-        } ${className}`}
+        className={`w-full border-2 rounded-lg p-3 outline-none resize-none leading-relaxed transition-all ${className}`}
         style={{
-          backgroundColor: isDarkMode ? undefined : '#FDFBF9',
+          backgroundColor: isDarkMode ? '#1F1E1D' : '#FDFBF9',
+          color: isDarkMode ? '#FAF9F5' : '#3D2219',
+          borderColor: '#C15F3C',
         }}
       />
     )
@@ -657,7 +654,7 @@ function ScholarshipEditButtons({
           isLoading ? 'opacity-70 cursor-not-allowed' : ''
         }`}
         style={{
-          backgroundColor: '#C15F3C',
+          backgroundColor: brandColors.crail,
         }}
       >
         {isLoading && <Loader2 size={14} className="animate-spin" />}
@@ -682,7 +679,7 @@ export function ScholarshipActions({
         disabled={isGenerating}
         className="flex items-center gap-2 px-4 py-2 text-white rounded-md font-medium border-none cursor-pointer transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed"
         style={{
-          backgroundColor: '#C15F3C',
+          backgroundColor: brandColors.teal,
         }}
       >
         {isGenerating ? (
@@ -792,10 +789,11 @@ export function ScholarshipBlock({
             : 'bg-gray-800 shadow-md border-gray-700 border'
           : isEditing
             ? 'shadow-lg border-[#C15F3C] border'
-            : 'shadow-md border border-[#B1ADA1]'
+            : `shadow-md border`
       }`}
       style={{
-        backgroundColor: isDarkMode ? undefined : '#FDFBF9',
+        backgroundColor: isDarkMode ? brandColors.componentBackgroundDark : brandColors.componentBackground,
+        borderColor: isEditing ? brandColors.crail : brandColors.cloudy,
       }}
     >
       {/* Menu - top right */}

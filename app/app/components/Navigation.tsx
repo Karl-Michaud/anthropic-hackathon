@@ -26,26 +26,34 @@ import { requestClaude } from '../lib/request'
 import { parseFileContent, getFileType } from '../lib/fileParser'
 import type { FeedbackData } from '../lib/dynamicFeedback/types'
 import { IPromptWeights } from '../types/interfaces'
+import { brandColors, colorsLight, colorsDark } from '../styles/design-system'
 
 const navItems = [{ href: '/', icon: Home, label: 'Home' }]
 
 // DarkModeToggle component
 function DarkModeToggle() {
   const { isDarkMode, toggleDarkMode, isMounted } = useDarkMode()
+  const colors = isDarkMode ? colorsDark : colorsLight
 
   return (
     <button
       onClick={toggleDarkMode}
-      className={`group relative p-2 rounded-xl transition-all duration-200 hover:scale-105 cursor-pointer ${
-        isDarkMode
-          ? 'hover:bg-gray-600/40 text-yellow-300'
-          : 'hover:bg-white/40 text-gray-500 group-hover:text-gray-600'
-      }`}
+      className="group relative p-2 rounded-xl transition-all duration-200 hover:scale-105 cursor-pointer"
+      style={{
+        color: isDarkMode ? brandColors.mustard : colors.text.secondary,
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.backgroundColor = isDarkMode
+          ? `${brandColors.backgroundDark}66`
+          : `${brandColors.pampas}66`
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.backgroundColor = 'transparent'
+      }}
       aria-label="Toggle dark mode"
       suppressHydrationWarning
     >
       {!isMounted ? (
-        // Show Moon icon during SSR and initial render to match server output
         <Moon size={28} />
       ) : isDarkMode ? (
         <Sun size={28} />
@@ -53,9 +61,11 @@ function DarkModeToggle() {
         <Moon size={28} />
       )}
       <span
-        className={`absolute left-12 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 text-xs rounded-md px-2 py-1 transition-all duration-200 ${
-          isDarkMode ? 'bg-gray-900 text-yellow-100' : 'bg-gray-900 text-white'
-        }`}
+        className="absolute left-12 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 text-xs rounded-md px-2 py-1 transition-all duration-200"
+        style={{
+          backgroundColor: isDarkMode ? colorsDark.background.elevated : brandColors.backgroundDark,
+          color: isDarkMode ? brandColors.mustard : brandColors.foregroundDark,
+        }}
         suppressHydrationWarning
       >
         {isDarkMode ? 'Light Mode' : 'Dark Mode'}
@@ -69,19 +79,42 @@ function NavigationItem({
   href,
   icon: Icon,
   label,
+  isDarkMode = false,
 }: {
   href: string
   icon: LucideIcon
   label: string
+  isDarkMode?: boolean
 }) {
+  const colors = isDarkMode ? colorsDark : colorsLight
+
   return (
     <NextLink
       href={href}
-      className="group relative p-2 rounded-xl transition-all duration-200 hover:bg-white/40 hover:scale-105 cursor-pointer"
+      className="group relative p-2 rounded-xl transition-all duration-200 hover:scale-105 cursor-pointer"
+      style={{
+        color: colors.text.secondary,
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.backgroundColor = isDarkMode
+          ? `${brandColors.backgroundDark}66`
+          : `${brandColors.pampas}66`
+        e.currentTarget.style.color = colors.text.primary
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.backgroundColor = 'transparent'
+        e.currentTarget.style.color = colors.text.secondary
+      }}
       aria-label={label}
     >
-      <Icon className="text-gray-500 group-hover:text-gray-600" size={28} />
-      <span className="absolute left-12 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 bg-gray-900 text-white text-xs rounded-md px-2 py-1 transition-all duration-200">
+      <Icon size={28} />
+      <span
+        className="absolute left-12 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 text-xs rounded-md px-2 py-1 transition-all duration-200 whitespace-nowrap"
+        style={{
+          backgroundColor: isDarkMode ? colorsDark.background.elevated : brandColors.backgroundDark,
+          color: brandColors.foregroundDark,
+        }}
+      >
         {label}
       </span>
     </NextLink>
@@ -89,48 +122,77 @@ function NavigationItem({
 }
 
 // ScholarshipUploadButton component
-function ScholarshipUploadButton({ onClick }: { onClick: () => void }) {
+function ScholarshipUploadButton({
+  onClick,
+  isDarkMode = false,
+}: {
+  onClick: () => void
+  isDarkMode?: boolean
+}) {
+  const colors = isDarkMode ? colorsDark : colorsLight
+
   return (
     <button
       onClick={onClick}
-      className="cursor-pointer group relative p-2 rounded-xl transition-all duration-200 hover:bg-white/40 hover:scale-105"
+      className="cursor-pointer group relative p-2 rounded-xl transition-all duration-200 hover:scale-105"
+      style={{
+        color: colors.text.secondary,
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.backgroundColor = isDarkMode
+          ? `${brandColors.backgroundDark}66`
+          : `${brandColors.pampas}66`
+        e.currentTarget.style.color = colors.text.primary
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.backgroundColor = 'transparent'
+        e.currentTarget.style.color = colors.text.secondary
+      }}
     >
-      <Plus className="text-gray-500 group-hover:text-gray-600" size={28} />
-      <span className="absolute left-12 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 bg-gray-900 text-white text-xs rounded-md px-2 py-1 transition-all duration-200 whitespace-nowrap">
+      <Plus size={28} />
+      <span
+        className="absolute left-12 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 text-xs rounded-md px-2 py-1 transition-all duration-200 whitespace-nowrap"
+        style={{
+          backgroundColor: isDarkMode ? colorsDark.background.elevated : brandColors.backgroundDark,
+          color: brandColors.foregroundDark,
+        }}
+      >
         Add Scholarship
       </span>
     </button>
   )
 }
 
-// LogoutButton component
-function LogoutButton() {
-  const { signOut, user } = useAuth()
-  const [isLoggingOut, setIsLoggingOut] = useState(false)
-
-  const handleLogout = async () => {
-    setIsLoggingOut(true)
-    try {
-      await signOut()
-    } catch (error) {
-      console.error('Logout error:', error)
-    } finally {
-      setIsLoggingOut(false)
-    }
-  }
-
-  // Only show logout button if user is logged in
-  if (!user) return null
+// AccountButton component
+function AccountButton({ isDarkMode = false }: { isDarkMode?: boolean }) {
+  const colors = isDarkMode ? colorsDark : colorsLight
 
   return (
     <button
-      onClick={handleLogout}
-      disabled={isLoggingOut}
-      className="cursor-pointer group relative p-2 rounded-xl transition-all duration-200 hover:bg-white/40 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+      className="cursor-pointer group relative p-2 rounded-xl transition-all duration-200 hover:scale-105"
+      style={{
+        color: colors.text.secondary,
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.backgroundColor = isDarkMode
+          ? `${brandColors.backgroundDark}66`
+          : `${brandColors.pampas}66`
+        e.currentTarget.style.color = colors.text.primary
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.backgroundColor = 'transparent'
+        e.currentTarget.style.color = colors.text.secondary
+      }}
     >
-      <LogOut className="text-gray-500 group-hover:text-gray-600" size={28} />
-      <span className="absolute left-12 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 bg-gray-900 text-white text-xs rounded-md px-2 py-1 transition-all duration-200 whitespace-nowrap">
-        {isLoggingOut ? 'Logging out...' : 'Logout'}
+      <User size={28} />
+      <span
+        className="absolute left-12 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 text-xs rounded-md px-2 py-1 transition-all duration-200 whitespace-nowrap"
+        style={{
+          backgroundColor: isDarkMode ? colorsDark.background.elevated : brandColors.backgroundDark,
+          color: brandColors.foregroundDark,
+        }}
+      >
+        Account
       </span>
     </button>
   )
@@ -140,12 +202,15 @@ function LogoutButton() {
 function FileUploadArea({
   onFileUpload,
   isUploading,
+  isDarkMode = false,
 }: {
   onFileUpload: (file: File) => void
   isUploading: boolean
+  isDarkMode?: boolean
 }) {
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const colors = isDarkMode ? colorsDark : colorsLight
 
   const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault()
@@ -188,26 +253,41 @@ function FileUploadArea({
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        className={`border-2 border-dashed rounded-xl transition-all cursor-pointer p-8 text-gray-900 ${
-          isDragging
-            ? 'border-blue-500 bg-blue-50'
-            : 'border-gray-300 hover:border-blue-400'
-        } ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}
+        className="border-2 border-dashed rounded-xl transition-all cursor-pointer p-8"
+        style={{
+          borderColor: isDragging ? brandColors.teal : brandColors.cloudy,
+          backgroundColor: isDragging
+            ? `${brandColors.teal}1a`
+            : colors.background.paper,
+          color: colors.text.primary,
+          opacity: isUploading ? 0.5 : 1,
+          pointerEvents: isUploading ? 'none' : 'auto',
+        }}
+        onMouseEnter={(e) => {
+          if (!isDragging && !isUploading) {
+            e.currentTarget.style.borderColor = brandColors.teal
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!isDragging) {
+            e.currentTarget.style.borderColor = brandColors.cloudy
+          }
+        }}
         onClick={() => fileInputRef.current?.click()}
       >
         <div className="flex flex-col items-center gap-3">
           {isUploading ? (
-            <Upload size={48} className="animate-pulse text-blue-500" />
+            <Upload size={48} className="animate-pulse" style={{ color: brandColors.teal }} />
           ) : (
-            <FileText size={48} className="text-blue-400" />
+            <FileText size={48} style={{ color: brandColors.teal }} />
           )}
           <div>
-            <p className="text-base font-medium text-gray-900 mb-2">
+            <p className="text-base font-medium mb-2" style={{ color: colors.text.primary }}>
               {isUploading
                 ? 'Uploading...'
                 : 'Drop your file here or click to browse'}
             </p>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm" style={{ color: colors.text.secondary }}>
               Supports TXT, JSON, and PDF files
             </p>
           </div>
@@ -228,13 +308,16 @@ function FileUploadArea({
 function ManualEntryForm({
   onSubmit,
   isSubmitting,
+  isDarkMode = false,
 }: {
   onSubmit: (title: string, description: string, prompts: string[]) => void
   isSubmitting: boolean
+  isDarkMode?: boolean
 }) {
   const [scholarshipTitle, setScholarshipTitle] = useState('')
   const [scholarshipDescription, setScholarshipDescription] = useState('')
   const [scholarshipPrompt, setScholarshipPrompt] = useState('')
+  const colors = isDarkMode ? colorsDark : colorsLight
 
   const handleSubmit = () => {
     if (
@@ -251,7 +334,7 @@ function ManualEntryForm({
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium mb-2" style={{ color: colors.text.primary }}>
           Scholarship Title
         </label>
         <input
@@ -259,12 +342,27 @@ function ManualEntryForm({
           value={scholarshipTitle}
           onChange={(e) => setScholarshipTitle(e.target.value)}
           placeholder="Enter scholarship title"
-          className="w-full py-2 px-3 border border-gray-200 rounded-md text-gray-900 transition-all text-sm bg-white focus:border-blue-500 focus:ring-3 focus:ring-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full py-2 px-3 border rounded-md transition-all text-sm"
+          style={{
+            borderColor: brandColors.cloudy,
+            color: colors.text.primary,
+            backgroundColor: colors.background.paper,
+            opacity: isSubmitting ? 0.5 : 1,
+            cursor: isSubmitting ? 'not-allowed' : 'text',
+          }}
+          onFocus={(e) => {
+            e.target.style.borderColor = brandColors.teal
+            e.target.style.boxShadow = `0 0 0 3px ${brandColors.teal}1a`
+          }}
+          onBlur={(e) => {
+            e.target.style.borderColor = brandColors.cloudy
+            e.target.style.boxShadow = 'none'
+          }}
           disabled={isSubmitting}
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium mb-2" style={{ color: colors.text.primary }}>
           Scholarship Description
         </label>
         <textarea
@@ -272,12 +370,27 @@ function ManualEntryForm({
           onChange={(e) => setScholarshipDescription(e.target.value)}
           placeholder="Enter scholarship description"
           rows={4}
-          className="w-full py-2 px-3 border border-gray-200 rounded-md text-gray-900 transition-all text-sm bg-white resize-none focus:border-blue-500 focus:ring-3 focus:ring-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full py-2 px-3 border rounded-md transition-all text-sm resize-none"
+          style={{
+            borderColor: brandColors.cloudy,
+            color: colors.text.primary,
+            backgroundColor: colors.background.paper,
+            opacity: isSubmitting ? 0.5 : 1,
+            cursor: isSubmitting ? 'not-allowed' : 'text',
+          }}
+          onFocus={(e) => {
+            e.target.style.borderColor = brandColors.teal
+            e.target.style.boxShadow = `0 0 0 3px ${brandColors.teal}1a`
+          }}
+          onBlur={(e) => {
+            e.target.style.borderColor = brandColors.cloudy
+            e.target.style.boxShadow = 'none'
+          }}
           disabled={isSubmitting}
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium mb-2" style={{ color: colors.text.primary }}>
           Essay Prompt
         </label>
         <textarea
@@ -285,14 +398,45 @@ function ManualEntryForm({
           onChange={(e) => setScholarshipPrompt(e.target.value)}
           placeholder="Enter essay prompt"
           rows={3}
-          className="w-full py-2 px-3 border border-gray-200 rounded-md text-gray-900 transition-all text-sm bg-white resize-none focus:border-blue-500 focus:ring-3 focus:ring-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full py-2 px-3 border rounded-md transition-all text-sm resize-none"
+          style={{
+            borderColor: brandColors.cloudy,
+            color: colors.text.primary,
+            backgroundColor: colors.background.paper,
+            opacity: isSubmitting ? 0.5 : 1,
+            cursor: isSubmitting ? 'not-allowed' : 'text',
+          }}
+          onFocus={(e) => {
+            e.target.style.borderColor = brandColors.teal
+            e.target.style.boxShadow = `0 0 0 3px ${brandColors.teal}1a`
+          }}
+          onBlur={(e) => {
+            e.target.style.borderColor = brandColors.cloudy
+            e.target.style.boxShadow = 'none'
+          }}
           disabled={isSubmitting}
         />
       </div>
       <button
         onClick={handleSubmit}
         disabled={isSubmitting}
-        className="w-full px-4 py-3 bg-blue-600 text-white rounded-md font-medium border-0 cursor-pointer transition-all hover:bg-blue-700 hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed"
+        className="w-full px-4 py-3 rounded-md font-medium border-0 cursor-pointer transition-all"
+        style={{
+          backgroundColor: brandColors.teal,
+          color: brandColors.foregroundDark,
+          opacity: isSubmitting ? 0.6 : 1,
+          cursor: isSubmitting ? 'not-allowed' : 'pointer',
+        }}
+        onMouseEnter={(e) => {
+          if (!isSubmitting) {
+            e.currentTarget.style.backgroundColor = brandColors.navy
+            e.currentTarget.style.transform = 'translateY(-2px)'
+          }
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = brandColors.teal
+          e.currentTarget.style.transform = 'translateY(0)'
+        }}
       >
         {isSubmitting ? 'Creating...' : 'Create Scholarship'}
       </button>
@@ -304,29 +448,60 @@ function ManualEntryForm({
 function UploadModeToggle({
   mode,
   onModeChange,
+  isDarkMode = false,
 }: {
   mode: 'file' | 'text'
   onModeChange: (mode: 'file' | 'text') => void
+  isDarkMode?: boolean
 }) {
+  const colors = isDarkMode ? colorsDark : colorsLight
+
   return (
-    <div className="flex gap-1 rounded-md overflow-hidden shadow-sm bg-gray-100 p-1">
+    <div
+      className="flex gap-1 rounded-md overflow-hidden shadow-sm p-1"
+      style={{ backgroundColor: colors.background.elevated }}
+    >
       <button
         onClick={() => onModeChange('file')}
-        className={`px-4 py-2 text-sm font-medium transition-all cursor-pointer ${
-          mode === 'file'
-            ? 'bg-blue-600 text-white'
-            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-        }`}
+        className="px-4 py-2 text-sm font-medium transition-all cursor-pointer"
+        style={{
+          backgroundColor: mode === 'file' ? brandColors.teal : 'transparent',
+          color: mode === 'file' ? brandColors.foregroundDark : colors.text.primary,
+        }}
+        onMouseEnter={(e) => {
+          if (mode !== 'file') {
+            e.currentTarget.style.backgroundColor = isDarkMode
+              ? brandColors.backgroundDark
+              : brandColors.pampas
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (mode !== 'file') {
+            e.currentTarget.style.backgroundColor = 'transparent'
+          }
+        }}
       >
         File
       </button>
       <button
         onClick={() => onModeChange('text')}
-        className={`px-4 py-2 text-sm font-medium transition-all cursor-pointer ${
-          mode === 'text'
-            ? 'bg-blue-600 text-white'
-            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-        }`}
+        className="px-4 py-2 text-sm font-medium transition-all cursor-pointer"
+        style={{
+          backgroundColor: mode === 'text' ? brandColors.teal : 'transparent',
+          color: mode === 'text' ? brandColors.foregroundDark : colors.text.primary,
+        }}
+        onMouseEnter={(e) => {
+          if (mode !== 'text') {
+            e.currentTarget.style.backgroundColor = isDarkMode
+              ? brandColors.backgroundDark
+              : brandColors.pampas
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (mode !== 'text') {
+            e.currentTarget.style.backgroundColor = 'transparent'
+          }
+        }}
       >
         Text
       </button>
@@ -350,14 +525,17 @@ function ScholarshipUploadPopup({
   isOpen,
   onClose,
   onScholarshipCreated,
+  isDarkMode = false,
 }: {
   isOpen: boolean
   onClose: () => void
   onScholarshipCreated: (data: ScholarshipUploadResult) => void
+  isDarkMode?: boolean
 }) {
   const [uploadMode, setUploadMode] = useState<'file' | 'text'>('file')
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const colors = isDarkMode ? colorsDark : colorsLight
 
   if (!isOpen) return null
 
@@ -528,19 +706,41 @@ function ScholarshipUploadPopup({
       >
         {/* Floating Mode Toggle - above popup */}
         <div className="mb-3">
-          <UploadModeToggle mode={uploadMode} onModeChange={setUploadMode} />
+          <UploadModeToggle
+            mode={uploadMode}
+            onModeChange={setUploadMode}
+            isDarkMode={isDarkMode}
+          />
         </div>
 
         {/* Main Popup */}
-        <div className="w-96 bg-white rounded-xl shadow-xl border border-gray-200">
+        <div
+          className="w-96 rounded-xl shadow-xl border"
+          style={{
+            backgroundColor: colors.background.paper,
+            borderColor: brandColors.cloudy,
+          }}
+        >
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">
+          <div
+            className="flex items-center justify-between p-4 border-b"
+            style={{ borderColor: brandColors.cloudy }}
+          >
+            <h3 className="text-lg font-semibold" style={{ color: colors.text.primary }}>
               Upload Scholarship
             </h3>
             <button
               onClick={onClose}
-              className="p-1 rounded-md bg-transparent border-0 cursor-pointer text-gray-500 transition-all hover:bg-gray-100"
+              className="p-1 rounded-md bg-transparent border-0 cursor-pointer transition-all"
+              style={{ color: colors.text.secondary }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = isDarkMode
+                  ? brandColors.backgroundDark
+                  : brandColors.pampas
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent'
+              }}
             >
               <X size={18} />
             </button>
@@ -548,8 +748,16 @@ function ScholarshipUploadPopup({
 
           {/* Error Message */}
           {error && (
-            <div className="mx-4 mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
-              <p className="text-sm text-red-600">{error}</p>
+            <div
+              className="mx-4 mt-4 p-3 border rounded-md"
+              style={{
+                backgroundColor: `${brandColors.maroon}1a`,
+                borderColor: brandColors.maroon,
+              }}
+            >
+              <p className="text-sm" style={{ color: brandColors.maroon }}>
+                {error}
+              </p>
             </div>
           )}
 
@@ -559,11 +767,13 @@ function ScholarshipUploadPopup({
               <FileUploadArea
                 onFileUpload={handleFileUpload}
                 isUploading={isProcessing}
+                isDarkMode={isDarkMode}
               />
             ) : (
               <ManualEntryForm
                 onSubmit={handleManualSubmit}
                 isSubmitting={isProcessing}
+                isDarkMode={isDarkMode}
               />
             )}
           </div>
@@ -638,20 +848,28 @@ export default function Navigation() {
     addFeedbackPanel(feedbackData)
   }
 
+  const colors = isDarkMode ? colorsDark : colorsLight
+
   return (
     <>
       <div
         suppressHydrationWarning
-        className={`fixed left-6 top-6 bottom-6 z-50 rounded-2xl backdrop-blur-md shadow-lg p-2 flex flex-col items-center transition-colors duration-200 ${
-          isDarkMode
-            ? 'bg-gray-700/80 border border-gray-600/80'
-            : 'bg-white/80 border border-white/80'
-        }`}
+        className="fixed left-6 top-6 bottom-6 z-50 rounded-2xl backdrop-blur-md shadow-lg p-2 flex flex-col items-center transition-colors duration-200 border"
+        style={{
+          backgroundColor: `${colors.background.paper}cc`,
+          borderColor: `${brandColors.cloudy}cc`,
+        }}
       >
         {/* Top navigation items */}
         <nav className="flex flex-col gap-4 items-center py-4">
           {navItems.map(({ href, icon, label }) => (
-            <NavigationItem key={href} href={href} icon={icon} label={label} />
+            <NavigationItem
+              key={href}
+              href={href}
+              icon={icon}
+              label={label}
+              isDarkMode={isDarkMode}
+            />
           ))}
         </nav>
 
@@ -661,8 +879,11 @@ export default function Navigation() {
         {/* Bottom buttons */}
         <div className="flex flex-col gap-4 items-center py-4">
           <DarkModeToggle />
-          <ScholarshipUploadButton onClick={() => setIsPopupOpen(true)} />
-          <LogoutButton />
+          <ScholarshipUploadButton
+            onClick={() => setIsPopupOpen(true)}
+            isDarkMode={isDarkMode}
+          />
+          <AccountButton isDarkMode={isDarkMode} />
         </div>
       </div>
 
@@ -671,6 +892,7 @@ export default function Navigation() {
         isOpen={isPopupOpen}
         onClose={() => setIsPopupOpen(false)}
         onScholarshipCreated={handleScholarshipCreated}
+        isDarkMode={isDarkMode}
       />
     </>
   )
