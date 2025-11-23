@@ -1,19 +1,21 @@
 import type { Metadata } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
+import { Inter, Noto_Serif } from 'next/font/google'
 import './globals.css'
 import Navigation from './components/Navigation'
 import { WhiteboardProvider } from './context/WhiteboardContext'
 import { EditingProvider } from './context/EditingContext'
 import { DarkModeProvider } from './context/DarkModeContext'
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
+const inter = Inter({
+  variable: '--font-inter',
   subsets: ['latin'],
+  display: 'swap',
 })
 
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
+const notoSerif = Noto_Serif({
+  variable: '--font-noto-serif',
   subsets: ['latin'],
+  display: 'swap',
 })
 
 export const metadata: Metadata = {
@@ -29,7 +31,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${inter.variable} ${notoSerif.variable} antialiased`}
       >
         <DarkModeProvider>
           <EditingProvider>

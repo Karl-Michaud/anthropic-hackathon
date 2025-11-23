@@ -1,6 +1,7 @@
 'use client'
 
 import { ReactNode, MouseEvent } from 'react'
+import { brandColors } from '../styles/design-system'
 
 interface DraggableBlockProps {
   id: string
@@ -99,7 +100,7 @@ export default function DraggableBlock({
         boxShadow: isDragging
           ? '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
           : undefined,
-        outline: isSelected ? `${outlineWidth}px solid #0ea5e9` : 'none',
+        outline: isSelected ? `${outlineWidth}px solid ${brandColors.teal}` : 'none',
         outlineOffset: `${outlineOffset}px`,
         zIndex,
       }}
@@ -118,7 +119,7 @@ export default function DraggableBlock({
             width: `${16 / zoom}px`,
             height: `${16 / zoom}px`,
             cursor: 'nwse-resize',
-            backgroundColor: '#0ea5e9',
+            backgroundColor: brandColors.teal,
             borderRadius: '2px',
           }}
           title="Drag to resize"
