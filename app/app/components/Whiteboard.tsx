@@ -17,6 +17,7 @@ import { useEditing } from '../context/EditingContext'
 import { useDarkMode } from '../context/DarkModeContext'
 import { saveEssayDraftToDB } from '../lib/dbUtils'
 import { requestClaude } from '../lib/request'
+import { SyncStatusIndicator } from './SyncStatusIndicator'
 import type { IGenerateDraft } from '../types/interfaces'
 import type {
   CellData,
@@ -27,9 +28,9 @@ import type {
 import type { FeedbackData } from '../lib/dynamicFeedback'
 import { brandColors } from '../styles/design-system'
 
-const ZOOM_MIN = 0.06
+const ZOOM_MIN = 0.15 // 15% minimum zoom
 const ZOOM_MAX = 1.0
-const ZOOM_STEP = 0.1
+const ZOOM_STEP = 0.05 // Slower zoom speed
 const CANVAS_LIMIT = 65000 // Figma-style canvas size limit in pixels
 
 type ClipboardItem =
@@ -330,6 +331,30 @@ export default function Whiteboard() {
         return
       }
 
+      // Handle selection based on modifier keys
+      if (e.metaKey || e.ctrlKey) {
+        // Cmd/Ctrl+Click: toggle selection
+        const newSelectedIds = new Set(selectedIds)
+        if (newSelectedIds.has(blockId)) {
+          newSelectedIds.delete(blockId)
+        } else {
+          newSelectedIds.add(blockId)
+        }
+        setSelectedIds(newSelectedIds)
+        return // Don't start dragging when toggling selection
+      }
+
+      // Determine the new selection state
+      let newSelectedIds: Set<string>
+      if (!selectedIds.has(blockId)) {
+        // If clicking on an unselected item, select only this item
+        newSelectedIds = new Set([blockId])
+        setSelectedIds(newSelectedIds)
+      } else {
+        // If clicking on a selected item, keep current selection
+        newSelectedIds = selectedIds
+      }
+
       setDraggingCellId(blockId)
       setDragOffset({
         x: e.clientX - position.x - blockX * zoom,
@@ -340,21 +365,26 @@ export default function Whiteboard() {
       // Bring this block to front
       bringToFront(blockId)
 
-      // Populate dragStartPositions with current positions
+      // Populate dragStartPositions using the NEW selection state
       const newDragStartPositions = new Map<string, { x: number; y: number }>()
-      selectedIds.forEach((id) => {
-        const pos = getBlockPosition(id)
-        newDragStartPositions.set(id, pos)
+      newSelectedIds.forEach((id) => {
+        if (id.startsWith('cell-')) {
+          const cell = cells.find((c) => c.id === id)
+          if (cell) {
+            newDragStartPositions.set(id, { x: cell.x, y: cell.y })
+          }
+        } else {
+          const pos = getBlockPosition(id)
+          newDragStartPositions.set(id, pos)
+        }
       })
-      if (newDragStartPositions.size === 0) {
-        newDragStartPositions.set(blockId, { x: blockX, y: blockY })
-      }
       setDragStartPositions(newDragStartPositions)
     },
     [
       position,
       zoom,
       selectedIds,
+      cells,
       getBlockPosition,
       bringToFront,
       contextMenu,
@@ -520,15 +550,30 @@ export default function Whiteboard() {
       }
 
       if (e.button === 0 && !draggingCellId) {
-        setIsPanning(true)
-        setMomentum({ x: 0, y: 0 })
-        setStartPos({
-          x: e.clientX - position.x,
-          y: e.clientY - position.y,
-        })
+        if (activeTool === 'select') {
+          // Start selection box
+          setSelectionBox({
+            startX: e.clientX,
+            startY: e.clientY,
+            currentX: e.clientX,
+            currentY: e.clientY,
+          })
+          // Clear selection if not holding Cmd/Ctrl
+          if (!e.metaKey && !e.ctrlKey) {
+            setSelectedIds(new Set())
+          }
+        } else {
+          // Hand tool or other: just pan
+          setIsPanning(true)
+          setMomentum({ x: 0, y: 0 })
+          setStartPos({
+            x: e.clientX - position.x,
+            y: e.clientY - position.y,
+          })
+        }
       }
     },
-    [position, draggingCellId, isEditing, contextMenu],
+    [position, draggingCellId, isEditing, contextMenu, activeTool],
   )
 
   const handleMouseMove = useCallback(
@@ -758,6 +803,31 @@ export default function Whiteboard() {
       cellY: number,
     ) => {
       e.stopPropagation()
+
+      // Handle selection based on modifier keys
+      if (e.metaKey || e.ctrlKey) {
+        // Cmd/Ctrl+Click: toggle selection
+        const newSelectedIds = new Set(selectedIds)
+        if (newSelectedIds.has(cellId)) {
+          newSelectedIds.delete(cellId)
+        } else {
+          newSelectedIds.add(cellId)
+        }
+        setSelectedIds(newSelectedIds)
+        return // Don't start dragging when toggling selection
+      }
+
+      // Determine the new selection state
+      let newSelectedIds: Set<string>
+      if (!selectedIds.has(cellId)) {
+        // If clicking on an unselected item, select only this item
+        newSelectedIds = new Set([cellId])
+        setSelectedIds(newSelectedIds)
+      } else {
+        // If clicking on a selected item, keep current selection
+        newSelectedIds = selectedIds
+      }
+
       setDraggingCellId(cellId)
       setMomentum({ x: 0, y: 0 })
       setDragOffset({
@@ -768,9 +838,9 @@ export default function Whiteboard() {
       // Bring this cell to front
       bringToFront(cellId)
 
-      // Populate dragStartPositions with current positions
+      // Populate dragStartPositions using the NEW selection state
       const newDragStartPositions = new Map<string, { x: number; y: number }>()
-      selectedIds.forEach((id) => {
+      newSelectedIds.forEach((id) => {
         if (id.startsWith('cell-')) {
           const cell = cells.find((c) => c.id === id)
           if (cell) {
@@ -781,9 +851,6 @@ export default function Whiteboard() {
           newDragStartPositions.set(id, pos)
         }
       })
-      if (newDragStartPositions.size === 0) {
-        newDragStartPositions.set(cellId, { x: cellX, y: cellY })
-      }
       setDragStartPositions(newDragStartPositions)
     },
     [position, zoom, selectedIds, cells, getBlockPosition, bringToFront],
@@ -1236,6 +1303,23 @@ export default function Whiteboard() {
         </div>
       )}
 
+      {/* Selection box overlay */}
+      {selectionBox && (
+        <div
+          style={{
+            position: 'fixed',
+            left: Math.min(selectionBox.startX, selectionBox.currentX),
+            top: Math.min(selectionBox.startY, selectionBox.currentY),
+            width: Math.abs(selectionBox.currentX - selectionBox.startX),
+            height: Math.abs(selectionBox.currentY - selectionBox.startY),
+            border: '2px solid #3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            pointerEvents: 'none',
+            zIndex: 1000,
+          }}
+        />
+      )}
+
       {/* Panning canvas - infinite canvas that moves and scales */}
       <div
         style={{
@@ -1444,6 +1528,9 @@ export default function Whiteboard() {
           )
         })}
       </div>
+
+      {/* Sync Status Indicator */}
+      <SyncStatusIndicator />
     </div>
   )
 }

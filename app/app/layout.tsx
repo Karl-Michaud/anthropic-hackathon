@@ -1,10 +1,11 @@
 import type { Metadata } from 'next'
 import { Inter, Noto_Serif } from 'next/font/google'
 import './globals.css'
-import Navigation from './components/Navigation'
 import { WhiteboardProvider } from './context/WhiteboardContext'
 import { EditingProvider } from './context/EditingContext'
 import { DarkModeProvider } from './context/DarkModeContext'
+import { AuthProvider } from './components/auth/AuthProvider'
+import { ConditionalLayout } from './components/ConditionalLayout'
 
 const inter = Inter({
   variable: '--font-inter',
@@ -33,17 +34,15 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${notoSerif.variable} antialiased`}
       >
-        <DarkModeProvider>
-          <EditingProvider>
-            <WhiteboardProvider>
-              <div className="relative flex">
-                <Navigation />
-
-                <main className="flex-1 ml-24 p-6">{children}</main>
-              </div>
-            </WhiteboardProvider>
-          </EditingProvider>
-        </DarkModeProvider>
+        <AuthProvider>
+          <DarkModeProvider>
+            <EditingProvider>
+              <WhiteboardProvider>
+                <ConditionalLayout>{children}</ConditionalLayout>
+              </WhiteboardProvider>
+            </EditingProvider>
+          </DarkModeProvider>
+        </AuthProvider>
       </body>
     </html>
   )

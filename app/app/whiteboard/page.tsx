@@ -2,16 +2,16 @@
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from './components/auth/AuthProvider'
-import { LandingPage } from './components/auth/LandingPage'
+import { useAuth } from '../components/auth/AuthProvider'
+import Whiteboard from '../components/Whiteboard'
 
-export default function Home() {
+export default function WhiteboardPage() {
   const { user, loading } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
-    if (!loading && user) {
-      router.push('/whiteboard')
+    if (!loading && !user) {
+      router.push('/')
     }
   }, [user, loading, router])
 
@@ -23,9 +23,9 @@ export default function Home() {
     )
   }
 
-  if (user) {
-    return null // Will redirect
+  if (!user) {
+    return null
   }
 
-  return <LandingPage />
+  return <Whiteboard />
 }

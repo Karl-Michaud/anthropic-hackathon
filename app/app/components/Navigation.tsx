@@ -4,7 +4,7 @@ import {
   Home,
   X,
   Plus,
-  User,
+  LogOut,
   Upload,
   FileText,
   Moon,
@@ -15,6 +15,7 @@ import NextLink from 'next/link'
 import { useState, useRef, ChangeEvent, DragEvent } from 'react'
 import { useWhiteboard } from '../context/WhiteboardContext'
 import { useDarkMode } from '../context/DarkModeContext'
+import { useAuth } from './auth/AuthProvider'
 import {
   saveScholarshipToDB,
   generateAndSavePromptAnalysis,
