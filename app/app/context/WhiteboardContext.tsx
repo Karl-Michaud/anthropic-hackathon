@@ -121,6 +121,7 @@ interface WhiteboardContextType {
   syncStatus: SyncStatus
   userProfile: IUserProfile | null
   isFirstTimeUser: boolean
+  hasCheckedFirstTimeUser: boolean
 
   // Cell actions
   addCell: (cell: Omit<CellData, 'id'>) => string
@@ -207,7 +208,8 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
   const [isLoaded, setIsLoaded] = useState(false)
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle')
   const [userProfile, setUserProfileState] = useState<IUserProfile | null>(null)
-  const [isFirstTimeUser, setIsFirstTimeUser] = useState<boolean>(true)
+  const [isFirstTimeUser, setIsFirstTimeUser] = useState<boolean>(false)
+  const [hasCheckedFirstTimeUser, setHasCheckedFirstTimeUser] = useState<boolean>(false)
 
   const { user } = useAuth()
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -243,7 +245,8 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
       setBlockPositions([])
       setFeedbackPanels([])
       setUserProfileState(null)
-      setIsFirstTimeUser(true)
+      setIsFirstTimeUser(false)
+      setHasCheckedFirstTimeUser(false)
     }
 
     previousUserIdRef.current = currentUserId
@@ -283,11 +286,15 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
         ])
         setUserProfileState(profile)
         setIsFirstTimeUser(firstTime)
+        setHasCheckedFirstTimeUser(true)
 
         if (!hasLocalData && profile) {
           setIsLoaded(true)
           return
         }
+      } else {
+        // If no user is logged in, we've "checked" and they're not a first-time user
+        setHasCheckedFirstTimeUser(true)
       }
 
       // Use user-specific localStorage data
@@ -548,6 +555,7 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
         syncStatus,
         userProfile,
         isFirstTimeUser,
+        hasCheckedFirstTimeUser,
         addCell,
         updateCell,
         deleteCell,

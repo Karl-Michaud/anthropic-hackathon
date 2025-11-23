@@ -94,6 +94,7 @@ export default function Whiteboard() {
     feedbackPanels,
     blockPositions,
     isFirstTimeUser,
+    hasCheckedFirstTimeUser,
     setUserProfile,
     addCell,
     updateCell,
@@ -508,7 +509,7 @@ export default function Whiteboard() {
 
   const handleCanvasMouseDown = useCallback(
     (e: MouseEvent<HTMLDivElement>) => {
-      if (isEditing || isFirstTimeUser) return
+      if (isEditing || (hasCheckedFirstTimeUser && isFirstTimeUser)) return
 
       // Close context menu if open
       if (contextMenu) {
@@ -547,6 +548,7 @@ export default function Whiteboard() {
       contextMenu,
       activeTool,
       isFirstTimeUser,
+      hasCheckedFirstTimeUser,
     ],
   )
 
@@ -1158,7 +1160,7 @@ export default function Whiteboard() {
   const handleWheel = useCallback(
     (e: WheelEvent) => {
       // Disable wheel events when first-time user modal is open
-      if (isFirstTimeUser) return
+      if (hasCheckedFirstTimeUser && isFirstTimeUser) return
 
       if (e.metaKey || e.ctrlKey) {
         // Zoom with cmd/ctrl + scroll - zoom towards cursor
@@ -1178,7 +1180,7 @@ export default function Whiteboard() {
         }))
       }
     },
-    [zoom, zoomToPoint, isFirstTimeUser],
+    [zoom, zoomToPoint, isFirstTimeUser, hasCheckedFirstTimeUser],
   )
 
   useEffect(() => {
@@ -1466,8 +1468,8 @@ export default function Whiteboard() {
       {/* Sync Status Indicator */}
       <SyncStatusIndicator />
 
-      {/* First-time User Modal */}
-      {isFirstTimeUser && (
+      {/* First-time User Modal - Only show after we've checked and confirmed user is first-time */}
+      {hasCheckedFirstTimeUser && isFirstTimeUser && (
         <FirstTimeUserModal
           onComplete={async (profile) => {
             await setUserProfile(profile)
