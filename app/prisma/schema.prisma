@@ -1,12 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
-  // output   = "../app/generated/prisma"
 }
 
 datasource db {
@@ -15,48 +8,82 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-model Scholarship {
-  id                String             @id @unique @default(uuid())
-  title             String // the title of the scholarship 
-  description       String // the description of the scholarship
-  prompt            String
-  promptPersonality PromptPersonality?
-  promptPriorities  PromptPriorities?
-  promptValues      PromptValues?
-  promptWeights     PromptWeights?
-  generateDraft     GenerateDraft?
+model drafts {
+  id             String       @id
+  essay          String
+  scholarship_id String       @unique
+  user_id        String?      @db.Uuid
+  scholarships   scholarships @relation(fields: [scholarship_id], references: [id])
+}
 
-  @@map("scholarships")
+model prompt_personalities {
+  id                      String       @id
+  spirit                  String
+  tone_style              String
+  values_emphasized       String[]
+  recommended_essay_focus String
+  scholarship_id          String       @unique
+  user_id                 String?      @db.Uuid
+  scholarships            scholarships @relation(fields: [scholarship_id], references: [id])
+}
+
+model prompt_priorities {
+  id               String       @id
+  primary_focus    PrimaryFocus
+  priority_weights Json
+  scholarship_id   String       @unique
+  user_id          String?      @db.Uuid
+  scholarships     scholarships @relation(fields: [scholarship_id], references: [id])
+}
+
+model prompt_values {
+  id                String       @id
+  values_emphasized String[]
+  value_definitions Json
+  evidence_phrases  String[]
+  scholarship_id    String       @unique
+  user_id           String?      @db.Uuid
+  scholarships      scholarships @relation(fields: [scholarship_id], references: [id])
+}
+
+model prompt_weights {
+  id             String       @id
+  weights        Json
+  scholarship_id String       @unique
+  user_id        String?      @db.Uuid
+  scholarships   scholarships @relation(fields: [scholarship_id], references: [id])
+}
+
+model scholarships {
+  id                   String                @id @unique
+  title                String
+  description          String
+  prompt               String
+  user_id              String?               @db.Uuid
+  drafts               drafts?
+  prompt_personalities prompt_personalities?
+  prompt_priorities    prompt_priorities?
+  prompt_values        prompt_values?
+  prompt_weights       prompt_weights?
+}
+
+model whiteboard_data {
+  id                 String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id            String   @unique @db.Uuid
+  cells              Json     @default("[]")
+  scholarships       Json     @default("[]")
+  essays             Json     @default("[]")
+  json_outputs       Json     @default("[]")
+  block_positions    Json     @default("[]")
+  is_first_time_user Boolean  @default(true)
+  created_at         DateTime @default(now())
+  updated_at         DateTime
 }
 
 enum ImportanceLevel {
   HIGH
   MEDIUM
   LOW
-}
-
-model PromptPersonality {
-  id                    String   @id @default(cuid())
-  spirit                String // what is the purpose of the scholarship? Why was it established? How can the essay be tailored to match the spirit of the scholarship?
-  toneStyle             String   @map("tone_style") // be humourous, serious, and/or dramatic?
-  valuesEmphasized      String[] @map("values_emphasized") // academic, service, etc
-  recommendedEssayFocus String   @map("recommended_essay_focus") // what the essay should talk about (with regards to what the user has entered)
-
-  scholarshipId String      @unique @map("scholarship_id")
-  scholarship   Scholarship @relation(fields: [scholarshipId], references: [id])
-
-  @@map("prompt_personalities")
-}
-
-model PromptPriorities {
-  id              String       @id @default(cuid())
-  primaryFocus    PrimaryFocus @map("primary_focus") // a list of possible focuses for the scholarship
-  priorityWeights Json         @map("priority_weights") // Record<string, number>; matches each focus with a weight (percentage)
-
-  scholarshipId String      @unique @map("scholarship_id")
-  scholarship   Scholarship @relation(fields: [scholarshipId], references: [id])
-
-  @@map("prompt_priorities")
 }
 
 enum PrimaryFocus {
@@ -67,37 +94,4 @@ enum PrimaryFocus {
   ACADEMIC_EXCELLENCE
   EQUITY
   OTHER
-}
-
-model PromptValues {
-  id               String   @id @default(cuid())
-  valuesEmphasized String[] @map("values_emphasized") // the values that are especially emphasized in this prompt and/or scholarship
-  valueDefinitions Json     @map("value_definitions") // Record<string, string>; match each value with an elaboration of what that value means, particularly with regards to the specifics of the scholarship
-  evidencePhrases  String[] @map("evidence_phrases") // provide important phrases in the prompt and/or scholarship description that is relevant to the values of the scholarship
-
-  scholarshipId String      @unique @map("scholarship_id")
-  scholarship   Scholarship @relation(fields: [scholarshipId], references: [id])
-
-  @@map("prompt_values")
-}
-
-model PromptWeights {
-  id String @id @default(cuid())
-
-  weights Json @map("weights")
-
-  scholarshipId String      @unique @map("scholarship_id")
-  scholarship   Scholarship @relation(fields: [scholarshipId], references: [id])
-
-  @@map("prompt_weights")
-}
-
-model GenerateDraft {
-  id    String @id @default(cuid())
-  essay String
-
-  scholarshipId String      @unique @map("scholarship_id")
-  scholarship   Scholarship @relation(fields: [scholarshipId], references: [id])
-
-  @@map("drafts")
 }

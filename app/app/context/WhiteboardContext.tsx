@@ -15,9 +15,17 @@ import {
   loadFeedbackDraft,
   clearFeedbackDraft,
 } from '../lib/dynamicFeedback'
+import { syncManager, type SyncStatus } from '../lib/syncManager'
+import { useAuth } from '../components/auth/AuthProvider'
 
-const STORAGE_KEY = 'whiteboard-data'
+const STORAGE_KEY_PREFIX = 'whiteboard-data'
 const DEBOUNCE_MS = 500
+
+// Get user-specific storage key
+function getStorageKey(userId?: string): string {
+  if (!userId) return `${STORAGE_KEY_PREFIX}-anonymous`
+  return `${STORAGE_KEY_PREFIX}-${userId}`
+}
 
 export interface AdaptiveWeightCategory {
   weight: number
@@ -104,6 +112,7 @@ interface WhiteboardContextType {
   jsonOutputs: JsonOutputData[]
   feedbackPanels: FeedbackData[]
   blockPositions: BlockPosition[]
+  syncStatus: SyncStatus
 
   // Cell actions
   addCell: (cell: Omit<CellData, 'id'>) => string
@@ -152,10 +161,11 @@ const defaultState: WhiteboardState = {
 
 const WhiteboardContext = createContext<WhiteboardContextType | null>(null)
 
-function loadFromStorage(): WhiteboardState {
+function loadFromStorage(userId?: string): WhiteboardState {
   if (typeof window === 'undefined') return defaultState
   try {
-    const stored = localStorage.getItem(STORAGE_KEY)
+    const key = getStorageKey(userId)
+    const stored = localStorage.getItem(key)
     if (stored) {
       return JSON.parse(stored)
     }
@@ -165,16 +175,27 @@ function loadFromStorage(): WhiteboardState {
   return defaultState
 }
 
-function saveToStorage(state: WhiteboardState) {
+function saveToStorage(state: WhiteboardState, userId?: string) {
   if (typeof window === 'undefined') return
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+    const key = getStorageKey(userId)
+    localStorage.setItem(key, JSON.stringify(state))
   } catch (error) {
     console.error('Failed to save whiteboard data:', error)
   }
 }
 
-export function WhiteboardProvider({ children }: { children: ReactNode }) {
+function clearUserStorage(userId?: string) {
+  if (typeof window === 'undefined') return
+  try {
+    const key = getStorageKey(userId)
+    localStorage.removeItem(key)
+  } catch (error) {
+    console.error('Failed to clear whiteboard data:', error)
+  }
+}
+
+export function WhiteboardProvider({ children }: { children: ReactNode}) {
   const [cells, setCells] = useState<CellData[]>([])
   const [scholarships, setScholarships] = useState<ScholarshipData[]>([])
   const [essays, setEssays] = useState<EssayData[]>([])
@@ -182,47 +203,119 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
   const [feedbackPanels, setFeedbackPanels] = useState<FeedbackData[]>([])
   const [blockPositions, setBlockPositions] = useState<BlockPosition[]>([])
   const [isLoaded, setIsLoaded] = useState(false)
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle')
 
+  const { user } = useAuth()
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const previousUserIdRef = useRef<string | undefined>(undefined)
+
+  // Subscribe to sync status changes
+  useEffect(() => {
+    const unsubscribe = syncManager.onStatusChange(setSyncStatus)
+    return unsubscribe
+  }, [])
+
+  // Reset state when user changes (logout or switch accounts)
+  useEffect(() => {
+    const currentUserId = user?.id
+    const previousUserId = previousUserIdRef.current
+
+    // If user changed (not initial load), reset state
+    if (previousUserId !== undefined && previousUserId !== currentUserId) {
+      console.log('User changed, resetting state...')
+
+      // Cancel any pending saves
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
+        saveTimeoutRef.current = null
+      }
+      syncManager.cancelPendingSync()
+
+      setIsLoaded(false)
+      setCells([])
+      setScholarships([])
+      setEssays([])
+      setJsonOutputs([])
+      setBlockPositions([])
+      setFeedbackPanels([])
+    }
+
+    previousUserIdRef.current = currentUserId
+  }, [user?.id])
 
   // Load from localStorage after hydration (client-side only)
   useEffect(() => {
-    const stored = loadFromStorage()
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setCells(stored.cells)
-    setScholarships(stored.scholarships)
-    setEssays(stored.essays)
-    setJsonOutputs(stored.jsonOutputs)
-    setBlockPositions(stored.blockPositions)
+    async function loadData() {
+      // Load from user-specific localStorage
+      const stored = loadFromStorage(user?.id)
 
-    // Load feedback panel drafts separately
-    const feedbackDrafts: FeedbackData[] = []
-    stored.essays.forEach((essay) => {
-      const draft = loadFeedbackDraft(essay.id)
-      if (draft) {
-        feedbackDrafts.push(draft)
+      // If user-specific localStorage is empty and user is logged in, try to restore from database
+      const hasLocalData = stored.cells.length > 0 || stored.scholarships.length > 0 || stored.essays.length > 0
+
+      if (!hasLocalData && user) {
+        console.log('No local data found for user, loading from database...')
+        const dbData = await syncManager.loadFromDatabase(user.id)
+        if (dbData) {
+          console.log('Loaded data from database')
+          // eslint-disable-next-line react-hooks/set-state-in-effect
+          setCells(dbData.cells as CellData[])
+          setScholarships(dbData.scholarships as ScholarshipData[])
+          setEssays(dbData.essays as EssayData[])
+          setJsonOutputs(dbData.jsonOutputs as JsonOutputData[])
+          setBlockPositions(dbData.blockPositions as BlockPosition[])
+          setIsLoaded(true)
+          return
+        }
       }
-    })
-    setFeedbackPanels(feedbackDrafts)
 
-    setIsLoaded(true)
-  }, [])
+      // Use user-specific localStorage data
+      console.log('Loading from user-specific localStorage:', user?.id || 'anonymous')
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setCells(stored.cells)
+      setScholarships(stored.scholarships)
+      setEssays(stored.essays)
+      setJsonOutputs(stored.jsonOutputs)
+      setBlockPositions(stored.blockPositions)
 
-  // Debounced save to localStorage (only after hydration)
+      // Load feedback panel drafts separately
+      const feedbackDrafts: FeedbackData[] = []
+      stored.essays.forEach((essay) => {
+        const draft = loadFeedbackDraft(essay.id)
+        if (draft) {
+          feedbackDrafts.push(draft)
+        }
+      })
+      setFeedbackPanels(feedbackDrafts)
+
+      setIsLoaded(true)
+    }
+
+    loadData()
+  }, [user])
+
+  // Debounced save to localStorage and database (only after hydration)
   useEffect(() => {
     if (!isLoaded) return
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current)
     }
 
+    const whiteboardData = {
+      cells,
+      scholarships,
+      essays,
+      jsonOutputs,
+      blockPositions,
+    }
+
     saveTimeoutRef.current = setTimeout(() => {
-      saveToStorage({
-        cells,
-        scholarships,
-        essays,
-        jsonOutputs,
-        blockPositions,
-      })
+      // Always save to user-specific localStorage (instant backup)
+      saveToStorage(whiteboardData, user?.id)
+
+      // If user is logged in, also sync to database (debounced)
+      if (user?.id) {
+        syncManager.debouncedSave(user.id, whiteboardData)
+      }
     }, DEBOUNCE_MS)
 
     return () => {
@@ -230,7 +323,7 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
         clearTimeout(saveTimeoutRef.current)
       }
     }
-  }, [cells, scholarships, essays, jsonOutputs, blockPositions, isLoaded])
+  }, [cells, scholarships, essays, jsonOutputs, blockPositions, isLoaded, user])
 
   // Cell actions
   const addCell = useCallback((cell: Omit<CellData, 'id'>) => {
@@ -393,6 +486,7 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
         jsonOutputs,
         feedbackPanels,
         blockPositions,
+        syncStatus,
         addCell,
         updateCell,
         deleteCell,
