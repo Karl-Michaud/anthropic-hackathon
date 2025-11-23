@@ -88,6 +88,7 @@ model WhiteboardData {
   jsonOutputs     Json     @default("[]") @map("json_outputs")
   blockPositions  Json     @default("[]") @map("block_positions")
   isFirstTimeUser Boolean  @default(true) @map("is_first_time_user")
+  userResponses   Json     @default("[]")
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @map("updated_at")
 
