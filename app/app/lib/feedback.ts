@@ -260,7 +260,7 @@ ${userProfile.cvResumeSummary}
     .join('\n')
 
   // Use Claude to enhance the essay based on the feedback
-  const updatePrompt = `You are an expert essay editor helping a student improve their scholarship essay based on feedback received.
+  const updatePrompt = `You are an expert essay editor helping a student improve their scholarship essay based on feedback received. Do not fabricate any information; use only the provided applicant profile details and the student's responses to the feedback questions.
 ${userContext}
 
 Original Essay:
