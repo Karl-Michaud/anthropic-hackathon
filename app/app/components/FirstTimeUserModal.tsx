@@ -1,7 +1,5 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
-import { ChevronDown } from 'lucide-react'
 import { useDarkMode } from '../context/DarkModeContext'
 import { UserProfileForm } from './UserProfileForm'
 import { IUserProfile } from '../types/user-profile'
@@ -18,28 +16,9 @@ interface FirstTimeUserModalProps {
 }
 
 export function FirstTimeUserModal({ onComplete }: FirstTimeUserModalProps) {
-  const [showScrollIndicator, setShowScrollIndicator] = useState(true)
-  const scrollContainerRef = useRef<HTMLDivElement>(null)
   const { isDarkMode } = useDarkMode()
 
   const colors = isDarkMode ? colorsDark : colorsLight
-
-  // Handle scroll to hide indicator
-  useEffect(() => {
-    const container = scrollContainerRef.current
-    if (!container) return
-
-    const handleScroll = () => {
-      if (container.scrollTop > 50) {
-        setShowScrollIndicator(false)
-      } else {
-        setShowScrollIndicator(true)
-      }
-    }
-
-    container.addEventListener('scroll', handleScroll)
-    return () => container.removeEventListener('scroll', handleScroll)
-  }, [])
 
   return (
     <div
@@ -52,8 +31,7 @@ export function FirstTimeUserModal({ onComplete }: FirstTimeUserModalProps) {
       }}
     >
       <div
-        ref={scrollContainerRef}
-        className="w-full max-w-lg max-h-[90vh] overflow-y-auto relative scrollbar-hide"
+        className="w-full max-w-4xl relative"
         style={{
           backgroundColor: isDarkMode
             ? brandColors.componentBackgroundDark
@@ -61,8 +39,6 @@ export function FirstTimeUserModal({ onComplete }: FirstTimeUserModalProps) {
           borderRadius: borderRadius['2xl'],
           boxShadow: shadows.xl,
           border: `1px solid ${colors.border.default}`,
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none',
         }}
       >
         {/* Header */}
@@ -85,31 +61,6 @@ export function FirstTimeUserModal({ onComplete }: FirstTimeUserModalProps) {
         <div className="p-6">
           <UserProfileForm onSubmit={onComplete} isModal />
         </div>
-
-        {/* Scroll Indicator */}
-        {showScrollIndicator && (
-          <div
-            className="sticky bottom-0 left-0 right-0 flex justify-center pb-4 pt-2 pointer-events-none"
-            style={{
-              background: `linear-gradient(to top, ${
-                isDarkMode
-                  ? brandColors.componentBackgroundDark
-                  : brandColors.componentBackground
-              } 60%, transparent)`,
-            }}
-          >
-            <div
-              className="animate-bounce p-2 rounded-full"
-              style={{
-                backgroundColor: isDarkMode
-                  ? 'rgba(0, 128, 128, 0.2)'
-                  : 'rgba(0, 128, 128, 0.1)',
-              }}
-            >
-              <ChevronDown size={20} style={{ color: brandColors.teal }} />
-            </div>
-          </div>
-        )}
       </div>
     </div>
   )
