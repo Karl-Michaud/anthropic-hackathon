@@ -20,6 +20,7 @@ import { generateDraftWithAnalysis } from '../lib/request'
 import { useAuth } from './auth/AuthProvider'
 import { SyncStatusIndicator } from './SyncStatusIndicator'
 import { FirstTimeUserModal } from './FirstTimeUserModal'
+import { ContextMenu } from './ContextMenu'
 import type { IGenerateDraft } from '../types/interfaces'
 import type {
   CellData,
@@ -67,6 +68,10 @@ export default function Whiteboard() {
   // Tool state
   const [activeTool, setActiveTool] = useState<Tool>('select')
   const [contextMenu, setContextMenu] = useState<{
+    x: number
+    y: number
+  } | null>(null)
+  const [lastContextMenuCanvasPos, setLastContextMenuCanvasPos] = useState<{
     x: number
     y: number
   } | null>(null)
@@ -318,6 +323,7 @@ export default function Whiteboard() {
       // Close context menu if open
       if (contextMenu) {
         setContextMenu(null)
+        setLastContextMenuCanvasPos(null)
       }
 
       if (activeTool === 'hand') {
@@ -514,6 +520,7 @@ export default function Whiteboard() {
       // Close context menu if open
       if (contextMenu) {
         setContextMenu(null)
+        setLastContextMenuCanvasPos(null)
         return
       }
 
@@ -961,6 +968,11 @@ export default function Whiteboard() {
   // Context menu handlers
   const handleContextMenu = useCallback(
     (e: MouseEvent<HTMLDivElement>, blockId?: string) => {
+      // Don't show context menu if in hand tool mode or if modal is open
+      if (activeTool === 'hand' || (hasCheckedFirstTimeUser && isFirstTimeUser)) {
+        return
+      }
+
       e.preventDefault()
       e.stopPropagation()
 
@@ -969,9 +981,14 @@ export default function Whiteboard() {
         setSelectedIds(new Set([blockId]))
       }
 
+      // Convert screen coordinates to canvas coordinates for paste positioning
+      const canvasX = (e.clientX - position.x) / zoom
+      const canvasY = (e.clientY - position.y) / zoom
+      setLastContextMenuCanvasPos({ x: canvasX, y: canvasY })
+
       setContextMenu({ x: e.clientX, y: e.clientY })
     },
-    [selectedIds],
+    [selectedIds, activeTool, hasCheckedFirstTimeUser, isFirstTimeUser, position, zoom],
   )
 
   const handleCopy = useCallback(() => {
@@ -1011,13 +1028,56 @@ export default function Whiteboard() {
   const handlePaste = useCallback(() => {
     if (!clipboard || clipboard.length === 0) return
 
+    // Determine paste position
+    let pasteX: number
+    let pasteY: number
+
+    if (lastContextMenuCanvasPos) {
+      // Use context menu position (right-click paste)
+      pasteX = lastContextMenuCanvasPos.x
+      pasteY = lastContextMenuCanvasPos.y
+    } else {
+      // Use viewport center (keyboard paste)
+      const viewportCenterX = window.innerWidth / 2
+      const viewportCenterY = window.innerHeight / 2
+      pasteX = (viewportCenterX - position.x) / zoom
+      pasteY = (viewportCenterY - position.y) / zoom
+    }
+
     const newIds = new Set<string>()
+
+    // Calculate the centroid of copied items to paste them as a group
+    let totalX = 0
+    let totalY = 0
+    let count = 0
+
+    clipboard.forEach((item) => {
+      if (item.type === 'cell') {
+        const cellData = item.data as any
+        totalX += cellData.x
+        totalY += cellData.y
+        count++
+      } else if (item.type === 'scholarship' || item.type === 'essay') {
+        const blockData = item.data as any
+        const pos = getBlockPosition(blockData.id)
+        totalX += pos.x
+        totalY += pos.y
+        count++
+      }
+    })
+
+    const centroidX = count > 0 ? totalX / count : 0
+    const centroidY = count > 0 ? totalY / count : 0
 
     clipboard.forEach((item) => {
       if (item.type === 'cell') {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
         const { id: _id, ...cellData } = item.data as any
-        const clamped = clampToCanvas(cellData.x + 50, cellData.y + 50)
+        // Calculate offset from centroid
+        const offsetX = cellData.x - centroidX
+        const offsetY = cellData.y - centroidY
+        // Place at paste position + offset
+        const clamped = clampToCanvas(pasteX + offsetX, pasteY + offsetY)
         const newId = addCell({
           ...cellData,
           x: clamped.x,
@@ -1034,7 +1094,10 @@ export default function Whiteboard() {
           weights: item.data.weights,
         })
         const pos = getBlockPosition(scholarshipData.id)
-        const clamped = clampToCanvas(pos.x + 50, pos.y + 50)
+        // Calculate offset from centroid
+        const offsetX = pos.x - centroidX
+        const offsetY = pos.y - centroidY
+        const clamped = clampToCanvas(pasteX + offsetX, pasteY + offsetY)
         updateBlockPosition(newId, clamped.x, clamped.y)
         newIds.add(newId)
       } else if (item.type === 'essay') {
@@ -1046,15 +1109,24 @@ export default function Whiteboard() {
           maxWordCount: essayData.maxWordCount,
         })
         const pos = getBlockPosition(essayData.id)
-        const clamped = clampToCanvas(pos.x + 50, pos.y + 50)
+        // Calculate offset from centroid
+        const offsetX = pos.x - centroidX
+        const offsetY = pos.y - centroidY
+        const clamped = clampToCanvas(pasteX + offsetX, pasteY + offsetY)
         updateBlockPosition(newId, clamped.x, clamped.y)
         newIds.add(newId)
       }
     })
 
     setSelectedIds(newIds)
+
+    // Clear the context menu position after pasting
+    setLastContextMenuCanvasPos(null)
   }, [
     clipboard,
+    lastContextMenuCanvasPos,
+    position,
+    zoom,
     addCell,
     addScholarship,
     addEssay,
@@ -1273,6 +1345,22 @@ export default function Whiteboard() {
             backgroundColor: 'rgba(59, 130, 246, 0.1)',
             pointerEvents: 'none',
             zIndex: 1000,
+          }}
+        />
+      )}
+
+      {/* Context Menu */}
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onCopy={handleCopy}
+          onPaste={handlePaste}
+          onDelete={handleDelete}
+          isPasteDisabled={!clipboard || clipboard.length === 0}
+          onClose={() => {
+            setContextMenu(null)
+            setLastContextMenuCanvasPos(null)
           }}
         />
       )}
