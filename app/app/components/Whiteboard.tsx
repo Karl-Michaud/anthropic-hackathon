@@ -28,9 +28,9 @@ import type {
 import type { FeedbackData } from '../lib/dynamicFeedback'
 import { brandColors } from '../styles/design-system'
 
-const ZOOM_MIN = 0.06
+const ZOOM_MIN = 0.15 // 15% minimum zoom
 const ZOOM_MAX = 1.0
-const ZOOM_STEP = 0.1
+const ZOOM_STEP = 0.05 // Slower zoom speed
 const CANVAS_LIMIT = 65000 // Figma-style canvas size limit in pixels
 
 type ClipboardItem =
