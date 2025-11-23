@@ -22,6 +22,8 @@ export interface SocraticPanelData {
   introText?: string
   questions: SocraticQuestion[]
   areasOfImprovement?: string[] // For custom drafts
+  propertyType?: 'personality' | 'value' | 'weight' | 'priority' // Type of property being addressed
+  propertyValue?: string // The specific property value
 }
 
 interface SocraticPanelProps {
@@ -143,7 +145,24 @@ export default function SocraticPanel({
         >
           <X size={24} />
         </button>
-        {data.hiddenWeightType && (
+        {/* Property Type and Value Display */}
+        {(data.propertyType && data.propertyValue) && (
+          <div className="mb-3">
+            <div className="flex items-center gap-2">
+              <span
+                className="px-3 py-1 rounded-md text-xs font-medium capitalize"
+                style={{
+                  backgroundColor: brandColors.navy,
+                  color: brandColors.foregroundDark,
+                }}
+              >
+                {data.propertyValue}
+              </span>
+            </div>
+          </div>
+        )}
+        {/* Legacy support for hiddenWeightType */}
+        {!data.propertyType && data.hiddenWeightType && (
           <div className="mb-3 flex items-center gap-2">
             <span
               className="text-sm font-medium font-serif"
@@ -203,17 +222,23 @@ export default function SocraticPanel({
         style={{ backgroundColor: colors.background.paper }}
       >
         {data.explanation && (
-          <div
-            className="mb-6 pl-4 py-3 border-l-4 italic"
-            style={{
-              borderColor: brandColors.teal,
-              backgroundColor: isDarkMode
-                ? 'rgba(20, 184, 166, 0.1)'
-                : 'rgba(20, 184, 166, 0.05)',
-              color: colors.text.secondary,
-            }}
-          >
-            <p className="text-sm leading-relaxed">{data.explanation}</p>
+          <div className="mb-6">
+            <p
+              className="text-xs font-semibold uppercase tracking-wide mb-2"
+              style={{ color: colors.text.secondary }}
+            >
+              From your response
+            </p>
+            <div
+              className="pl-4 py-3 border-l-4 italic"
+              style={{
+                borderColor: brandColors.teal,
+                backgroundColor: isDarkMode ? '#262624' : brandColors.pampas,
+                color: isDarkMode ? colors.text.secondary : colors.text.primary,
+              }}
+            >
+              <p className="text-sm leading-relaxed">{data.explanation}</p>
+            </div>
           </div>
         )}
 
@@ -251,7 +276,7 @@ export default function SocraticPanel({
                   }}
                 >
                   <span
-                    className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+                    className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
                     style={{
                       backgroundColor: brandColors.teal,
                       color: brandColors.foregroundDark,

@@ -922,6 +922,8 @@ export default function EssayBlock({
         explanation: selectedSection.explanation,
         questions: data.socraticData?.[selectedSection.id] || [],
         areasOfImprovement: selectedSection.areasOfImprovement, // For custom drafts
+        propertyType: selectedSection.propertyType, // Add property type
+        propertyValue: selectedSection.propertyValue, // Add property value
       }
     : null
 
@@ -1149,9 +1151,9 @@ export default function EssayBlock({
             >
               <button
                 onClick={handleSubmitForReview}
-                disabled={isSubmitting || wordCount < 50}
+                disabled={isSubmitting || (data.isCustomDraft && wordCount < 50)}
                 className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all ${
-                  isSubmitting || wordCount < 50
+                  isSubmitting || (data.isCustomDraft && wordCount < 50)
                     ? 'opacity-50 cursor-not-allowed'
                     : 'hover:shadow-md cursor-pointer'
                 }`}
@@ -1163,20 +1165,23 @@ export default function EssayBlock({
                 {isSubmitting ? (
                   <>
                     <Loader2 size={18} className="animate-spin" />
-                    Submitting for Review...
+                    {data.isCustomDraft ? 'Submitting for Review...' : 'Refining Draft...'}
                   </>
                 ) : (
                   <>
                     <Sparkles size={18} />
-                    {data.customDraftAnalysis ? 'Resubmit for Review' : 'Submit for Review'}{' '}
-                    {wordCount < 50 && `(${wordCount}/50 words)`}
+                    {data.isCustomDraft
+                      ? (data.customDraftAnalysis ? 'Resubmit for Review' : 'Submit for Review')
+                      : (data.customDraftAnalysis ? 'Refine Draft with Answers' : 'Submit Answers for Review')
+                    }{' '}
+                    {data.isCustomDraft && wordCount < 50 && `(${wordCount}/50 words)`}
                   </>
                 )}
               </button>
               {submitError && (
                 <p className="mt-2 text-xs text-red-600">{submitError}</p>
               )}
-              {wordCount < 50 && !submitError && (
+              {data.isCustomDraft && wordCount < 50 && !submitError && (
                 <p
                   className={`mt-2 text-xs ${
                     isDarkMode ? 'text-gray-400' : 'text-gray-500'
@@ -1185,7 +1190,19 @@ export default function EssayBlock({
                   Write at least 50 words to submit for comprehensive analysis
                 </p>
               )}
-              {data.customDraftAnalysis && data.socraticData && wordCount >= 50 && !submitError && (
+              {!data.isCustomDraft && data.socraticData && !submitError && (
+                <p
+                  className={`mt-2 text-xs ${
+                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                  }`}
+                >
+                  {data.customDraftAnalysis
+                    ? 'Answer questions in highlighted sections, then refine to improve your essay'
+                    : 'Submit your answers to the highlighted questions to refine your essay and see alignment analysis'
+                  }
+                </p>
+              )}
+              {data.isCustomDraft && data.customDraftAnalysis && data.socraticData && wordCount >= 50 && !submitError && (
                 <p
                   className={`mt-2 text-xs ${
                     isDarkMode ? 'text-gray-400' : 'text-gray-500'
@@ -1197,8 +1214,8 @@ export default function EssayBlock({
             </div>
           )}
 
-          {/* Custom Draft Analysis */}
-          {data.isCustomDraft && data.customDraftAnalysis && (
+          {/* Alignment Analysis - Shows for both custom and AI-generated drafts */}
+          {data.customDraftAnalysis && (
             <CustomDraftAnalysisDisplay
               analysis={data.customDraftAnalysis}
               isDarkMode={isDarkMode}

@@ -105,11 +105,10 @@ function PersonalityDisplay({
                 {valuesEmphasized.map((value: string, idx: number) => (
                   <span
                     key={idx}
-                    className={`px-2 py-1 rounded text-xs font-serif ${
-                      isDarkMode
-                        ? 'bg-blue-900 text-blue-200'
-                        : 'bg-blue-100 text-blue-700'
-                    }`}
+                    className="px-2 py-1 rounded text-xs font-serif text-white"
+                    style={{
+                      backgroundColor: brandColors.teal,
+                    }}
                   >
                     {value}
                   </span>
@@ -198,11 +197,19 @@ function PrioritiesDisplay({
               <p className={`font-semibold mb-1 ${classes.heading}`}>
                 Selection Signals:
               </p>
-              <ul className={`list-disc list-inside space-y-1 ${classes.text}`}>
+              <div className="flex flex-wrap gap-1">
                 {selectionSignals.map((signal: string, idx: number) => (
-                  <li key={idx}>{signal}</li>
+                  <span
+                    key={idx}
+                    className="px-2 py-1 rounded text-xs text-white"
+                    style={{
+                      backgroundColor: brandColors.purple,
+                    }}
+                  >
+                    {signal}
+                  </span>
                 ))}
-              </ul>
+              </div>
             </div>
           )}
         </div>
@@ -262,11 +269,10 @@ function ValuesDisplay({
                 {valuesEmphasized.map((value: string, idx: number) => (
                   <span
                     key={idx}
-                    className={`px-2 py-1 rounded text-xs ${
-                      isDarkMode
-                        ? 'bg-purple-900 text-purple-200'
-                        : 'bg-purple-100 text-purple-700'
-                    }`}
+                    className="px-2 py-1 rounded text-xs text-white"
+                    style={{
+                      backgroundColor: brandColors.crail,
+                    }}
                   >
                     {value}
                   </span>
@@ -886,14 +892,11 @@ export function ScholarshipBlock({
           : data.personality
       ) as Record<string, unknown>
 
-      const spirit = (profile.spirit || profile.core_identity) as
-        | string
+      const valuesEmphasized = (profile.valuesEmphasized || profile.values_emphasized) as
+        | string[]
         | undefined
-      if (spirit) {
-        // Extract a keyword from the spirit description
-        const words = spirit.split(' ')
-        const keyword = words.find((w) => w.length > 5) || words[0]
-        badges.push({ label: keyword.replace(/[,.:;]/g, ''), color: 'teal' })
+      if (valuesEmphasized && valuesEmphasized.length > 0) {
+        badges.push({ label: valuesEmphasized[0], color: 'teal' })
       }
     }
 
@@ -1046,11 +1049,9 @@ export function ScholarshipBlock({
       {!isEditing && (
         <>
           <PersonalityDisplay data={data.personality} isDarkMode={isDarkMode} />
-          <PrioritiesDisplay data={data.priorities} isDarkMode={isDarkMode} />
           <ValuesDisplay data={data.values} isDarkMode={isDarkMode} />
           <WeightsDisplay data={data.weights} isDarkMode={isDarkMode} />
           {!data.personality &&
-            !data.priorities &&
             !data.values &&
             !data.weights && (
               <div
@@ -1061,7 +1062,7 @@ export function ScholarshipBlock({
                 }`}
               >
                 No AI analysis available. Generate analysis to see personality,
-                priorities, values, and weights.
+                values, and weights.
               </div>
             )}
         </>

@@ -82,9 +82,7 @@ export async function analyzeSocratic(
     ? `
 
 ### APPLICANT PROFILE
-Use this information to craft personalized questions that help the student elaborate on their actual experiences. Do NOT make up any details. Do not hallucinate information.
-
-**Name**: ${userProfile.firstName} ${userProfile.lastName}
+Use this information to craft personalized questions that help the student elaborate on their actual experiences. Do NOT make up any details. Do not hallucinate information. Address the student as "You" in all questions and explanations.
 
 **Background Summary**:
 ${userProfile.userSummary}
@@ -112,8 +110,10 @@ Your task: Identify ${sectionCount} key sections that would benefit from elabora
 For each section:
 1. Find exact character start and end positions (0-indexed) of the text to improve
 2. Create a brief title/theme for that section (3-5 words)
-3. Write a 1-2 sentence explanation of why this section was highlighted and why these questions matter
-4. Generate 2-4 open-ended Socratic questions to guide elaboration
+3. Classify the property type being addressed: "personality" (tone, spirit, communication style), "value" (specific values like innovation, integrity), "weight" (hidden requirements like sustained depth, problem-solving), or "priority" (primary focus areas)
+4. Identify the specific property value being addressed (e.g., "Innovation", "Resilience", "Problem-Solving Orientation")
+5. Write a 1-2 sentence explanation of why this section was highlighted. Address the student as "You" (not by name). Explain how improving this section will help them better demonstrate the identified property.
+6. Generate 2-4 open-ended Socratic questions to guide elaboration. Use "You" to address the student personally.
 
 Essay to analyze:
 """
@@ -127,8 +127,10 @@ Respond with ONLY valid JSON (no markdown, no code blocks), matching this exact 
       "startIndex": 0,
       "endIndex": 50,
       "title": "Theme title here",
-      "explanation": "A brief 1-2 sentence explanation of why this section needs improvement and how the questions will help.",
-      "questions": ["Question 1?", "Question 2?"]
+      "propertyType": "personality",
+      "propertyValue": "Innovation mindset",
+      "explanation": "A brief explanation addressing the student as 'You'. Explain why this section needs improvement and how the questions will help.",
+      "questions": ["Question 1 addressing 'You'?", "Question 2 addressing 'You'?"]
     }
   ]
 }
@@ -136,8 +138,12 @@ Respond with ONLY valid JSON (no markdown, no code blocks), matching this exact 
 Rules:
 - startIndex and endIndex are CHARACTER positions, not word positions
 - Ensure indices are valid and don't overlap
-- The explanation should be concise but meaningful
-- Each question should encourage deeper thinking
+- propertyType must be one of: "personality", "value", "weight", or "priority"
+- propertyValue should be a specific, named property (e.g., "Innovation", "Sustained Depth Over Resume Padding")
+- The explanation must address the student as "You" (never use their name)
+- Questions must use "You" to directly address the student
+- The explanation should be concise but meaningful, connecting to the property being addressed
+- Each question should encourage deeper thinking about the specific property
 - Return only the JSON object, nothing else`
 
   const message = await client.messages.create({
@@ -221,7 +227,24 @@ Rules:
       continue
     }
 
-    const colorName = HIGHLIGHT_COLORS[i]
+    // Determine color based on property type
+    let colorName: 'amber' | 'cyan' | 'pink' | 'lime' | 'purple'
+    const propertyType = section.propertyType as 'personality' | 'value' | 'weight' | 'priority' | undefined
+
+    // Map property types to specific colors
+    if (propertyType === 'personality') {
+      colorName = 'cyan' // Teal/cyan for personality traits
+    } else if (propertyType === 'value') {
+      colorName = 'pink' // Pink/crail for values
+    } else if (propertyType === 'weight') {
+      colorName = 'lime' // Lime/olive for hidden requirements
+    } else if (propertyType === 'priority') {
+      colorName = 'purple' // Purple for priorities
+    } else {
+      // Fallback to cycling colors if no type specified
+      colorName = HIGHLIGHT_COLORS[i]
+    }
+
     const sectionId = `section-${Date.now()}-${i}`
 
     // Create highlighted section
@@ -233,6 +256,8 @@ Rules:
       title: section.title || 'Improvement area',
       explanation: section.explanation || undefined,
       colorName,
+      propertyType: section.propertyType as 'personality' | 'value' | 'weight' | 'priority' | undefined,
+      propertyValue: section.propertyValue as string | undefined,
     })
 
     // Create Socratic questions for this section
@@ -306,9 +331,7 @@ export async function submitSocraticAnswers(
     ? `
 
 ### APPLICANT PROFILE
-Use this to ensure improvements align with the student's actual background:
-
-**Name**: ${userProfile.firstName} ${userProfile.lastName}
+Use this to ensure improvements align with the student's actual background. When referring to the student in the improved essay, use natural language that reflects their voice and experiences.
 
 **Background Summary**:
 ${userProfile.userSummary}
@@ -328,7 +351,7 @@ ${essayContent}
 Student's Elaborations:
 ${answersText}
 
-Based on the student's responses, improve the essay by incorporating their insights and elaborations. Maintain the original structure and tone while enhancing the content with the details they provided. Make the writing flow naturally.
+Based on the student's responses, improve the essay by incorporating their insights and elaborations. Maintain the original structure, tone, and first-person perspective while enhancing the content with the details they provided. Make the writing flow naturally and authentically.
 
 Return ONLY the improved essay text, no explanations or markdown.`
 

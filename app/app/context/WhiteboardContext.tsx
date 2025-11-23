@@ -67,6 +67,8 @@ export interface HighlightedSection {
   explanation?: string
   colorName: 'amber' | 'cyan' | 'pink' | 'lime' | 'purple'
   areasOfImprovement?: string[] // For custom drafts - specific areas to improve
+  propertyType?: 'personality' | 'value' | 'weight' | 'priority' // Type of property being addressed
+  propertyValue?: string // The specific property value (e.g., "Innovation", "Resilience")
 }
 
 export interface SocraticQuestion {

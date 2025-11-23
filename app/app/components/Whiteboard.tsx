@@ -589,7 +589,7 @@ export default function Whiteboard() {
     [essays, updateEssay],
   )
 
-  // Combined handler for submitting custom drafts for review
+  // Combined handler for submitting drafts (both custom and AI-generated) for review
   const handleSubmitCustomDraftForReview = useCallback(
     async (essayId: string) => {
       console.log('📤 [Whiteboard.handleSubmitCustomDraftForReview] CALLED')
@@ -601,12 +601,8 @@ export default function Whiteboard() {
         throw new Error('Essay not found')
       }
 
-      if (!essay.isCustomDraft) {
-        console.error('❌ Essay is not a custom draft:', essayId)
-        return
-      }
-
       console.log('  - Essay found:', {
+        isCustomDraft: essay.isCustomDraft,
         contentLength: essay.content.length,
         wordCount: essay.content.trim().split(/\s+/).length,
         hasSocraticData: !!essay.socraticData,
@@ -681,16 +677,36 @@ export default function Whiteboard() {
 
         console.log('  - Valid non-overlapping sections:', validSections.length)
 
-        const highlightedSections: HighlightedSection[] = validSections.map((section, i) => ({
-          id: `section-${Date.now()}-${i}`,
-          startIndex: section.startIndex,
-          endIndex: section.endIndex,
-          title: section.title,
-          explanation: section.reasons, // Store reasons in explanation field
-          color: HIGHLIGHT_COLORS[i % HIGHLIGHT_COLORS.length].color,
-          colorName: HIGHLIGHT_COLORS[i % HIGHLIGHT_COLORS.length].colorName,
-          areasOfImprovement: section.areasOfImprovement, // Add this for custom drafts
-        }))
+        const highlightedSections: HighlightedSection[] = validSections.map((section, i) => {
+          // Determine color based on property type
+          let colorIndex = i % HIGHLIGHT_COLORS.length
+          const propertyType = (section as any).propertyType as 'personality' | 'value' | 'weight' | 'priority' | undefined
+
+          // Map property types to specific color indices
+          if (propertyType === 'personality') {
+            colorIndex = 1 // cyan for personality traits
+          } else if (propertyType === 'value') {
+            colorIndex = 2 // pink for values
+          } else if (propertyType === 'weight') {
+            colorIndex = 3 // lime for hidden requirements
+          } else if (propertyType === 'priority') {
+            colorIndex = 4 // purple for priorities
+          }
+          // Otherwise use cycling colors for backward compatibility
+
+          return {
+            id: `section-${Date.now()}-${i}`,
+            startIndex: section.startIndex,
+            endIndex: section.endIndex,
+            title: section.title,
+            explanation: section.reasons, // Store reasons in explanation field
+            color: HIGHLIGHT_COLORS[colorIndex].color,
+            colorName: HIGHLIGHT_COLORS[colorIndex].colorName,
+            areasOfImprovement: section.areasOfImprovement, // Add this for custom drafts
+            propertyType: (section as any).propertyType as 'personality' | 'value' | 'weight' | 'priority' | undefined,
+            propertyValue: (section as any).propertyValue as string | undefined,
+          }
+        })
 
         // Update essay with both results - no socraticData for custom drafts
         // NOTE: Content is NOT modified, only analysis results are added
@@ -1181,7 +1197,7 @@ export default function Whiteboard() {
       return
     }
 
-    // Calculate bounding box
+    // Calculate bounding box (for zoom calculation)
     let minX = Infinity
     let minY = Infinity
     let maxX = -Infinity
@@ -1198,9 +1214,16 @@ export default function Whiteboard() {
     const boundsWidth = maxX - minX
     const boundsHeight = maxY - minY
 
-    // Calculate center of all objects
+    // Calculate the VISUAL center (center of bounding box)
+    // This gives better visual balance than arithmetic mean of centers
     const centerX = (minX + maxX) / 2
     const centerY = (minY + maxY) / 2
+
+    console.log('🎯 [Recenter] Object details:', {
+      totalObjects: objects.length,
+      boundingBox: { minX, minY, maxX, maxY },
+      visualCenter: { x: centerX, y: centerY },
+    })
 
     // Calculate viewport dimensions
     const viewportWidth = window.innerWidth
@@ -1221,6 +1244,13 @@ export default function Whiteboard() {
 
     const newX = viewportCenterX - centerX * newZoom
     const newY = viewportCenterY - centerY * newZoom
+
+    console.log('🎯 [Recenter] Viewport calculation:', {
+      viewportSize: { width: viewportWidth, height: viewportHeight },
+      viewportCenter: { x: viewportCenterX, y: viewportCenterY },
+      zoom: newZoom,
+      newPosition: { x: newX, y: newY },
+    })
 
     // Apply zoom and position
     setZoom(newZoom)

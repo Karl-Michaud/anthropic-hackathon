@@ -1389,16 +1389,21 @@ ${essayContent}
 Identify ${sectionCount} key sections in the essay that would benefit from improvement. For each section:
 1. Find exact character start and end positions (0-indexed) of the text to improve
 2. Create a brief title/theme for that section (3-5 words)
-3. Write a detailed explanation of WHY this section was highlighted. Reference the scholarship's requirements, values, priorities, or weights when relevant. Explain what's missing or weak based on the scholarship analysis.
-4. Provide 2-4 specific, actionable areas of improvement for this section
+3. Classify the property type being addressed: "personality" (tone, spirit, communication style), "value" (specific values like innovation, integrity), "weight" (hidden requirements like sustained depth, problem-solving), or "priority" (primary focus areas)
+4. Identify the specific property value being addressed (e.g., "Innovation", "Resilience", "Problem-Solving Orientation")
+5. Write a detailed explanation of WHY this section was highlighted. Address the student as "You" (not by name). Reference the scholarship's requirements, values, priorities, or weights when relevant. Explain what's missing or weak based on the scholarship analysis.
+6. Provide 2-4 specific, actionable areas of improvement for this section. Use "You" to directly address the student.
 
 CRITICAL RULES for highlighting:
 - startIndex and endIndex are CHARACTER positions (0-indexed), not word positions
 - Sections MUST NOT overlap - each character can only be in ONE section
 - Each section must be unique with different start/end positions
 - Ensure indices are valid (0 <= startIndex < endIndex <= essay length)
+- propertyType must be one of: "personality", "value", "weight", or "priority"
+- propertyValue should be a specific, named property
+- The reasons must address the student as "You" (never use their name)
 - The reasons should explicitly reference the scholarship's hidden requirements when relevant
-- Areas of improvement should be specific and actionable
+- Areas of improvement should be specific, actionable, and address the student as "You"
 
 ---
 
@@ -1412,11 +1417,13 @@ Respond with ONLY valid JSON (no markdown, no code blocks), matching this exact 
       "startIndex": 0,
       "endIndex": 50,
       "title": "Opening statement",
-      "reasons": "This opening lacks connection to the scholarship's emphasis on innovation and problem-solving. The tone is too informal for a merit-based scholarship that values scholarly communication.",
+      "propertyType": "weight",
+      "propertyValue": "Problem-Solving Orientation",
+      "reasons": "Your opening lacks connection to the scholarship's emphasis on innovation and problem-solving. The tone doesn't match the scholarly communication style that this merit-based scholarship values.",
       "areasOfImprovement": [
-        "Connect opening to innovation theme from scholarship priorities",
+        "Connect your opening to the innovation theme from scholarship priorities",
         "Adopt a more formal, scholarly tone matching the scholarship's communication strategy",
-        "Reference specific problem-solving context early"
+        "Reference a specific problem-solving context early to demonstrate your analytical mindset"
       ]
     }
   ]

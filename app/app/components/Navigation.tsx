@@ -308,14 +308,14 @@ function FileUploadArea({
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        className="border-2 border-dashed rounded-xl transition-all cursor-pointer p-8"
+        className="border-2 border-dashed rounded-xl transition-all cursor-pointer p-8 relative overflow-hidden"
         style={{
           borderColor: isDragging ? brandColors.teal : brandColors.cloudy,
           backgroundColor: isDragging
             ? `${brandColors.teal}1a`
             : colors.background.paper,
           color: colors.text.primary,
-          opacity: isUploading ? 0.5 : 1,
+          opacity: isUploading ? 1 : 1,
           pointerEvents: isUploading ? 'none' : 'auto',
         }}
         onMouseEnter={(e) => {
@@ -328,33 +328,123 @@ function FileUploadArea({
             e.currentTarget.style.borderColor = brandColors.cloudy
           }
         }}
-        onClick={() => fileInputRef.current?.click()}
+        onClick={() => !isUploading && fileInputRef.current?.click()}
       >
-        <div className="flex flex-col items-center gap-3">
+        {/* Animated background gradient when uploading */}
+        {isUploading && (
+          <div
+            className="absolute inset-0 opacity-10"
+            style={{
+              background: `linear-gradient(90deg, transparent 0%, ${brandColors.teal} 50%, transparent 100%)`,
+              animation: 'shimmer 2s infinite',
+            }}
+          />
+        )}
+
+        <div className="flex flex-col items-center gap-3 relative z-10">
           {isUploading ? (
-            <Upload
-              size={48}
-              className="animate-pulse"
-              style={{ color: brandColors.teal }}
-            />
+            <div className="relative">
+              {/* Outer rotating ring */}
+              <div
+                className="absolute inset-0 rounded-full border-4 border-transparent"
+                style={{
+                  borderTopColor: brandColors.teal,
+                  borderRightColor: brandColors.teal,
+                  animation: 'spin 1.5s linear infinite',
+                  width: '64px',
+                  height: '64px',
+                  top: '-8px',
+                  left: '-8px',
+                }}
+              />
+              {/* Inner pulsing icon */}
+              <Upload
+                size={48}
+                className="animate-pulse"
+                style={{ color: brandColors.teal }}
+              />
+            </div>
           ) : (
             <FileText size={48} style={{ color: brandColors.teal }} />
           )}
           <div>
             <p
-              className="text-base font-medium mb-2"
+              className="text-base font-medium mb-2 text-center"
               style={{ color: colors.text.primary }}
             >
               {isUploading
-                ? 'Uploading...'
+                ? 'Processing scholarship...'
                 : 'Drop your file here or click to browse'}
             </p>
-            <p className="text-sm" style={{ color: colors.text.secondary }}>
-              Supports TXT, JSON, and PDF files
-            </p>
+            {isUploading ? (
+              <div className="flex flex-col items-center gap-2">
+                <p className="text-xs" style={{ color: colors.text.secondary }}>
+                  Analyzing content with AI
+                </p>
+                {/* Animated dots */}
+                <div className="flex gap-1">
+                  <span
+                    className="w-1.5 h-1.5 rounded-full"
+                    style={{
+                      backgroundColor: brandColors.teal,
+                      animation: 'bounce 1.4s infinite 0s',
+                    }}
+                  />
+                  <span
+                    className="w-1.5 h-1.5 rounded-full"
+                    style={{
+                      backgroundColor: brandColors.teal,
+                      animation: 'bounce 1.4s infinite 0.2s',
+                    }}
+                  />
+                  <span
+                    className="w-1.5 h-1.5 rounded-full"
+                    style={{
+                      backgroundColor: brandColors.teal,
+                      animation: 'bounce 1.4s infinite 0.4s',
+                    }}
+                  />
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-center" style={{ color: colors.text.secondary }}>
+                Supports TXT, JSON, and PDF files
+              </p>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Add keyframe animations */}
+      <style jsx>{`
+        @keyframes spin {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
+        }
+
+        @keyframes shimmer {
+          0% {
+            transform: translateX(-100%);
+          }
+          100% {
+            transform: translateX(100%);
+          }
+        }
+
+        @keyframes bounce {
+          0%, 80%, 100% {
+            transform: translateY(0);
+          }
+          40% {
+            transform: translateY(-8px);
+          }
+        }
+      `}</style>
+
       <input
         ref={fileInputRef}
         type="file"
