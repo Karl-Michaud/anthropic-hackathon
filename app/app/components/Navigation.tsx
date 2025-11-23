@@ -863,14 +863,7 @@ function ScholarshipUploadPopup({
 // Main Navigation component
 export default function Navigation() {
   const [isPopupOpen, setIsPopupOpen] = useState(false)
-  let isDarkMode = false
-  try {
-    const darkModeContext = useDarkMode()
-    isDarkMode = darkModeContext.isDarkMode
-  } catch {
-    // Provider not available
-    isDarkMode = false
-  }
+  const { isDarkMode } = useDarkMode()
   const { addScholarship, addJsonOutput } = useWhiteboard()
 
   const handleScholarshipCreated = (data: ScholarshipUploadResult) => {

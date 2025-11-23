@@ -5,14 +5,7 @@ import { useDarkMode } from '../context/DarkModeContext'
 
 export function SyncStatusIndicator() {
   const { syncStatus } = useWhiteboard()
-
-  let isDarkMode = false
-  try {
-    const darkModeContext = useDarkMode()
-    isDarkMode = darkModeContext.isDarkMode
-  } catch {
-    isDarkMode = false
-  }
+  const { isDarkMode } = useDarkMode()
 
   // Don't show anything if idle
   if (syncStatus === 'idle') {

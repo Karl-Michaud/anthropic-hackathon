@@ -19,18 +19,11 @@ import {
 export default function ProfilePage() {
   const { user, loading: authLoading } = useAuth()
   const { userProfile, setUserProfile } = useWhiteboard()
+  const { isDarkMode } = useDarkMode()
   const router = useRouter()
   const [showSuccess, setShowSuccess] = useState(false)
   const [showScrollIndicator, setShowScrollIndicator] = useState(true)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
-
-  let isDarkMode = false
-  try {
-    const darkModeContext = useDarkMode()
-    isDarkMode = darkModeContext.isDarkMode
-  } catch {
-    isDarkMode = false
-  }
 
   const colors = isDarkMode ? colorsDark : colorsLight
 
@@ -61,7 +54,11 @@ export default function ProfilePage() {
     return (
       <div
         className="h-screen overflow-hidden flex items-center justify-center"
-        style={{ backgroundColor: colors.background.default }}
+        style={{
+          backgroundColor: isDarkMode
+            ? brandColors.backgroundDark
+            : brandColors.pampas,
+        }}
       >
         <div style={{ color: colors.text.primary }} className="text-xl">
           Loading...
@@ -86,7 +83,11 @@ export default function ProfilePage() {
   return (
     <div
       className="h-screen overflow-hidden flex items-center justify-center px-4 pt-4 pb-8"
-      style={{ backgroundColor: colors.background.default }}
+      style={{
+        backgroundColor: isDarkMode
+          ? brandColors.backgroundDark
+          : brandColors.pampas,
+      }}
     >
       {/* Modal-style container */}
       <div
@@ -114,10 +115,7 @@ export default function ProfilePage() {
           >
             Update your profile
           </h2>
-          <p
-            className="mt-2 text-sm"
-            style={{ color: colors.text.secondary }}
-          >
+          <p className="mt-2 text-sm" style={{ color: colors.text.secondary }}>
             Keep your information up to date for better essay personalization
           </p>
         </div>
@@ -164,10 +162,7 @@ export default function ProfilePage() {
                   : 'rgba(0, 128, 128, 0.1)',
               }}
             >
-              <ChevronDown
-                size={20}
-                style={{ color: brandColors.teal }}
-              />
+              <ChevronDown size={20} style={{ color: brandColors.teal }} />
             </div>
           </div>
         )}

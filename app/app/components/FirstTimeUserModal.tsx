@@ -20,14 +20,7 @@ interface FirstTimeUserModalProps {
 export function FirstTimeUserModal({ onComplete }: FirstTimeUserModalProps) {
   const [showScrollIndicator, setShowScrollIndicator] = useState(true)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
-
-  let isDarkMode = false
-  try {
-    const darkModeContext = useDarkMode()
-    isDarkMode = darkModeContext.isDarkMode
-  } catch {
-    isDarkMode = false
-  }
+  const { isDarkMode } = useDarkMode()
 
   const colors = isDarkMode ? colorsDark : colorsLight
 
@@ -83,10 +76,7 @@ export function FirstTimeUserModal({ onComplete }: FirstTimeUserModalProps) {
           >
             Welcome! Let&apos;s set up your profile
           </h2>
-          <p
-            className="mt-2 text-sm"
-            style={{ color: colors.text.secondary }}
-          >
+          <p className="mt-2 text-sm" style={{ color: colors.text.secondary }}>
             Help us personalize your scholarship essay experience
           </p>
         </div>
@@ -116,10 +106,7 @@ export function FirstTimeUserModal({ onComplete }: FirstTimeUserModalProps) {
                   : 'rgba(0, 128, 128, 0.1)',
               }}
             >
-              <ChevronDown
-                size={20}
-                style={{ color: brandColors.teal }}
-              />
+              <ChevronDown size={20} style={{ color: brandColors.teal }} />
             </div>
           </div>
         )}

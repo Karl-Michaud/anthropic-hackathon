@@ -238,14 +238,7 @@ export default function DraggableToolbar({
   const [position, setPosition] = useState<ToolbarPosition>('bottom')
   const [isDragging, setIsDragging] = useState(false)
   const [dragPos, setDragPos] = useState({ x: 0, y: 0 })
-
-  let isDarkMode = false
-  try {
-    const darkModeContext = useDarkMode()
-    isDarkMode = darkModeContext.isDarkMode
-  } catch {
-    isDarkMode = false
-  }
+  const { isDarkMode } = useDarkMode()
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault()

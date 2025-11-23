@@ -55,13 +55,7 @@ export default function Whiteboard() {
   const [momentum, setMomentum] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1.0)
 
-  let isDarkMode = false
-  try {
-    const darkModeContext = useDarkMode()
-    isDarkMode = darkModeContext.isDarkMode
-  } catch {
-    isDarkMode = false
-  }
+  const { isDarkMode } = useDarkMode()
 
   const [draggingCellId, setDraggingCellId] = useState<string | null>(null)
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
@@ -546,7 +540,14 @@ export default function Whiteboard() {
         }
       }
     },
-    [position, draggingCellId, isEditing, contextMenu, activeTool, isFirstTimeUser],
+    [
+      position,
+      draggingCellId,
+      isEditing,
+      contextMenu,
+      activeTool,
+      isFirstTimeUser,
+    ],
   )
 
   const handleMouseMove = useCallback(

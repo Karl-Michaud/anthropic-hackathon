@@ -110,14 +110,7 @@ export default function SocraticPanel({
 }: SocraticPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null)
   const isSubmitting = useRef(false)
-
-  let isDarkMode = false
-  try {
-    const darkModeContext = useDarkMode()
-    isDarkMode = darkModeContext.isDarkMode
-  } catch {
-    isDarkMode = false
-  }
+  const { isDarkMode } = useDarkMode()
 
   const allQuestionsAnswered = data.questions.every(
     (q) => q.answer.trim().length > 0,

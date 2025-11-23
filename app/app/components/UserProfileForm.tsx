@@ -37,14 +37,7 @@ export function UserProfileForm({
   const [isDragging, setIsDragging] = useState(false)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
-
-  let isDarkMode = false
-  try {
-    const darkModeContext = useDarkMode()
-    isDarkMode = darkModeContext.isDarkMode
-  } catch {
-    isDarkMode = false
-  }
+  const { isDarkMode } = useDarkMode()
 
   const colors = isDarkMode ? colorsDark : colorsLight
 
@@ -57,7 +50,9 @@ export function UserProfileForm({
     try {
       const fileType = await getFileType(file.name)
       if (!fileType) {
-        setError('Unsupported file type. Please upload a PDF, TXT, or JSON file.')
+        setError(
+          'Unsupported file type. Please upload a PDF, TXT, or JSON file.',
+        )
         return
       }
 
@@ -70,9 +65,7 @@ export function UserProfileForm({
           setCvFile(file)
           setCvText(parsedText)
         } catch (parseError) {
-          setError(
-            `Failed to parse file: ${(parseError as Error).message}`,
-          )
+          setError(`Failed to parse file: ${(parseError as Error).message}`)
         }
       }
 
@@ -110,7 +103,9 @@ export function UserProfileForm({
     try {
       const fileType = await getFileType(file.name)
       if (!fileType) {
-        setError('Unsupported file type. Please upload a PDF, TXT, or JSON file.')
+        setError(
+          'Unsupported file type. Please upload a PDF, TXT, or JSON file.',
+        )
         return
       }
 
@@ -123,9 +118,7 @@ export function UserProfileForm({
           setCvFile(file)
           setCvText(parsedText)
         } catch (parseError) {
-          setError(
-            `Failed to parse file: ${(parseError as Error).message}`,
-          )
+          setError(`Failed to parse file: ${(parseError as Error).message}`)
         }
       }
 
@@ -269,10 +262,7 @@ export function UserProfileForm({
             }}
           >
             <div className="flex items-center gap-3">
-              <FileText
-                size={24}
-                style={{ color: brandColors.teal }}
-              />
+              <FileText size={24} style={{ color: brandColors.teal }} />
               <div>
                 <p
                   className="font-medium text-sm"
@@ -280,10 +270,7 @@ export function UserProfileForm({
                 >
                   {cvFile?.name || 'Resume uploaded'}
                 </p>
-                <p
-                  className="text-xs"
-                  style={{ color: colors.text.secondary }}
-                >
+                <p className="text-xs" style={{ color: colors.text.secondary }}>
                   {cvText.length} characters extracted
                 </p>
               </div>
@@ -301,7 +288,9 @@ export function UserProfileForm({
           <div
             className="relative border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:border-opacity-80 transition-all"
             style={{
-              borderColor: isDragging ? brandColors.teal : colors.border.default,
+              borderColor: isDragging
+                ? brandColors.teal
+                : colors.border.default,
               backgroundColor: isDragging
                 ? `${brandColors.teal}1a`
                 : colors.background.elevated,
@@ -321,13 +310,17 @@ export function UserProfileForm({
             <Upload
               size={32}
               className="mx-auto mb-3"
-              style={{ color: isDragging ? brandColors.teal : colors.text.secondary }}
+              style={{
+                color: isDragging ? brandColors.teal : colors.text.secondary,
+              }}
             />
             <p
               className="font-medium mb-1"
               style={{ color: colors.text.primary }}
             >
-              {isDragging ? 'Drop your file here' : 'Click to upload or drag and drop'}
+              {isDragging
+                ? 'Drop your file here'
+                : 'Click to upload or drag and drop'}
             </p>
             <p className="text-sm" style={{ color: colors.text.secondary }}>
               PDF, TXT, or JSON (max 10MB)
@@ -360,10 +353,7 @@ export function UserProfileForm({
             maxHeight: '200px',
           }}
         />
-        <p
-          className="text-xs mt-1"
-          style={{ color: colors.text.secondary }}
-        >
+        <p className="text-xs mt-1" style={{ color: colors.text.secondary }}>
           This helps us understand your unique story beyond your resume
         </p>
       </div>

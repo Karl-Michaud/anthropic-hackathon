@@ -5,13 +5,7 @@ import { useDarkMode } from '@/app/context/DarkModeContext'
 import { colorsLight, colorsDark, typography } from '@/app/styles/design-system'
 
 export function LandingPage() {
-  let isDarkMode = false
-  try {
-    const darkModeContext = useDarkMode()
-    isDarkMode = darkModeContext.isDarkMode
-  } catch {
-    isDarkMode = false
-  }
+  const { isDarkMode } = useDarkMode()
 
   const colors = isDarkMode ? colorsDark : colorsLight
 

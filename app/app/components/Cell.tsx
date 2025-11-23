@@ -42,14 +42,7 @@ export default function Cell({
   const [isHovered, setIsHovered] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const { setEditing } = useEditing()
-
-  let isDarkMode = false
-  try {
-    const darkModeContext = useDarkMode()
-    isDarkMode = darkModeContext.isDarkMode
-  } catch {
-    isDarkMode = false
-  }
+  const { isDarkMode } = useDarkMode()
 
   useEffect(() => {
     if (isEditingLocal && textareaRef.current) {
