@@ -11,8 +11,6 @@ import { IUserProfile } from '../types/user-profile'
 import {
   colorsLight,
   colorsDark,
-  borderRadius,
-  shadows,
   brandColors,
 } from '../styles/design-system'
 
@@ -82,33 +80,19 @@ export default function ProfilePage() {
 
   return (
     <div
-      className="h-screen overflow-hidden flex items-center justify-center px-4 pt-4 pb-8"
+      ref={scrollContainerRef}
+      className="-m-6 h-screen overflow-y-auto px-4 pt-8 pb-8 scrollbar-hide"
       style={{
         backgroundColor: isDarkMode
           ? brandColors.backgroundDark
           : brandColors.pampas,
+        scrollbarWidth: 'none',
+        msOverflowStyle: 'none',
       }}
     >
-      {/* Modal-style container */}
-      <div
-        ref={scrollContainerRef}
-        className="w-full max-w-lg max-h-[90vh] overflow-y-auto relative scrollbar-hide m-auto"
-        style={{
-          backgroundColor: isDarkMode
-            ? brandColors.componentBackgroundDark
-            : brandColors.componentBackground,
-          borderRadius: borderRadius['2xl'],
-          boxShadow: shadows.xl,
-          border: `1px solid ${colors.border.default}`,
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none',
-        }}
-      >
+      <div className="w-full max-w-2xl mx-auto">
         {/* Header */}
-        <div
-          className="p-6 border-b"
-          style={{ borderColor: colors.border.default }}
-        >
+        <div className="mb-8">
           <h2
             className="text-2xl font-bold"
             style={{ color: colors.text.primary }}
@@ -123,7 +107,7 @@ export default function ProfilePage() {
         {/* Success Message */}
         {showSuccess && (
           <div
-            className="mx-6 mt-6 p-4 rounded-lg flex items-center gap-3"
+            className="mb-6 p-4 rounded-lg flex items-center gap-3"
             style={{
               backgroundColor: isDarkMode
                 ? 'rgba(128, 128, 0, 0.2)'
@@ -138,22 +122,11 @@ export default function ProfilePage() {
         )}
 
         {/* Form */}
-        <div className="p-6">
-          <UserProfileForm onSubmit={handleSubmit} initialData={userProfile} />
-        </div>
+        <UserProfileForm onSubmit={handleSubmit} initialData={userProfile} />
 
         {/* Scroll Indicator */}
         {showScrollIndicator && (
-          <div
-            className="sticky bottom-0 left-0 right-0 flex justify-center pb-4 pt-2 pointer-events-none"
-            style={{
-              background: `linear-gradient(to top, ${
-                isDarkMode
-                  ? brandColors.componentBackgroundDark
-                  : brandColors.componentBackground
-              } 60%, transparent)`,
-            }}
-          >
+          <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 pointer-events-none">
             <div
               className="animate-bounce p-2 rounded-full"
               style={{

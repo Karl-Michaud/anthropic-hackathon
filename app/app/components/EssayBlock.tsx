@@ -432,6 +432,7 @@ export default function EssayBlock({
   const [selectedSection, setSelectedSection] =
     useState<HighlightedSection | null>(null)
   const [isEditMode, setIsEditMode] = useState(true)
+  const [textareaHeight, setTextareaHeight] = useState<number>(100)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const blockRef = useRef<HTMLDivElement>(null)
   const { setEditing } = useEditing()
@@ -444,7 +445,9 @@ export default function EssayBlock({
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto'
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`
+      const newHeight = textareaRef.current.scrollHeight
+      textareaRef.current.style.height = `${newHeight}px`
+      setTextareaHeight(newHeight)
     }
   }, [data.content])
 
@@ -666,7 +669,7 @@ export default function EssayBlock({
               }`}
               style={{
                 minHeight: '100px',
-                height: textareaRef.current?.scrollHeight || 'auto',
+                height: `${textareaHeight}px`,
               }}
             />
           ) : (

@@ -141,7 +141,7 @@ export default function Cell({
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
           style={{
-            color: colors.text.primary,
+            color: colorStyles.text,
           }}
           className="w-full h-full text-sm bg-transparent border-0 outline-none resize-none"
           onClick={(e) => e.stopPropagation()}
@@ -150,7 +150,7 @@ export default function Cell({
       ) : (
         <p
           style={{
-            color: colors.text.primary,
+            color: colorStyles.text,
           }}
           className="text-sm whitespace-pre-wrap wrap-break-word m-0"
         >

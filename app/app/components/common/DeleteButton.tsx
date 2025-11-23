@@ -37,7 +37,7 @@ export default function DeleteButton({
   const colors = isDarkMode ? colorsDark : colorsLight
 
   const bgColor = isDarkMode ? brandColors.backgroundDark : brandColors.pampas
-  const textColor = brandColors.maroon
+  const textColor = isDarkMode ? brandColors.foregroundDark : brandColors.maroon
   const hoverBgColor = brandColors.maroon
   const hoverTextColor = brandColors.foregroundDark
 
