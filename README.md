@@ -18,7 +18,7 @@
 
 ------------------------------------------------------------------------
 
-## The Problem {#the-problem}
+## The Problem
 
 Generic AI tools generate polished but ineffective scholarship essays because they don't understand that **each scholarship seeks specific types of students**. The Loran Award wants character and sustained service. Schulich Leaders seek STEM entrepreneurs. TD Scholarships fund community problem-solvers. Terry Fox Awards honor courage through adversity.
 
@@ -26,7 +26,7 @@ Generic AI tools generate polished but ineffective scholarship essays because th
 
 ------------------------------------------------------------------------
 
-## Our Solution {#our-solution}
+## Our Solution
 
 We use **Socratic questioning** to extract authentic stories and guide strategic positioning.
 
@@ -38,7 +38,7 @@ Our AI acts like an expert scholarship coach that: 1. Decodes what each scholars
 
 ------------------------------------------------------------------------
 
-## Features {#features}
+## Features
 
 ### For Students Applying to Canadian Scholarships
 
@@ -57,7 +57,7 @@ Our AI acts like an expert scholarship coach that: 1. Decodes what each scholars
 
 ------------------------------------------------------------------------
 
-## How It Works {#how-it-works}
+## How It Works
 
 ### Step 1: Tell Us Your Story
 
@@ -81,7 +81,7 @@ You write in your own voice. We provide: - "This scholarship values X but you've
 
 ------------------------------------------------------------------------
 
-## Getting Started {#getting-started}
+## Getting Started
 
 ### Prerequisites
 
@@ -126,7 +126,7 @@ Visit `http://localhost:3000` in your browser.
 
 ------------------------------------------------------------------------
 
-## Project Structure {#project-structure}
+## Project Structure
 
 ```         
 anthropic-hackathon/
@@ -142,7 +142,7 @@ anthropic-hackathon/
 
 ------------------------------------------------------------------------
 
-## The Research Behind It {#the-research-behind-it}
+## The Research Behind It
 
 Our platform is built on comprehensive analysis:
 
@@ -166,7 +166,7 @@ See `/docs/research/` for full analysis.
 
 ------------------------------------------------------------------------
 
-## Contributing {#contributing}
+## Contributing
 
 We welcome contributions! Whether you're adding scholarship intelligence, improving the Socratic questioning, or enhancing UX.
 
@@ -226,7 +226,7 @@ Resolve any merge conflicts that arise.
 
 ------------------------------------------------------------------------
 
-## Contributors {#contributors}
+## Contributors
 
 This project was built by a dedicated team passionate about making scholarships more accessible:
 
@@ -276,7 +276,7 @@ Want to contribute? See our [Contributing](#contributing) section!
 
 ------------------------------------------------------------------------
 
-## Tech Stack {#tech-stack}
+## Tech Stack
 
 -   **Frontend**: React, Next.js, TypeScript
 -   **AI Integration**: Anthropic Claude (Sonnet 4.5)
@@ -285,7 +285,7 @@ Want to contribute? See our [Contributing](#contributing) section!
 
 ------------------------------------------------------------------------
 
-## License {#license}
+## License
 
 MIT License - see LICENSE file for details
 
