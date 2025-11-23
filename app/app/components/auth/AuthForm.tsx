@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useAuth } from './AuthProvider'
 import { useDarkMode } from '@/app/context/DarkModeContext'
+import { colorsLight, colorsDark, borderRadius, shadows } from '@/app/styles/design-system'
 
 export function AuthForm() {
   const [mode, setMode] = useState<'login' | 'signup'>('login')
@@ -55,39 +56,39 @@ export function AuthForm() {
     }
   }
 
+  const colors = isDarkMode ? colorsDark : colorsLight
+
   return (
-    <div className={`w-full max-w-md p-8 rounded-2xl backdrop-blur-lg ${
-      isDarkMode
-        ? 'bg-gray-800/50 border border-gray-700'
-        : 'bg-white/50 border border-gray-200'
-    } shadow-2xl`}>
+    <div
+      className="w-full max-w-md p-8 backdrop-blur-lg"
+      style={{
+        backgroundColor: isDarkMode ? colorsDark.background.paper : colorsLight.background.paper,
+        border: `1px solid ${colors.border.default}`,
+        borderRadius: borderRadius['2xl'],
+        boxShadow: shadows.xl,
+      }}
+    >
       {/* Tab Switcher */}
       <div className="flex gap-2 mb-6">
         <button
           onClick={() => setMode('login')}
-          className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
-            mode === 'login'
-              ? isDarkMode
-                ? 'bg-blue-600 text-white'
-                : 'bg-blue-500 text-white'
-              : isDarkMode
-                ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-          }`}
+          className="flex-1 py-2 px-4 font-medium transition-all"
+          style={{
+            backgroundColor: mode === 'login' ? colors.primary : colors.background.elevated,
+            color: mode === 'login' ? colors.text.inverse : colors.text.secondary,
+            borderRadius: borderRadius.md,
+          }}
         >
           Login
         </button>
         <button
           onClick={() => setMode('signup')}
-          className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
-            mode === 'signup'
-              ? isDarkMode
-                ? 'bg-blue-600 text-white'
-                : 'bg-blue-500 text-white'
-              : isDarkMode
-                ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-          }`}
+          className="flex-1 py-2 px-4 font-medium transition-all"
+          style={{
+            backgroundColor: mode === 'signup' ? colors.primary : colors.background.elevated,
+            color: mode === 'signup' ? colors.text.inverse : colors.text.secondary,
+            borderRadius: borderRadius.md,
+          }}
         >
           Sign Up
         </button>
@@ -162,11 +163,13 @@ export function AuthForm() {
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email"
             required
-            className={`w-full py-3 px-4 rounded-lg border ${
-              isDarkMode
-                ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
-                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-            } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+            className="w-full py-3 px-4 focus:outline-none focus:ring-2 transition-all"
+            style={{
+              backgroundColor: colors.background.paper,
+              border: `1px solid ${colors.border.default}`,
+              borderRadius: borderRadius.md,
+              color: colors.text.primary,
+            }}
           />
         </div>
 
@@ -178,16 +181,26 @@ export function AuthForm() {
             placeholder="Password"
             required
             minLength={6}
-            className={`w-full py-3 px-4 rounded-lg border ${
-              isDarkMode
-                ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
-                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-            } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+            className="w-full py-3 px-4 focus:outline-none focus:ring-2 transition-all"
+            style={{
+              backgroundColor: colors.background.paper,
+              border: `1px solid ${colors.border.default}`,
+              borderRadius: borderRadius.md,
+              color: colors.text.primary,
+            }}
           />
         </div>
 
         {error && (
-          <div className="p-3 rounded-lg bg-red-100 border border-red-400 text-red-700 text-sm">
+          <div
+            className="p-3 text-sm"
+            style={{
+              backgroundColor: isDarkMode ? 'rgba(128, 0, 0, 0.2)' : 'rgba(128, 0, 0, 0.1)',
+              border: `1px solid ${colors.danger}`,
+              borderRadius: borderRadius.md,
+              color: colors.danger,
+            }}
+          >
             {error}
           </div>
         )}
@@ -195,11 +208,12 @@ export function AuthForm() {
         <button
           type="submit"
           disabled={loading}
-          className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${
-            isDarkMode
-              ? 'bg-blue-600 hover:bg-blue-700 text-white'
-              : 'bg-blue-500 hover:bg-blue-600 text-white'
-          } disabled:opacity-50 disabled:cursor-not-allowed`}
+          className="w-full py-3 px-4 font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{
+            backgroundColor: colors.primary,
+            color: colors.text.inverse,
+            borderRadius: borderRadius.md,
+          }}
         >
           {loading ? 'Loading...' : mode === 'login' ? 'Login' : 'Sign Up'}
         </button>
