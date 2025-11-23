@@ -698,6 +698,54 @@ export function ScholarshipActions({
   )
 }
 
+// Badge component for top highlights
+function Badge({
+  label,
+  color,
+  isDarkMode = false,
+}: {
+  label: string
+  color: 'teal' | 'crail' | 'olive' | 'purple' | 'navy'
+  isDarkMode?: boolean
+}) {
+  const colorMap = {
+    teal: {
+      light: { bg: brandColors.teal, text: '#ffffff' },
+      dark: { bg: brandColors.teal, text: '#ffffff' },
+    },
+    crail: {
+      light: { bg: brandColors.crail, text: '#ffffff' },
+      dark: { bg: brandColors.crail, text: '#ffffff' },
+    },
+    olive: {
+      light: { bg: brandColors.olive, text: '#ffffff' },
+      dark: { bg: brandColors.olive, text: '#ffffff' },
+    },
+    purple: {
+      light: { bg: brandColors.purple, text: '#ffffff' },
+      dark: { bg: brandColors.purple, text: '#ffffff' },
+    },
+    navy: {
+      light: { bg: brandColors.navy, text: '#ffffff' },
+      dark: { bg: brandColors.navy, text: '#ffffff' },
+    },
+  }
+
+  const styles = isDarkMode ? colorMap[color].dark : colorMap[color].light
+
+  return (
+    <span
+      className="px-2 py-1 rounded text-xs font-medium"
+      style={{
+        backgroundColor: styles.bg,
+        color: styles.text,
+      }}
+    >
+      {label}
+    </span>
+  )
+}
+
 // Main ScholarshipBlock component
 interface ScholarshipBlockProps {
   data: ScholarshipData
@@ -780,16 +828,76 @@ export function ScholarshipBlock({
 
   const currentData = isEditing ? editedData : data
 
+  // Extract badge information
+  const getBadges = () => {
+    const badges: Array<{ label: string; color: 'teal' | 'crail' | 'olive' | 'purple' | 'navy' }> = []
+
+    // Get personality badge (teal)
+    if (data.personality) {
+      const profile = (
+        typeof data.personality.personality_profile === 'object' && data.personality.personality_profile
+          ? (data.personality.personality_profile as Record<string, unknown>)
+          : data.personality
+      ) as Record<string, unknown>
+
+      const spirit = (profile.spirit || profile.core_identity) as string | undefined
+      if (spirit) {
+        // Extract a keyword from the spirit description
+        const words = spirit.split(' ')
+        const keyword = words.find(w => w.length > 5) || words[0]
+        badges.push({ label: keyword.replace(/[,.:;]/g, ''), color: 'teal' })
+      }
+    }
+
+    // Get values badge (crail/red)
+    if (data.values) {
+      const valuesEmphasized = (data.values.valuesEmphasized || data.values.values_emphasized) as string[] | undefined
+      if (valuesEmphasized && valuesEmphasized.length > 0) {
+        badges.push({ label: valuesEmphasized[0], color: 'crail' })
+      }
+    }
+
+    // Get hidden requirement badge from weights (olive)
+    if (data.weights && typeof data.weights === 'object') {
+      const weightsData = data.weights as Record<string, unknown>
+      const categories = Object.keys(weightsData)
+      if (categories.length > 0) {
+        // Find the category with highest weight
+        let maxWeight = 0
+        let maxCategory = categories[0]
+
+        categories.forEach((category) => {
+          const categoryData = weightsData[category] as Record<string, unknown> | undefined
+          if (categoryData && typeof categoryData.weight === 'number') {
+            if (categoryData.weight > maxWeight) {
+              maxWeight = categoryData.weight
+              maxCategory = category
+            }
+          }
+        })
+
+        badges.push({
+          label: maxCategory.charAt(0).toUpperCase() + maxCategory.slice(1).replace(/_/g, ' '),
+          color: 'olive'
+        })
+      }
+    }
+
+    return badges
+  }
+
+  const badges = getBadges()
+
   return (
     <div
-      className={`w-[550px] rounded-2xl p-6 relative transition-all ${
+      className={`w-[550px] rounded-2xl p-6 relative transition-all border-2 ${
         isDarkMode
           ? isEditing
-            ? 'bg-gray-800 shadow-lg border-blue-400 border'
-            : 'bg-gray-800 shadow-md border-gray-700 border'
+            ? 'bg-gray-800 shadow-lg'
+            : 'bg-gray-800 shadow-md'
           : isEditing
-            ? 'shadow-lg border-[#C15F3C] border'
-            : `shadow-md border`
+            ? 'shadow-lg'
+            : 'shadow-md'
       }`}
       style={{
         backgroundColor: isDarkMode ? brandColors.componentBackgroundDark : brandColors.componentBackground,
@@ -816,12 +924,21 @@ export function ScholarshipBlock({
         />
       )}
 
+      {/* Badges at top */}
+      {!isEditing && badges.length > 0 && (
+        <div className="flex gap-2 mb-4">
+          {badges.map((badge, idx) => (
+            <Badge key={idx} label={badge.label} color={badge.color} isDarkMode={isDarkMode} />
+          ))}
+        </div>
+      )}
+
       {/* Title */}
       <EditableField
         value={currentData.title}
         onChange={(value) => handleFieldChange('title', value)}
         isEditing={isEditing}
-        className="pr-8"
+        className="pb-8 text-3xl font-serif"
         isTitle
         placeholder="Scholarship Title"
         isDarkMode={isDarkMode}

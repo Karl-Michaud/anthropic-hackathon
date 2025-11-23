@@ -9,12 +9,16 @@ export interface SocraticQuestion {
   id: string
   text: string
   answer: string
+  tags?: string[]
 }
 
 export interface SocraticPanelData {
   id: string
   sectionId: string
   title: string
+  hiddenWeightType?: string
+  scholarshipPrompt?: string
+  introText?: string
   questions: SocraticQuestion[]
 }
 
@@ -29,11 +33,13 @@ function Question({
   question,
   value,
   onChange,
+  tags,
   isDarkMode = false,
 }: {
   question: string
   value: string
   onChange: (value: string) => void
+  tags?: string[]
   isDarkMode?: boolean
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -47,18 +53,34 @@ function Question({
   }, [value])
 
   return (
-    <div className="mb-4">
+    <div className="mb-6">
       <label
         className="block text-sm font-medium mb-2 font-serif"
         style={{ color: colors.text.primary }}
       >
         {question}
       </label>
+      {tags && tags.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-2">
+          {tags.map((tag, index) => (
+            <span
+              key={index}
+              className="px-3 py-1 rounded-md text-xs font-medium"
+              style={{
+                backgroundColor: brandColors.navy,
+                color: brandColors.foregroundDark,
+              }}
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
+      )}
       <textarea
         ref={textareaRef}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="Type your response here..."
+        placeholder="Example of this field |"
         className="w-full p-3 border rounded-lg resize-none focus:ring-2 transition-all min-h-20"
         style={{
           backgroundColor: colors.background.paper,
@@ -127,14 +149,14 @@ export default function SocraticPanel({
   return (
     <div
       ref={panelRef}
-      className="w-[500px] rounded-2xl shadow-2xl border flex flex-col max-h-[700px] fixed right-8 top-1/2 transform -translate-y-1/2 z-40"
+      className="w-[500px] rounded-2xl shadow-2xl border flex flex-col absolute left-[540px] top-0 z-40"
       style={{
         backgroundColor: colors.background.paper,
         borderColor: brandColors.cloudy,
       }}
     >
       <div
-        className="p-6 border-b shrink-0 relative"
+        className="p-6 shrink-0 relative rounded-2xl"
         style={{
           backgroundColor: colors.background.paper,
           borderColor: brandColors.cloudy,
@@ -154,12 +176,59 @@ export default function SocraticPanel({
         >
           <X size={24} />
         </button>
+        {data.hiddenWeightType && (
+          <div className="mb-3 flex items-center gap-2">
+            <span
+              className="text-sm font-medium font-serif"
+              style={{ color: colors.text.primary }}
+            >
+              Hidden Weight Type:
+            </span>
+            <span
+              className="px-3 py-1 rounded-md text-xs font-medium"
+              style={{
+                backgroundColor: brandColors.navy,
+                color: brandColors.foregroundDark,
+              }}
+            >
+              {data.hiddenWeightType}
+            </span>
+          </div>
+        )}
         <h2
           className="text-2xl font-bold pr-10 font-serif"
           style={{ color: colors.text.primary }}
         >
           {data.title}
         </h2>
+        {data.scholarshipPrompt && (
+          <div className="mt-4">
+            <div
+              className="text-xs font-medium mb-2"
+              style={{ color: colors.text.secondary }}
+            >
+              From the Scholarship Prompt
+            </div>
+            <div
+              className="p-4 rounded-lg border-l-4 italic text-sm"
+              style={{
+                backgroundColor: colors.background.elevated,
+                borderLeftColor: brandColors.cloudy,
+                color: colors.text.primary,
+              }}
+            >
+              {data.scholarshipPrompt}
+            </div>
+          </div>
+        )}
+        {data.introText && (
+          <p
+            className="mt-4 text-sm leading-relaxed"
+            style={{ color: colors.text.primary }}
+          >
+            {data.introText}
+          </p>
+        )}
       </div>
 
       <div
@@ -172,13 +241,14 @@ export default function SocraticPanel({
             question={question.text}
             value={question.answer}
             onChange={(value) => onAnswerChange(question.id, value)}
+            tags={question.tags}
             isDarkMode={isDarkMode}
           />
         ))}
       </div>
 
       <div
-        className="p-6 border-t shrink-0"
+        className="p-6 shrink-0 rounded-2xl"
         style={{
           backgroundColor: colors.background.paper,
           borderColor: brandColors.cloudy,
@@ -191,7 +261,7 @@ export default function SocraticPanel({
           style={{
             backgroundColor:
               allQuestionsAnswered && !isSubmitting.current
-                ? brandColors.crail
+                ? brandColors.teal
                 : brandColors.cloudy,
             color: brandColors.foregroundDark,
           }}
@@ -202,7 +272,7 @@ export default function SocraticPanel({
               Updating essay...
             </>
           ) : (
-            'Submit & Update Essay'
+            'Update Essay'
           )}
         </button>
       </div>

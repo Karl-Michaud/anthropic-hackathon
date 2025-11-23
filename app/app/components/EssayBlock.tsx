@@ -191,10 +191,12 @@ function EssayMenu({
   maxWords,
   onMaxWordsChange,
   onDelete,
+  isDarkMode = false,
 }: {
   maxWords: string
   onMaxWordsChange: (value: string) => void
   onDelete: () => void
+  isDarkMode?: boolean
 }) {
   const [showMenu, setShowMenu] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -227,22 +229,42 @@ function EssayMenu({
       </button>
 
       {showMenu && (
-        <div className="absolute top-8 right-0 bg-white rounded-lg shadow-xl border border-neutral-200 py-2 z-50 min-w-[180px]">
-          <div className="px-3 py-2 border-b border-neutral-100">
+        <div
+          className={`absolute top-8 right-0 rounded-lg shadow-xl border py-2 z-50 min-w-[180px] ${
+            isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+          }`}
+        >
+          <div
+            className={`px-3 py-2 border-b ${
+              isDarkMode ? 'border-gray-700' : 'border-gray-100'
+            }`}
+          >
             <label className="flex items-center gap-2 text-sm">
-              <span className="text-neutral-600">Max words:</span>
+              <span
+                className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}
+              >
+                Max words:
+              </span>
               <input
                 type="number"
                 value={maxWords}
                 onChange={(e) => onMaxWordsChange(e.target.value)}
                 placeholder="None"
-                className="w-16 px-2 py-1 border border-neutral-300 rounded text-neutral-900 text-xs"
+                className={`w-16 px-2 py-1 border rounded text-xs ${
+                  isDarkMode
+                    ? 'bg-gray-700 text-white border-gray-600'
+                    : 'bg-white text-gray-900 border-gray-300'
+                }`}
               />
             </label>
           </div>
           <button
             onClick={handleDelete}
-            className="w-full px-3 py-2 text-left text-sm text-danger-600 hover:bg-danger-50 flex items-center gap-2 cursor-pointer"
+            className={`w-full px-3 py-2 text-left text-sm flex items-center gap-2 cursor-pointer ${
+              isDarkMode
+                ? 'text-red-400 hover:bg-red-900/30'
+                : 'text-red-600 hover:bg-red-50'
+            }`}
           >
             <Trash2 size={14} />
             Delete Draft
@@ -341,24 +363,40 @@ function ExportMenu({
 function EssayDeleteConfirm({
   onConfirm,
   onCancel,
+  isDarkMode = false,
 }: {
   onConfirm: () => void
   onCancel: () => void
+  isDarkMode?: boolean
 }) {
   return (
-    <div className="absolute inset-0 bg-neutral-0/90 backdrop-blur-sm rounded-xl flex items-center justify-center z-50">
+    <div
+      className={`absolute inset-0 backdrop-blur-sm rounded-xl flex items-center justify-center z-50 ${
+        isDarkMode ? 'bg-gray-900/90' : 'bg-white/90'
+      }`}
+    >
       <div className="text-center p-6">
-        <p className="text-neutral-700 font-medium mb-4">Delete this draft?</p>
+        <p
+          className={`font-medium mb-4 ${
+            isDarkMode ? 'text-gray-200' : 'text-gray-700'
+          }`}
+        >
+          Delete this draft?
+        </p>
         <div className="flex gap-3 justify-center">
           <button
             onClick={onCancel}
-            className="px-4 py-2 text-sm text-neutral-600 hover:bg-neutral-100 rounded-lg transition-colors cursor-pointer"
+            className={`px-4 py-2 text-sm rounded-lg transition-colors cursor-pointer ${
+              isDarkMode
+                ? 'text-gray-300 hover:bg-gray-700'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
-            className="px-4 py-2 text-sm bg-danger-600 text-neutral-0 rounded-lg hover:bg-danger-700 transition-colors cursor-pointer"
+            className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors cursor-pointer"
           >
             Delete
           </button>
@@ -545,14 +583,15 @@ export default function EssayBlock({
     : null
 
   return (
-    <div
-      className={`w-[500px] rounded-xl shadow-lg relative transition-colors duration-200 ${
-        isDarkMode
-          ? 'bg-gray-800 border border-gray-700'
-          : 'bg-white border border-neutral-200'
-      }`}
-      ref={blockRef}
-    >
+    <div className="relative">
+      <div
+        className={`w-[500px] rounded-xl shadow-lg transition-colors duration-200 ${
+          isDarkMode
+            ? 'bg-gray-800 border border-gray-700'
+            : 'bg-white border border-neutral-200'
+        }`}
+        ref={blockRef}
+      >
       <div
         className={`flex items-center justify-between py-3 px-4 border-b rounded-t-xl transition-colors duration-200 ${
           isDarkMode
@@ -585,6 +624,7 @@ export default function EssayBlock({
             maxWords={maxWords}
             onMaxWordsChange={handleMaxWordsChange}
             onDelete={handleDelete}
+            isDarkMode={isDarkMode}
           />
         </div>
       </div>
@@ -593,6 +633,7 @@ export default function EssayBlock({
         <EssayDeleteConfirm
           onConfirm={confirmDelete}
           onCancel={() => setShowDeleteConfirm(false)}
+          isDarkMode={isDarkMode}
         />
       )}
 
@@ -643,6 +684,8 @@ export default function EssayBlock({
             )}
           </div>
         )}
+      </div>
+
       </div>
 
       {socraticPanelData && (
