@@ -73,6 +73,37 @@ export interface SocraticQuestion {
   answer: string
 }
 
+export interface CustomDraftAnalysis {
+  overall_alignment_score: number
+  personality_alignment: {
+    score: number
+    matches: string[]
+    gaps: string[]
+    suggestions: string[]
+  }
+  priorities_alignment: {
+    score: number
+    well_addressed: string[]
+    needs_attention: string[]
+    suggestions: string[]
+  }
+  values_alignment: {
+    score: number
+    demonstrated_values: string[]
+    missing_values: string[]
+    suggestions: string[]
+  }
+  weights_alignment: {
+    score: number
+    strong_categories: string[]
+    weak_categories: string[]
+    suggestions: string[]
+  }
+  key_strengths: string[]
+  critical_improvements: string[]
+  summary: string
+}
+
 export interface EssayData {
   id: string
   scholarshipId: string
@@ -80,7 +111,9 @@ export interface EssayData {
   maxWordCount?: number
   highlightedSections?: HighlightedSection[]
   socraticData?: Record<string, SocraticQuestion[]>
+  customDraftAnalysis?: CustomDraftAnalysis
   lastEditedAt?: number
+  isCustomDraft?: boolean
 }
 
 export interface BlockPosition {
@@ -121,6 +154,7 @@ interface WhiteboardContextType {
   syncStatus: SyncStatus
   userProfile: IUserProfile | null
   isFirstTimeUser: boolean
+  hasCheckedFirstTimeUser: boolean
 
   // Cell actions
   addCell: (cell: Omit<CellData, 'id'>) => string
@@ -207,7 +241,8 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
   const [isLoaded, setIsLoaded] = useState(false)
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle')
   const [userProfile, setUserProfileState] = useState<IUserProfile | null>(null)
-  const [isFirstTimeUser, setIsFirstTimeUser] = useState<boolean>(true)
+  const [isFirstTimeUser, setIsFirstTimeUser] = useState<boolean>(false)
+  const [hasCheckedFirstTimeUser, setHasCheckedFirstTimeUser] = useState<boolean>(false)
 
   const { user } = useAuth()
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -243,7 +278,8 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
       setBlockPositions([])
       setFeedbackPanels([])
       setUserProfileState(null)
-      setIsFirstTimeUser(true)
+      setIsFirstTimeUser(false)
+      setHasCheckedFirstTimeUser(false)
     }
 
     previousUserIdRef.current = currentUserId
@@ -283,11 +319,15 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
         ])
         setUserProfileState(profile)
         setIsFirstTimeUser(firstTime)
+        setHasCheckedFirstTimeUser(true)
 
         if (!hasLocalData && profile) {
           setIsLoaded(true)
           return
         }
+      } else {
+        // If no user is logged in, we've "checked" and they're not a first-time user
+        setHasCheckedFirstTimeUser(true)
       }
 
       // Use user-specific localStorage data
@@ -406,7 +446,18 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
   // Essay actions
   const addEssay = useCallback((essay: Omit<EssayData, 'id'>) => {
     const id = `essay-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-    setEssays((prev) => [...prev, { ...essay, id }])
+    console.log('📝 [WhiteboardContext.addEssay] Creating new essay:', {
+      id,
+      scholarshipId: essay.scholarshipId,
+      isCustomDraft: essay.isCustomDraft || false,
+      contentLength: essay.content.length,
+    })
+    setEssays((prev) => {
+      const newEssays = [...prev, { ...essay, id }]
+      console.log('  - Total essays after add:', newEssays.length)
+      return newEssays
+    })
+    console.log('  - ✅ Essay added to context')
     return id
   }, [])
 
@@ -437,13 +488,21 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
   // Position actions
   const updateBlockPosition = useCallback(
     (id: string, x: number, y: number) => {
+      console.log('📍 [WhiteboardContext.updateBlockPosition] Updating position:', {
+        id,
+        x,
+        y,
+      })
       setBlockPositions((prev) => {
         const existing = prev.find((p) => p.id === id)
         if (existing) {
+          console.log('  - Existing position found, updating:', existing)
           return prev.map((p) => (p.id === id ? { ...p, x, y } : p))
         }
+        console.log('  - No existing position, creating new')
         return [...prev, { id, x, y }]
       })
+      console.log('  - ✅ Position updated')
     },
     [],
   )
@@ -548,6 +607,7 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
         syncStatus,
         userProfile,
         isFirstTimeUser,
+        hasCheckedFirstTimeUser,
         addCell,
         updateCell,
         deleteCell,

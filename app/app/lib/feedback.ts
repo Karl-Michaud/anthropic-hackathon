@@ -3,6 +3,8 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { FeedbackSection, FeedbackData } from '@/app/lib/dynamicFeedback/types'
 import { generateFeedbackId } from '@/app/lib/dynamicFeedback'
+import { createClient as createServerClient } from '@/app/utils/supabase/server'
+import { IUserProfile } from '@/app/types/user-profile'
 
 const client = new Anthropic()
 
@@ -11,12 +13,14 @@ interface AnalyzeFeedbackRequest {
   scholarshipTitle?: string
   essayId: string
   scholarshipId: string
+  userId?: string
 }
 
 export async function analyzeFeedback(
   request: AnalyzeFeedbackRequest,
 ): Promise<FeedbackData> {
-  const { essayContent, scholarshipTitle, essayId, scholarshipId } = request
+  const { essayContent, scholarshipTitle, essayId, scholarshipId, userId } =
+    request
 
   if (!essayContent || essayContent.trim().length === 0) {
     throw new Error('Essay content is required')
@@ -28,10 +32,50 @@ export async function analyzeFeedback(
     throw new Error('Essay is too short (minimum 20 words)')
   }
 
+  // Fetch user profile if userId is provided
+  let userProfile: IUserProfile | null = null
+  if (userId) {
+    try {
+      const supabase = await createServerClient()
+      const { data } = await supabase
+        .from('whiteboard_data')
+        .select('user_profile')
+        .eq('user_id', userId)
+        .single()
+
+      if (data?.user_profile) {
+        userProfile = data.user_profile as IUserProfile
+        console.log('✅ User profile loaded for feedback analysis:', {
+          name: `${userProfile.firstName} ${userProfile.lastName}`,
+        })
+      }
+    } catch (error) {
+      console.warn('Could not load user profile for feedback:', error)
+    }
+  }
+
+  // Build user context section
+  const userContext = userProfile
+    ? `
+
+### APPLICANT PROFILE
+Use this information to provide personalized feedback that aligns with the student's actual experiences. Do not make up any details. Do not hallucinate information.
+
+**Name**: ${userProfile.firstName} ${userProfile.lastName}
+
+**Background Summary**:
+${userProfile.userSummary}
+
+**CV/Resume Highlights**:
+${userProfile.cvResumeSummary}
+`
+    : ''
+
   // Use Claude to analyze the essay and generate feedback
   const analysisPrompt = `You are an expert college admission counselor analyzing a scholarship essay${
     scholarshipTitle ? ` for the "${scholarshipTitle}" scholarship` : ''
   }.
+${userContext}
 
 Your task: Identify 2-3 areas where the essay can be significantly improved. For each area, provide:
 1. A clear title for the improvement area (e.g., "Strengthen Leadership Examples")
@@ -158,6 +202,7 @@ Return 2-3 sections based on the essay quality and length.`
 export async function submitFeedback(
   essayContent: string,
   feedbackData: FeedbackData,
+  userId?: string,
 ): Promise<string> {
   if (!essayContent || essayContent.trim().length === 0) {
     throw new Error('Essay content is required')
@@ -166,6 +211,45 @@ export async function submitFeedback(
   if (!feedbackData || !feedbackData.sections) {
     throw new Error('Feedback data is required')
   }
+
+  // Fetch user profile if userId is provided
+  let userProfile: IUserProfile | null = null
+  if (userId) {
+    try {
+      const supabase = await createServerClient()
+      const { data } = await supabase
+        .from('whiteboard_data')
+        .select('user_profile')
+        .eq('user_id', userId)
+        .single()
+
+      if (data?.user_profile) {
+        userProfile = data.user_profile as IUserProfile
+        console.log('✅ User profile loaded for feedback submission:', {
+          name: `${userProfile.firstName} ${userProfile.lastName}`,
+        })
+      }
+    } catch (error) {
+      console.warn('Could not load user profile for feedback submission:', error)
+    }
+  }
+
+  // Build user context section
+  const userContext = userProfile
+    ? `
+
+### APPLICANT PROFILE
+Use this information to ensure improvements align with the student's actual background and experiences:
+
+**Name**: ${userProfile.firstName} ${userProfile.lastName}
+
+**Background Summary**:
+${userProfile.userSummary}
+
+**CV/Resume Highlights**:
+${userProfile.cvResumeSummary}
+`
+    : ''
 
   // Format the feedback for the prompt
   const feedbackSummary = feedbackData.sections
@@ -176,7 +260,8 @@ export async function submitFeedback(
     .join('\n')
 
   // Use Claude to enhance the essay based on the feedback
-  const updatePrompt = `You are an expert essay editor helping a student improve their scholarship essay based on feedback received.
+  const updatePrompt = `You are an expert essay editor helping a student improve their scholarship essay based on feedback received. Do not fabricate any information; use only the provided applicant profile details and the student's responses to the feedback questions.
+${userContext}
 
 Original Essay:
 """

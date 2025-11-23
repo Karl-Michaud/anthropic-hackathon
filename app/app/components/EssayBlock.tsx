@@ -9,11 +9,12 @@ import {
   FileText,
   FileType,
   File,
+  Sparkles,
 } from 'lucide-react'
 import { exportEssay, ExportFormat } from '../lib/exportUtils'
 import { useEditing } from '../context/EditingContext'
 import { useDarkMode } from '../context/DarkModeContext'
-import { EssayData, HighlightedSection } from '../context/WhiteboardContext'
+import { EssayData, HighlightedSection, CustomDraftAnalysis } from '../context/WhiteboardContext'
 import { brandColors, typography, transitions } from '../styles/design-system'
 import SocraticPanel, { SocraticPanelData } from './SocraticPanel'
 import { submitSocraticAnswers } from '@/app/lib/dynamicFeedback'
@@ -360,6 +361,217 @@ function ExportMenu({
   )
 }
 
+// CustomDraftAnalysisDisplay component
+function CustomDraftAnalysisDisplay({
+  analysis,
+  isDarkMode = false,
+}: {
+  analysis: CustomDraftAnalysis
+  isDarkMode?: boolean
+}) {
+  const [isExpanded, setIsExpanded] = useState(true)
+
+  // Helper function to get score color
+  const getScoreColor = (score: number): string => {
+    if (score >= 80) return isDarkMode ? '#10b981' : '#059669' // green
+    if (score >= 60) return isDarkMode ? '#f59e0b' : '#d97706' // amber
+    return isDarkMode ? '#ef4444' : '#dc2626' // red
+  }
+
+  return (
+    <div
+      className={`mt-4 border-t pt-4 transition-colors duration-200 ${
+        isDarkMode ? 'border-gray-700' : 'border-gray-200'
+      }`}
+    >
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className={`w-full text-left flex items-center justify-between px-2 py-2 rounded transition-colors cursor-pointer ${
+          isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
+        }`}
+      >
+        <div className="flex items-center gap-3">
+          <h4
+            className={`text-sm font-semibold ${
+              isDarkMode ? 'text-gray-200' : 'text-gray-700'
+            }`}
+          >
+            📊 Alignment Analysis
+          </h4>
+          <span
+            className="text-lg font-bold"
+            style={{ color: getScoreColor(analysis.overall_alignment_score) }}
+          >
+            {analysis.overall_alignment_score}%
+          </span>
+        </div>
+        <span
+          className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}
+        >
+          {isExpanded ? '▼' : '▶'}
+        </span>
+      </button>
+
+      {isExpanded && (
+        <div className="mt-3 space-y-4">
+          {/* Summary */}
+          <div
+            className={`p-3 rounded text-sm ${
+              isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-blue-50 text-gray-700'
+            }`}
+          >
+            <p className="font-medium mb-1">Summary</p>
+            <p className="text-xs leading-relaxed">{analysis.summary}</p>
+          </div>
+
+          {/* Key Strengths */}
+          {analysis.key_strengths.length > 0 && (
+            <div>
+              <p
+                className={`text-xs font-semibold mb-2 ${
+                  isDarkMode ? 'text-green-400' : 'text-green-700'
+                }`}
+              >
+                ✓ Key Strengths
+              </p>
+              <ul className="space-y-1">
+                {analysis.key_strengths.map((strength, idx) => (
+                  <li
+                    key={idx}
+                    className={`text-xs pl-4 ${
+                      isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                    }`}
+                    style={{ listStyle: 'disc', listStylePosition: 'inside' }}
+                  >
+                    {strength}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Critical Improvements */}
+          {analysis.critical_improvements.length > 0 && (
+            <div>
+              <p
+                className={`text-xs font-semibold mb-2 ${
+                  isDarkMode ? 'text-red-400' : 'text-red-700'
+                }`}
+              >
+                ⚠ Critical Improvements
+              </p>
+              <ul className="space-y-1">
+                {analysis.critical_improvements.map((improvement, idx) => (
+                  <li
+                    key={idx}
+                    className={`text-xs pl-4 ${
+                      isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                    }`}
+                    style={{ listStyle: 'disc', listStylePosition: 'inside' }}
+                  >
+                    {improvement}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Detailed Scores */}
+          <div className="grid grid-cols-2 gap-2">
+            <div
+              className={`p-2 rounded ${
+                isDarkMode ? 'bg-gray-700' : 'bg-gray-50'
+              }`}
+            >
+              <p
+                className={`text-xs font-medium mb-1 ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                }`}
+              >
+                Personality
+              </p>
+              <p
+                className="text-lg font-bold"
+                style={{
+                  color: getScoreColor(analysis.personality_alignment.score),
+                }}
+              >
+                {analysis.personality_alignment.score}%
+              </p>
+            </div>
+
+            <div
+              className={`p-2 rounded ${
+                isDarkMode ? 'bg-gray-700' : 'bg-gray-50'
+              }`}
+            >
+              <p
+                className={`text-xs font-medium mb-1 ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                }`}
+              >
+                Priorities
+              </p>
+              <p
+                className="text-lg font-bold"
+                style={{
+                  color: getScoreColor(analysis.priorities_alignment.score),
+                }}
+              >
+                {analysis.priorities_alignment.score}%
+              </p>
+            </div>
+
+            <div
+              className={`p-2 rounded ${
+                isDarkMode ? 'bg-gray-700' : 'bg-gray-50'
+              }`}
+            >
+              <p
+                className={`text-xs font-medium mb-1 ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                }`}
+              >
+                Values
+              </p>
+              <p
+                className="text-lg font-bold"
+                style={{
+                  color: getScoreColor(analysis.values_alignment.score),
+                }}
+              >
+                {analysis.values_alignment.score}%
+              </p>
+            </div>
+
+            <div
+              className={`p-2 rounded ${
+                isDarkMode ? 'bg-gray-700' : 'bg-gray-50'
+              }`}
+            >
+              <p
+                className={`text-xs font-medium mb-1 ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                }`}
+              >
+                Criteria
+              </p>
+              <p
+                className="text-lg font-bold"
+                style={{
+                  color: getScoreColor(analysis.weights_alignment.score),
+                }}
+              >
+                {analysis.weights_alignment.score}%
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // EssayDeleteConfirm component
 function EssayDeleteConfirm({
   onConfirm,
@@ -415,6 +627,8 @@ interface EssayBlockProps {
   onDelete: (essayId: string) => void
   isGenerating?: boolean
   onGenerateSocraticQuestions?: (essayId: string) => Promise<void>
+  userId?: string
+  onSubmitForReview?: (essayId: string) => Promise<void>
 }
 
 export default function EssayBlock({
@@ -424,6 +638,8 @@ export default function EssayBlock({
   onDelete,
   isGenerating = false,
   onGenerateSocraticQuestions,
+  userId,
+  onSubmitForReview,
 }: EssayBlockProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [maxWords, setMaxWords] = useState<string>(
@@ -433,6 +649,8 @@ export default function EssayBlock({
     useState<HighlightedSection | null>(null)
   const [isEditMode, setIsEditMode] = useState(true)
   const [textareaHeight, setTextareaHeight] = useState<number>(100)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const blockRef = useRef<HTMLDivElement>(null)
   const { setEditing } = useEditing()
@@ -478,9 +696,16 @@ export default function EssayBlock({
 
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newContent = e.target.value
+    console.log('📝 [EssayBlock.handleContentChange] Content changed')
+    console.log('  - Essay ID:', data.id)
+    console.log('  - Is custom draft:', data.isCustomDraft)
+    console.log('  - New content length:', newContent.length)
+    console.log('  - New word count:', newContent.trim().split(/\s+/).length)
+
     // Switch to edit mode when content changes
     setIsEditMode(true)
     setSelectedSection(null)
+    setSubmitError(null) // Clear any previous submit errors
 
     // Clear highlights and socratic data when content changes
     onUpdate({
@@ -488,10 +713,20 @@ export default function EssayBlock({
       content: newContent,
       highlightedSections: undefined,
       socraticData: undefined,
+      customDraftAnalysis: undefined, // Clear custom draft analysis too
       lastEditedAt: Date.now(),
     })
-    // Trigger regeneration
+
+    // IMPORTANT: Do NOT auto-trigger for custom drafts
+    // Custom drafts require manual submission via "Submit for Review" button
+    if (data.isCustomDraft) {
+      console.log('  - ⚠️ Skipping auto-analysis (custom draft - manual submission required)')
+      return
+    }
+
+    // Trigger regeneration for AI-generated drafts only
     if (onGenerateSocraticQuestions) {
+      console.log('  - ✅ Triggering auto-analysis (AI-generated draft)')
       onGenerateSocraticQuestions(data.id)
     }
   }
@@ -548,6 +783,7 @@ export default function EssayBlock({
         data.content,
         selectedSection.id,
         answers,
+        userId,
       )
 
       // Clear the selected section
@@ -567,6 +803,26 @@ export default function EssayBlock({
       }
     } catch (error) {
       console.error('Error submitting Socratic answers:', error)
+    }
+  }
+
+  const handleSubmitForReview = async () => {
+    if (!onSubmitForReview) return
+
+    setIsSubmitting(true)
+    setSubmitError(null)
+
+    try {
+      console.log('🔘 [EssayBlock] Submit for Review button clicked')
+      await onSubmitForReview(data.id)
+      console.log('✅ [EssayBlock] Submit successful')
+    } catch (error) {
+      console.error('❌ [EssayBlock] Submit error:', error)
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to submit for review'
+      setSubmitError(errorMessage)
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -687,6 +943,60 @@ export default function EssayBlock({
                 handleSectionClick,
               )}
             </div>
+          )}
+
+          {/* Submit for Review Button - Only for custom drafts without analysis */}
+          {data.isCustomDraft &&
+            !data.customDraftAnalysis &&
+            !isGenerating &&
+            onSubmitForReview && (
+              <div className="mt-4 pt-4 border-t">
+                <button
+                  onClick={handleSubmitForReview}
+                  disabled={isSubmitting || wordCount < 50}
+                  className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all ${
+                    isSubmitting || wordCount < 50
+                      ? 'opacity-50 cursor-not-allowed'
+                      : 'hover:shadow-md cursor-pointer'
+                  }`}
+                  style={{
+                    backgroundColor: brandColors.teal,
+                    color: '#ffffff',
+                  }}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 size={18} className="animate-spin" />
+                      Submitting for Review...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles size={18} />
+                      Submit for Review {wordCount < 50 && `(${wordCount}/50 words)`}
+                    </>
+                  )}
+                </button>
+                {submitError && (
+                  <p className="mt-2 text-xs text-red-600">{submitError}</p>
+                )}
+                {wordCount < 50 && !submitError && (
+                  <p
+                    className={`mt-2 text-xs ${
+                      isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                    }`}
+                  >
+                    Write at least 50 words to submit for comprehensive analysis
+                  </p>
+                )}
+              </div>
+            )}
+
+          {/* Custom Draft Analysis */}
+          {data.isCustomDraft && data.customDraftAnalysis && (
+            <CustomDraftAnalysisDisplay
+              analysis={data.customDraftAnalysis}
+              isDarkMode={isDarkMode}
+            />
           )}
         </div>
       </div>

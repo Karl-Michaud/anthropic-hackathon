@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { MoreVertical, Pencil, Trash2, Plus, Loader2 } from 'lucide-react'
+import { MoreVertical, Pencil, Trash2, Plus, Loader2, Sparkles } from 'lucide-react'
 import { useEditing } from '../context/EditingContext'
 import { useDarkMode } from '../context/DarkModeContext'
 import { ScholarshipData } from '../context/WhiteboardContext'
@@ -669,15 +669,35 @@ function ScholarshipEditButtons({
 // ScholarshipActions component
 export function ScholarshipActions({
   onDraft,
+  onCustomDraft,
   isGenerating = false,
 }: {
   onDraft: () => void
+  onCustomDraft?: () => void
   isGenerating?: boolean
 }) {
+  const handleGenerateDraftClick = () => {
+    console.log('🎯 [ScholarshipActions] Generate Draft button clicked')
+    console.log('  - isGenerating:', isGenerating)
+    console.log('  - onDraft function:', typeof onDraft)
+    onDraft()
+  }
+
+  const handleCustomDraftClick = () => {
+    console.log('✏️ [ScholarshipActions] Custom Draft button clicked')
+    console.log('  - isGenerating:', isGenerating)
+    console.log('  - onCustomDraft function:', typeof onCustomDraft)
+    if (onCustomDraft) {
+      onCustomDraft()
+    } else {
+      console.error('⚠️ onCustomDraft is undefined!')
+    }
+  }
+
   return (
     <div className="flex gap-2 mt-4">
       <button
-        onClick={onDraft}
+        onClick={handleGenerateDraftClick}
         disabled={isGenerating}
         className="flex items-center gap-2 px-4 py-2 text-white rounded-md font-medium border-none cursor-pointer transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed"
         style={{
@@ -691,11 +711,25 @@ export function ScholarshipActions({
           </>
         ) : (
           <>
-            <Plus size={18} />
-            Draft
+            <Sparkles size={18} />
+            Generate Draft
           </>
         )}
       </button>
+      {onCustomDraft && (
+        <button
+          onClick={handleCustomDraftClick}
+          disabled={isGenerating}
+          className="flex items-center gap-2 px-4 py-2 text-white rounded-md font-medium border-none cursor-pointer transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed"
+          style={{
+            backgroundColor: brandColors.crail,
+            opacity: 0.8,
+          }}
+        >
+          <Plus size={18} />
+          Custom Draft
+        </button>
+      )}
     </div>
   )
 }
@@ -754,6 +788,7 @@ interface ScholarshipBlockProps {
   onUpdate: (data: ScholarshipData) => void
   onDelete: (scholarshipId: string) => void
   onDraft?: (scholarshipId: string) => void
+  onCustomDraft?: (scholarshipId: string) => void
   isGeneratingEssay?: boolean
 }
 
@@ -762,6 +797,7 @@ export function ScholarshipBlock({
   onUpdate,
   onDelete,
   onDraft,
+  onCustomDraft,
   isGeneratingEssay = false,
 }: ScholarshipBlockProps) {
   const [isEditing, setIsEditing] = useState(false)
@@ -770,6 +806,17 @@ export function ScholarshipBlock({
   const [editedData, setEditedData] = useState(data)
   const { setEditing: setGlobalEditing } = useEditing()
   const { isDarkMode } = useDarkMode()
+
+  // Log props on mount and when they change
+  useEffect(() => {
+    console.log('📦 [ScholarshipBlock] Props received:', {
+      scholarshipId: data.id,
+      scholarshipTitle: data.title,
+      hasOnDraft: !!onDraft,
+      hasOnCustomDraft: !!onCustomDraft,
+      isGeneratingEssay,
+    })
+  }, [data.id, data.title, onDraft, onCustomDraft, isGeneratingEssay])
 
   const startEditing = () => {
     setIsEditing(true)
@@ -1034,6 +1081,7 @@ export function ScholarshipBlock({
       {!isEditing && onDraft && (
         <ScholarshipActions
           onDraft={() => onDraft(data.id)}
+          onCustomDraft={onCustomDraft ? () => onCustomDraft(data.id) : undefined}
           isGenerating={isGeneratingEssay}
         />
       )}

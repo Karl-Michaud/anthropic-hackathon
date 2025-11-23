@@ -16,10 +16,11 @@ import { useWhiteboard } from '../context/WhiteboardContext'
 import { useEditing } from '../context/EditingContext'
 import { useDarkMode } from '../context/DarkModeContext'
 import { saveEssayDraftToDB } from '../lib/dbUtils'
-import { generateDraftWithAnalysis } from '../lib/request'
+import { generateDraftWithAnalysis, analyzeCustomDraftWithAnalysis } from '../lib/request'
 import { useAuth } from './auth/AuthProvider'
 import { SyncStatusIndicator } from './SyncStatusIndicator'
 import { FirstTimeUserModal } from './FirstTimeUserModal'
+import { ContextMenu } from './ContextMenu'
 import type { IGenerateDraft } from '../types/interfaces'
 import type {
   CellData,
@@ -70,6 +71,10 @@ export default function Whiteboard() {
     x: number
     y: number
   } | null>(null)
+  const [lastContextMenuCanvasPos, setLastContextMenuCanvasPos] = useState<{
+    x: number
+    y: number
+  } | null>(null)
   const [selectedIds, setSelectedIds] = useState(new Set<string>())
   const [dragStartPositions, setDragStartPositions] = useState(
     new Map<string, { x: number; y: number }>(),
@@ -94,6 +99,7 @@ export default function Whiteboard() {
     feedbackPanels,
     blockPositions,
     isFirstTimeUser,
+    hasCheckedFirstTimeUser,
     setUserProfile,
     addCell,
     updateCell,
@@ -317,6 +323,7 @@ export default function Whiteboard() {
       // Close context menu if open
       if (contextMenu) {
         setContextMenu(null)
+        setLastContextMenuCanvasPos(null)
       }
 
       if (activeTool === 'hand') {
@@ -387,76 +394,260 @@ export default function Whiteboard() {
 
   const handleGenerateEssay = useCallback(
     async (scholarshipId: string) => {
+      console.log('🎯 [Whiteboard.handleGenerateEssay] CALLED')
+      console.log('  - scholarshipId:', scholarshipId)
+
       const scholarship = scholarships.find((s) => s.id === scholarshipId)
-      if (!scholarship) return
+      if (!scholarship) {
+        console.error('❌ [Whiteboard.handleGenerateEssay] Scholarship not found!', scholarshipId)
+        return
+      }
+
+      console.log('  - Scholarship found:', scholarship.title)
+      console.log('  - User ID:', user?.id || 'NOT PROVIDED')
 
       setGeneratingEssayFor(scholarshipId)
 
       try {
+        console.log('  - Calling generateDraftWithAnalysis...')
         // Use generateDraftWithAnalysis to include user profile context
         const response = await generateDraftWithAnalysis(
           scholarshipId,
           user?.id,
         )
 
+        console.log('  - ✅ Received response from AI')
         const essayContent = response.essay || ''
+        console.log('  - Essay length:', essayContent.length, 'characters')
 
+        console.log('  - Creating essay in context...')
         const essayId = addEssay({
           scholarshipId,
           content: essayContent,
           maxWordCount: undefined,
           lastEditedAt: Date.now(),
         })
+        console.log('  - ✅ Essay created with ID:', essayId)
 
         // Position essay to the right of the scholarship
         const scholarshipPos = getBlockPosition(scholarshipId)
         const essayX = scholarshipPos.x + 600 // 550px width + 50px gap
         const essayY = scholarshipPos.y
+        console.log('  - Positioning essay at:', { x: essayX, y: essayY })
 
         updateBlockPosition(essayId, essayX, essayY)
+        console.log('  - ✅ Essay positioned')
 
         // Save to database
         if (scholarship.id) {
+          console.log('  - Saving essay to database...')
           await saveEssayDraftToDB(scholarship.id, essayContent)
+          console.log('  - ✅ Essay saved to database')
         }
       } catch (error) {
-        console.error('Failed to generate essay:', error)
+        console.error('❌ [Whiteboard.handleGenerateEssay] Error:', error)
+        if (error instanceof Error) {
+          console.error('  - Error message:', error.message)
+          console.error('  - Error stack:', error.stack)
+        }
       } finally {
         setGeneratingEssayFor(null)
+        console.log('🏁 [Whiteboard.handleGenerateEssay] COMPLETED')
       }
     },
     [scholarships, addEssay, getBlockPosition, updateBlockPosition, user?.id],
   )
 
+  const handleCustomDraft = useCallback(
+    (scholarshipId: string) => {
+      console.log('✏️ [Whiteboard.handleCustomDraft] CALLED')
+      console.log('  - scholarshipId:', scholarshipId)
+
+      const scholarship = scholarships.find((s) => s.id === scholarshipId)
+      if (!scholarship) {
+        console.error('❌ [Whiteboard.handleCustomDraft] Scholarship not found!', scholarshipId)
+        return
+      }
+
+      console.log('  - Scholarship found:', scholarship.title)
+      console.log('  - Creating blank essay marked as custom draft...')
+
+      // Create a blank essay marked as custom draft
+      const essayId = addEssay({
+        scholarshipId,
+        content: '',
+        maxWordCount: undefined,
+        lastEditedAt: Date.now(),
+        isCustomDraft: true, // Mark this as a custom draft
+      })
+      console.log('  - ✅ Essay created with ID:', essayId)
+
+      // Position essay to the right of the scholarship
+      const scholarshipPos = getBlockPosition(scholarshipId)
+      const essayX = scholarshipPos.x + 600 // 550px width + 50px gap
+      const essayY = scholarshipPos.y
+      console.log('  - Positioning essay at:', { x: essayX, y: essayY })
+
+      updateBlockPosition(essayId, essayX, essayY)
+      console.log('  - ✅ Essay positioned')
+
+      console.log('🏁 [Whiteboard.handleCustomDraft] COMPLETED')
+      console.log('  - New essay should be visible to the right of the scholarship')
+    },
+    [scholarships, addEssay, getBlockPosition, updateBlockPosition],
+  )
+
   const handleGenerateSocraticQuestions = useCallback(
     async (essayId: string) => {
+      console.log('❓ [Whiteboard.handleGenerateSocraticQuestions] CALLED')
+      console.log('  - essayId:', essayId)
+
       const essay = essays.find((e) => e.id === essayId)
-      if (!essay) return
+      if (!essay) {
+        console.error('  - ❌ Essay not found!')
+        return
+      }
+
+      console.log('  - Essay found:', {
+        id: essay.id,
+        isCustomDraft: essay.isCustomDraft,
+        contentLength: essay.content?.length || 0,
+        wordCount: essay.content?.trim().split(/\s+/).length || 0,
+      })
+
+      if (essay.isCustomDraft) {
+        console.warn('  - ⚠️ WARNING: Attempting to analyze custom draft!')
+        console.warn('  - This should NOT happen - custom drafts should use manual submission')
+        console.warn('  - Aborting auto-analysis')
+        return
+      }
 
       try {
         const scholarship = scholarships.find(
           (s) => s.id === essay.scholarshipId,
         )
+        console.log('  - Calling analyzeSocraticQuestions...')
+        console.log('  - Content being analyzed:', {
+          length: essay.content.length,
+          preview: essay.content.substring(0, 100),
+        })
+
         const analysisResult = await analyzeSocraticQuestions(
           essay.content,
           scholarship?.title,
+          user?.id,
         )
 
+        console.log('  - ✅ Analysis complete, updating essay')
         updateEssay({
           ...essay,
           highlightedSections: analysisResult.highlightedSections,
           socraticData: analysisResult.socraticData,
         })
       } catch (error) {
-        console.error('Failed to generate Socratic questions:', error)
+        console.error('❌ [Whiteboard.handleGenerateSocraticQuestions] Error:', error)
+        if (error instanceof Error) {
+          console.error('  - Error message:', error.message)
+          console.error('  - Error stack:', error.stack)
+        }
       }
     },
-    [essays, scholarships, updateEssay],
+    [essays, scholarships, updateEssay, user?.id],
+  )
+
+  const handleAnalyzeCustomDraft = useCallback(
+    async (essayId: string) => {
+      const essay = essays.find((e) => e.id === essayId)
+      if (!essay || !essay.isCustomDraft) return
+
+      // Only analyze if essay has sufficient content
+      const wordCount = essay.content.trim().split(/\s+/).length
+      if (wordCount < 50) {
+        console.log('Essay too short for comprehensive analysis:', { wordCount })
+        throw new Error(
+          `Essay too short for analysis. Please write at least 50 words (currently ${wordCount} words).`,
+        )
+      }
+
+      try {
+        console.log('🔍 Analyzing custom draft for essay:', essayId)
+        const analysisResult = await analyzeCustomDraftWithAnalysis(
+          essay.scholarshipId,
+          essay.content,
+        )
+
+        console.log('✅ Analysis complete, updating essay with results')
+        updateEssay({
+          ...essay,
+          customDraftAnalysis: analysisResult,
+        })
+      } catch (error) {
+        console.error('Failed to analyze custom draft:', error)
+        throw error // Re-throw to let caller handle it
+      }
+    },
+    [essays, updateEssay],
+  )
+
+  // Combined handler for submitting custom drafts for review
+  const handleSubmitCustomDraftForReview = useCallback(
+    async (essayId: string) => {
+      console.log('📤 [Whiteboard.handleSubmitCustomDraftForReview] CALLED')
+      console.log('  - essayId:', essayId)
+
+      const essay = essays.find((e) => e.id === essayId)
+      if (!essay) {
+        console.error('❌ Essay not found:', essayId)
+        throw new Error('Essay not found')
+      }
+
+      if (!essay.isCustomDraft) {
+        console.error('❌ Essay is not a custom draft:', essayId)
+        return
+      }
+
+      console.log('  - Essay found:', {
+        contentLength: essay.content.length,
+        wordCount: essay.content.trim().split(/\s+/).length,
+      })
+
+      try {
+        // Run both analyses in parallel
+        console.log('  - Running Socratic analysis and comprehensive analysis...')
+        const [socraticResult] = await Promise.all([
+          analyzeSocraticQuestions(
+            essay.content,
+            scholarships.find((s) => s.id === essay.scholarshipId)?.title,
+          ),
+          handleAnalyzeCustomDraft(essayId),
+        ])
+
+        console.log('  - ✅ Both analyses complete')
+        console.log('  - Updating essay with Socratic results...')
+
+        // Update with Socratic results (custom draft analysis is handled in handleAnalyzeCustomDraft)
+        updateEssay({
+          ...essay,
+          highlightedSections: socraticResult.highlightedSections,
+          socraticData: socraticResult.socraticData,
+        })
+
+        console.log('🏁 [Whiteboard.handleSubmitCustomDraftForReview] COMPLETED')
+      } catch (error) {
+        console.error('❌ [Whiteboard.handleSubmitCustomDraftForReview] Error:', error)
+        throw error
+      }
+    },
+    [essays, scholarships, updateEssay, handleAnalyzeCustomDraft],
   )
 
   // Auto-generate Socratic questions for new essays without highlights
+  // NOTE: Custom drafts are excluded - they require manual submission
   useEffect(() => {
     const essaysWithoutHighlights = essays.filter((essay) => {
+      // Skip custom drafts - they need manual submission
+      if (essay.isCustomDraft) return false
+
       // Only generate for essays with content and no highlights
       if (!essay.content || essay.content.trim().length === 0) return false
       if (essay.highlightedSections && essay.highlightedSections.length > 0) {
@@ -479,6 +670,10 @@ export default function Whiteboard() {
 
     return () => clearTimeout(timer)
   }, [essays, handleGenerateSocraticQuestions])
+
+  // NOTE: Auto-analysis for custom drafts is DISABLED
+  // Custom drafts now use manual "Submit for Review" button
+  // This prevents the error when content is empty or incomplete
 
   const addNewCell = useCallback(() => {
     const colors = ['yellow', 'blue', 'pink', 'green', 'purple', 'orange']
@@ -508,11 +703,12 @@ export default function Whiteboard() {
 
   const handleCanvasMouseDown = useCallback(
     (e: MouseEvent<HTMLDivElement>) => {
-      if (isEditing || isFirstTimeUser) return
+      if (isEditing || (hasCheckedFirstTimeUser && isFirstTimeUser)) return
 
       // Close context menu if open
       if (contextMenu) {
         setContextMenu(null)
+        setLastContextMenuCanvasPos(null)
         return
       }
 
@@ -547,6 +743,7 @@ export default function Whiteboard() {
       contextMenu,
       activeTool,
       isFirstTimeUser,
+      hasCheckedFirstTimeUser,
     ],
   )
 
@@ -959,6 +1156,11 @@ export default function Whiteboard() {
   // Context menu handlers
   const handleContextMenu = useCallback(
     (e: MouseEvent<HTMLDivElement>, blockId?: string) => {
+      // Don't show context menu if in hand tool mode or if modal is open
+      if (activeTool === 'hand' || (hasCheckedFirstTimeUser && isFirstTimeUser)) {
+        return
+      }
+
       e.preventDefault()
       e.stopPropagation()
 
@@ -967,9 +1169,14 @@ export default function Whiteboard() {
         setSelectedIds(new Set([blockId]))
       }
 
+      // Convert screen coordinates to canvas coordinates for paste positioning
+      const canvasX = (e.clientX - position.x) / zoom
+      const canvasY = (e.clientY - position.y) / zoom
+      setLastContextMenuCanvasPos({ x: canvasX, y: canvasY })
+
       setContextMenu({ x: e.clientX, y: e.clientY })
     },
-    [selectedIds],
+    [selectedIds, activeTool, hasCheckedFirstTimeUser, isFirstTimeUser, position, zoom],
   )
 
   const handleCopy = useCallback(() => {
@@ -1009,13 +1216,56 @@ export default function Whiteboard() {
   const handlePaste = useCallback(() => {
     if (!clipboard || clipboard.length === 0) return
 
+    // Determine paste position
+    let pasteX: number
+    let pasteY: number
+
+    if (lastContextMenuCanvasPos) {
+      // Use context menu position (right-click paste)
+      pasteX = lastContextMenuCanvasPos.x
+      pasteY = lastContextMenuCanvasPos.y
+    } else {
+      // Use viewport center (keyboard paste)
+      const viewportCenterX = window.innerWidth / 2
+      const viewportCenterY = window.innerHeight / 2
+      pasteX = (viewportCenterX - position.x) / zoom
+      pasteY = (viewportCenterY - position.y) / zoom
+    }
+
     const newIds = new Set<string>()
+
+    // Calculate the centroid of copied items to paste them as a group
+    let totalX = 0
+    let totalY = 0
+    let count = 0
+
+    clipboard.forEach((item) => {
+      if (item.type === 'cell') {
+        const cellData = item.data as any
+        totalX += cellData.x
+        totalY += cellData.y
+        count++
+      } else if (item.type === 'scholarship' || item.type === 'essay') {
+        const blockData = item.data as any
+        const pos = getBlockPosition(blockData.id)
+        totalX += pos.x
+        totalY += pos.y
+        count++
+      }
+    })
+
+    const centroidX = count > 0 ? totalX / count : 0
+    const centroidY = count > 0 ? totalY / count : 0
 
     clipboard.forEach((item) => {
       if (item.type === 'cell') {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
         const { id: _id, ...cellData } = item.data as any
-        const clamped = clampToCanvas(cellData.x + 50, cellData.y + 50)
+        // Calculate offset from centroid
+        const offsetX = cellData.x - centroidX
+        const offsetY = cellData.y - centroidY
+        // Place at paste position + offset
+        const clamped = clampToCanvas(pasteX + offsetX, pasteY + offsetY)
         const newId = addCell({
           ...cellData,
           x: clamped.x,
@@ -1032,7 +1282,10 @@ export default function Whiteboard() {
           weights: item.data.weights,
         })
         const pos = getBlockPosition(scholarshipData.id)
-        const clamped = clampToCanvas(pos.x + 50, pos.y + 50)
+        // Calculate offset from centroid
+        const offsetX = pos.x - centroidX
+        const offsetY = pos.y - centroidY
+        const clamped = clampToCanvas(pasteX + offsetX, pasteY + offsetY)
         updateBlockPosition(newId, clamped.x, clamped.y)
         newIds.add(newId)
       } else if (item.type === 'essay') {
@@ -1044,15 +1297,24 @@ export default function Whiteboard() {
           maxWordCount: essayData.maxWordCount,
         })
         const pos = getBlockPosition(essayData.id)
-        const clamped = clampToCanvas(pos.x + 50, pos.y + 50)
+        // Calculate offset from centroid
+        const offsetX = pos.x - centroidX
+        const offsetY = pos.y - centroidY
+        const clamped = clampToCanvas(pasteX + offsetX, pasteY + offsetY)
         updateBlockPosition(newId, clamped.x, clamped.y)
         newIds.add(newId)
       }
     })
 
     setSelectedIds(newIds)
+
+    // Clear the context menu position after pasting
+    setLastContextMenuCanvasPos(null)
   }, [
     clipboard,
+    lastContextMenuCanvasPos,
+    position,
+    zoom,
     addCell,
     addScholarship,
     addEssay,
@@ -1158,7 +1420,7 @@ export default function Whiteboard() {
   const handleWheel = useCallback(
     (e: WheelEvent) => {
       // Disable wheel events when first-time user modal is open
-      if (isFirstTimeUser) return
+      if (hasCheckedFirstTimeUser && isFirstTimeUser) return
 
       if (e.metaKey || e.ctrlKey) {
         // Zoom with cmd/ctrl + scroll - zoom towards cursor
@@ -1178,7 +1440,7 @@ export default function Whiteboard() {
         }))
       }
     },
-    [zoom, zoomToPoint, isFirstTimeUser],
+    [zoom, zoomToPoint, isFirstTimeUser, hasCheckedFirstTimeUser],
   )
 
   useEffect(() => {
@@ -1253,7 +1515,7 @@ export default function Whiteboard() {
 
       {/* Syncing indicator */}
       {syncingData && (
-        <div className="absolute bottom-4 left-4 text-sm text-gray-500">
+        <div className="absolute bottom-4 right-4 text-sm text-gray-500">
           Syncing...
         </div>
       )}
@@ -1271,6 +1533,22 @@ export default function Whiteboard() {
             backgroundColor: 'rgba(59, 130, 246, 0.1)',
             pointerEvents: 'none',
             zIndex: 1000,
+          }}
+        />
+      )}
+
+      {/* Context Menu */}
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onCopy={handleCopy}
+          onPaste={handlePaste}
+          onDelete={handleDelete}
+          isPasteDisabled={!clipboard || clipboard.length === 0}
+          onClose={() => {
+            setContextMenu(null)
+            setLastContextMenuCanvasPos(null)
           }}
         />
       )}
@@ -1320,6 +1598,7 @@ export default function Whiteboard() {
                 onUpdate={updateScholarship}
                 onDelete={deleteScholarship}
                 onDraft={handleGenerateEssay}
+                onCustomDraft={handleCustomDraft}
                 isGeneratingEssay={generatingEssayFor === scholarship.id}
               />
             </DraggableBlock>
@@ -1352,6 +1631,8 @@ export default function Whiteboard() {
                 onDelete={deleteEssay}
                 isGenerating={generatingEssayFor === essay.scholarshipId}
                 onGenerateSocraticQuestions={handleGenerateSocraticQuestions}
+                userId={user?.id}
+                onSubmitForReview={handleSubmitCustomDraftForReview}
               />
             </DraggableBlock>
           )
@@ -1437,6 +1718,7 @@ export default function Whiteboard() {
                     const updatedEssayContent = await submitFeedbackAnswers(
                       feedbackData,
                       essay.content,
+                      user?.id,
                     )
 
                     // Update the essay with the enhanced content
@@ -1466,8 +1748,8 @@ export default function Whiteboard() {
       {/* Sync Status Indicator */}
       <SyncStatusIndicator />
 
-      {/* First-time User Modal */}
-      {isFirstTimeUser && (
+      {/* First-time User Modal - Only show after we've checked and confirmed user is first-time */}
+      {hasCheckedFirstTimeUser && isFirstTimeUser && (
         <FirstTimeUserModal
           onComplete={async (profile) => {
             await setUserProfile(profile)
