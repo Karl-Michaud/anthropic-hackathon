@@ -23,7 +23,6 @@ import {
 import { extractScholarshipInfo } from '../lib/claudeApi'
 import { requestClaude } from '../lib/request'
 import { parseFileContent, getFileType } from '../lib/fileParser'
-import type { FeedbackData } from '../lib/dynamicFeedback/types'
 import { IPromptWeights } from '../types/interfaces'
 import { brandColors, colorsLight, colorsDark } from '../styles/design-system'
 
@@ -823,7 +822,7 @@ export default function Navigation() {
     // Provider not available
     isDarkMode = false
   }
-  const { addScholarship, addJsonOutput, addFeedbackPanel } = useWhiteboard()
+  const { addScholarship, addJsonOutput } = useWhiteboard()
 
   const handleScholarshipCreated = (data: ScholarshipUploadResult) => {
     // Use the database ID directly instead of generating a new local ID
