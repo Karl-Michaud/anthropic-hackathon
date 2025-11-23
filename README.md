@@ -12,7 +12,7 @@ Generic AI tools generate polished but ineffective scholarship essays because th
 
 -   Find the prompts we used to the LLM in `/docs/research/prompts`
 -   Find the Research with 25+ scholarships and award profiles in `/docs/research/25 Scholarships and Award Profiles.pdf`
--   Use our app [Here](socraticai.vercel.app/)
+-   Use our app [Here](https://socraticai.vercel.app/)
 
 ## Getting Started
 
