@@ -651,10 +651,19 @@ export default function EssayBlock({
   const [textareaHeight, setTextareaHeight] = useState<number>(100)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [localContent, setLocalContent] = useState(data.content)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const blockRef = useRef<HTMLDivElement>(null)
+  const originalContentRef = useRef<string>(data.content)
   const { setEditing } = useEditing()
   const { isDarkMode } = useDarkMode()
+
+  // Sync local content with data.content when not editing
+  useEffect(() => {
+    if (!isEditMode) {
+      setLocalContent(data.content)
+    }
+  }, [data.content, isEditMode])
 
   const wordCount = useMemo(() => {
     return data.content.trim() ? data.content.trim().split(/\s+/).length : 0
@@ -667,7 +676,7 @@ export default function EssayBlock({
       textareaRef.current.style.height = `${newHeight}px`
       setTextareaHeight(newHeight)
     }
-  }, [data.content])
+  }, [localContent])
 
   // Handle clicks outside highlights to close the Socratic panel
   useEffect(() => {
@@ -695,40 +704,83 @@ export default function EssayBlock({
   }, [data.highlightedSections])
 
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newContent = e.target.value
-    console.log('📝 [EssayBlock.handleContentChange] Content changed')
-    console.log('  - Essay ID:', data.id)
-    console.log('  - Is custom draft:', data.isCustomDraft)
-    console.log('  - New content length:', newContent.length)
-    console.log('  - New word count:', newContent.trim().split(/\s+/).length)
+    // Only update local state while typing - no context updates
+    setLocalContent(e.target.value)
+  }
 
-    // Switch to edit mode when content changes
+  const handleTextareaFocus = () => {
+    // Store the original content when starting to edit
+    originalContentRef.current = data.content
+    setLocalContent(data.content)
+    setEditing(true)
+    // Switch to edit mode to show textarea
     setIsEditMode(true)
-    setSelectedSection(null)
-    setSubmitError(null) // Clear any previous submit errors
+  }
 
-    // Clear highlights and socratic data when content changes
+  const handleTextareaBlur = () => {
+    setEditing(false)
+    // Exit edit mode to show highlights again
+    setIsEditMode(false)
+
+    // Apply changes and filter highlights based on edits
+    const newContent = localContent
+    const originalContent = originalContentRef.current
+
+    // Check if content actually changed
+    if (newContent === originalContent) {
+      return // No changes, nothing to update
+    }
+
+    // Check if any highlighted sections were edited
+    let updatedHighlights = data.highlightedSections
+    let updatedSocraticData = data.socraticData
+
+    if (data.highlightedSections && data.highlightedSections.length > 0) {
+      // Filter out highlights where the text has changed
+      const validHighlights = data.highlightedSections.filter((highlight) => {
+        const originalText = originalContent.substring(
+          highlight.startIndex,
+          highlight.endIndex,
+        )
+        const newText = newContent.substring(
+          highlight.startIndex,
+          highlight.endIndex,
+        )
+
+        // Keep highlight only if text is unchanged
+        return originalText === newText && highlight.endIndex <= newContent.length
+      })
+
+      // Check if highlights changed
+      if (validHighlights.length !== data.highlightedSections.length) {
+        // Remove socratic data for removed highlights
+        if (data.socraticData) {
+          const validSectionIds = new Set(validHighlights.map((h) => h.id))
+          const filteredSocraticData: Record<string, typeof data.socraticData[string]> = {}
+
+          Object.keys(data.socraticData).forEach((sectionId) => {
+            if (validSectionIds.has(sectionId)) {
+              filteredSocraticData[sectionId] = data.socraticData![sectionId]
+            }
+          })
+
+          updatedSocraticData = Object.keys(filteredSocraticData).length > 0
+            ? filteredSocraticData
+            : undefined
+        }
+
+        updatedHighlights = validHighlights.length > 0 ? validHighlights : undefined
+      }
+    }
+
+    // Update context only once when done editing
     onUpdate({
       ...data,
       content: newContent,
-      highlightedSections: undefined,
-      socraticData: undefined,
-      customDraftAnalysis: undefined, // Clear custom draft analysis too
+      highlightedSections: updatedHighlights,
+      socraticData: updatedSocraticData,
       lastEditedAt: Date.now(),
     })
-
-    // IMPORTANT: Do NOT auto-trigger for custom drafts
-    // Custom drafts require manual submission via "Submit for Review" button
-    if (data.isCustomDraft) {
-      console.log('  - ⚠️ Skipping auto-analysis (custom draft - manual submission required)')
-      return
-    }
-
-    // Trigger regeneration for AI-generated drafts only
-    if (onGenerateSocraticQuestions) {
-      console.log('  - ✅ Triggering auto-analysis (AI-generated draft)')
-      onGenerateSocraticQuestions(data.id)
-    }
   }
 
   const handleMaxWordsChange = (value: string) => {
@@ -775,48 +827,42 @@ export default function EssayBlock({
   }
 
   const handleSubmitAllSocraticAnswers = async () => {
-    if (!data.socraticData) return
-
     setIsSubmitting(true)
     setSubmitError(null)
 
     try {
-      console.log('📤 [EssayBlock] Submitting ALL Socratic answers')
-
-      // Collect all answered questions across ALL sections
+      // Collect all answered questions if they exist
       const allAnswers: Record<string, string> = {}
       let answeredCount = 0
-      let totalCount = 0
 
-      Object.values(data.socraticData).forEach((questions) => {
-        questions.forEach((q) => {
-          totalCount++
-          if (q.answer && q.answer.trim().length > 0) {
-            allAnswers[q.id] = q.answer
-            answeredCount++
-          }
+      if (data.socraticData) {
+        Object.values(data.socraticData).forEach((questions) => {
+          questions.forEach((q) => {
+            if (q.answer && q.answer.trim().length > 0) {
+              allAnswers[q.id] = q.answer
+              answeredCount++
+            }
+          })
         })
-      })
-
-      if (answeredCount === 0) {
-        setSubmitError('Please answer at least one question before submitting')
-        setIsSubmitting(false)
-        return
       }
 
-      console.log(`Submitting ${answeredCount}/${totalCount} answered questions`)
+      let updatedContent = data.content
 
-      // Submit all answers and get updated essay
-      const updatedContent = await submitSocraticAnswers(
-        data.content,
-        '', // sectionId not needed when submitting all
-        allAnswers,
-        userId,
-      )
+      // If there are answered questions, submit them to improve the essay
+      if (answeredCount > 0) {
+        console.log(`📤 [EssayBlock] Submitting ${answeredCount} answered questions`)
+        updatedContent = await submitSocraticAnswers(
+          data.content,
+          '', // sectionId not needed when submitting all
+          allAnswers,
+          userId,
+        )
+        console.log('✅ Essay content updated with improvements')
+      } else {
+        console.log('📤 [EssayBlock] No answers to submit, regenerating highlights only')
+      }
 
-      console.log('✅ Essay content updated')
-
-      // Update the essay with new content and clear highlights to regenerate
+      // Update the essay and clear highlights to regenerate
       onUpdate({
         ...data,
         content: updatedContent,
@@ -830,12 +876,13 @@ export default function EssayBlock({
 
       // Trigger regeneration of highlights
       if (onGenerateSocraticQuestions) {
+        console.log('🔄 Regenerating highlights')
         await onGenerateSocraticQuestions(data.id)
       }
     } catch (error) {
-      console.error('❌ [EssayBlock] Error submitting Socratic answers:', error)
+      console.error('❌ [EssayBlock] Error submitting:', error)
       const errorMessage =
-        error instanceof Error ? error.message : 'Failed to submit answers'
+        error instanceof Error ? error.message : 'Failed to submit'
       setSubmitError(errorMessage)
     } finally {
       setIsSubmitting(false)
@@ -872,6 +919,7 @@ export default function EssayBlock({
         id: `socratic-${selectedSection.id}`,
         sectionId: selectedSection.id,
         title: selectedSection.title,
+        explanation: selectedSection.explanation,
         questions: data.socraticData?.[selectedSection.id] || [],
       }
     : null
@@ -953,10 +1001,10 @@ export default function EssayBlock({
             data.highlightedSections.length === 0 ? (
             <textarea
               ref={textareaRef}
-              value={data.content}
+              value={localContent}
               onChange={handleContentChange}
-              onFocus={() => setEditing(true)}
-              onBlur={() => setEditing(false)}
+              onFocus={handleTextareaFocus}
+              onBlur={handleTextareaBlur}
               onWheel={(e) => e.stopPropagation()}
               placeholder="Start writing your essay here..."
               className={`w-full resize-none outline-none text-sm leading-relaxed border-0 p-0 transition-colors ${
@@ -974,7 +1022,11 @@ export default function EssayBlock({
               className={`w-full border-0 p-0 text-sm leading-relaxed transition-colors cursor-pointer opacity-75 ${
                 isDarkMode ? 'text-gray-100' : 'text-neutral-800'
               }`}
-              onDoubleClick={() => setIsEditMode(true)}
+              onDoubleClick={() => {
+                originalContentRef.current = data.content
+                setLocalContent(data.content)
+                setIsEditMode(true)
+              }}
               onWheel={(e) => e.stopPropagation()}
               title="Double-click to edit"
             >
@@ -986,36 +1038,37 @@ export default function EssayBlock({
             </div>
           )}
 
-          {/* Submit Socratic Answers Button - For AI-generated drafts with highlights */}
-          {!data.isCustomDraft &&
-            data.socraticData &&
-            Object.keys(data.socraticData).length > 0 &&
-            !isGenerating && (
+          {/* Submit Button - Always visible for AI-generated drafts */}
+          {!data.isCustomDraft && !isGenerating && (
               <div
                 className={`mt-4 pt-4 border-t ${
                   isDarkMode ? 'border-gray-700' : 'border-gray-200'
                 }`}
               >
                 {(() => {
-                  // Calculate answered questions
+                  // Calculate answered questions if they exist
                   let answeredCount = 0
                   let totalCount = 0
-                  Object.values(data.socraticData).forEach((questions) => {
-                    questions.forEach((q) => {
-                      totalCount++
-                      if (q.answer && q.answer.trim().length > 0) {
-                        answeredCount++
-                      }
+                  if (data.socraticData) {
+                    Object.values(data.socraticData).forEach((questions) => {
+                      questions.forEach((q) => {
+                        totalCount++
+                        if (q.answer && q.answer.trim().length > 0) {
+                          answeredCount++
+                        }
+                      })
                     })
-                  })
+                  }
+
+                  const hasQuestions = totalCount > 0
 
                   return (
                     <>
                       <button
                         onClick={handleSubmitAllSocraticAnswers}
-                        disabled={isSubmitting || answeredCount === 0}
+                        disabled={isSubmitting}
                         className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all ${
-                          isSubmitting || answeredCount === 0
+                          isSubmitting
                             ? 'opacity-50 cursor-not-allowed'
                             : 'hover:shadow-md cursor-pointer'
                         }`}
@@ -1029,33 +1082,55 @@ export default function EssayBlock({
                             <Loader2 size={18} className="animate-spin" />
                             Updating Essay...
                           </>
+                        ) : hasQuestions ? (
+                          <>
+                            <Sparkles size={18} />
+                            Submit Answers & Regenerate ({answeredCount}/{totalCount})
+                          </>
                         ) : (
                           <>
                             <Sparkles size={18} />
-                            Submit All Answers & Update Essay ({answeredCount}/
-                            {totalCount})
+                            Generate New Highlights
                           </>
                         )}
                       </button>
                       {submitError && (
                         <p className="mt-2 text-xs text-red-600">{submitError}</p>
                       )}
-                      {answeredCount === 0 && !submitError && (
+                      {hasQuestions && answeredCount === 0 && !submitError && (
                         <p
                           className={`mt-2 text-xs text-center ${
                             isDarkMode ? 'text-gray-400' : 'text-gray-500'
                           }`}
                         >
-                          Click highlighted sections to answer questions
+                          Click highlighted sections to answer questions, or submit to regenerate
                         </p>
                       )}
-                      {answeredCount > 0 && answeredCount < totalCount && !submitError && (
+                      {hasQuestions && answeredCount > 0 && answeredCount < totalCount && !submitError && (
                         <p
                           className={`mt-2 text-xs text-center ${
                             isDarkMode ? 'text-gray-400' : 'text-gray-500'
                           }`}
                         >
-                          You can submit now or answer more questions first
+                          {answeredCount} answered • Submit to improve essay and regenerate
+                        </p>
+                      )}
+                      {hasQuestions && answeredCount === totalCount && !submitError && (
+                        <p
+                          className={`mt-2 text-xs text-center ${
+                            isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                          }`}
+                        >
+                          All questions answered • Submit to improve essay
+                        </p>
+                      )}
+                      {!hasQuestions && !submitError && (
+                        <p
+                          className={`mt-2 text-xs text-center ${
+                            isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                          }`}
+                        >
+                          Generate new highlights to find areas for improvement
                         </p>
                       )}
                     </>

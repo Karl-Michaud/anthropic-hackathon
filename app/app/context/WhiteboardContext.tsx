@@ -64,6 +64,7 @@ export interface HighlightedSection {
   endIndex: number
   color: string
   title: string
+  explanation?: string
   colorName: 'amber' | 'cyan' | 'pink' | 'lime' | 'purple'
 }
 

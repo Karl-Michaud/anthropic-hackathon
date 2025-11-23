@@ -112,7 +112,8 @@ Your task: Identify ${sectionCount} key sections that would benefit from elabora
 For each section:
 1. Find exact character start and end positions (0-indexed) of the text to improve
 2. Create a brief title/theme for that section (3-5 words)
-3. Generate 2-4 open-ended Socratic questions to guide elaboration
+3. Write a 1-2 sentence explanation of why this section was highlighted and why these questions matter
+4. Generate 2-4 open-ended Socratic questions to guide elaboration
 
 Essay to analyze:
 """
@@ -126,6 +127,7 @@ Respond with ONLY valid JSON (no markdown, no code blocks), matching this exact 
       "startIndex": 0,
       "endIndex": 50,
       "title": "Theme title here",
+      "explanation": "A brief 1-2 sentence explanation of why this section needs improvement and how the questions will help.",
       "questions": ["Question 1?", "Question 2?"]
     }
   ]
@@ -134,6 +136,7 @@ Respond with ONLY valid JSON (no markdown, no code blocks), matching this exact 
 Rules:
 - startIndex and endIndex are CHARACTER positions, not word positions
 - Ensure indices are valid and don't overlap
+- The explanation should be concise but meaningful
 - Each question should encourage deeper thinking
 - Return only the JSON object, nothing else`
 
@@ -228,6 +231,7 @@ Rules:
       endIndex: section.endIndex,
       color: colorName,
       title: section.title || 'Improvement area',
+      explanation: section.explanation || undefined,
       colorName,
     })
 

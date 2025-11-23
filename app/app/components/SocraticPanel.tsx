@@ -16,6 +16,7 @@ export interface SocraticPanelData {
   id: string
   sectionId: string
   title: string
+  explanation?: string
   hiddenWeightType?: string
   scholarshipPrompt?: string
   introText?: string
@@ -200,6 +201,20 @@ export default function SocraticPanel({
         className="p-6 overflow-y-auto flex-1 rounded-2xl"
         style={{ backgroundColor: colors.background.paper }}
       >
+        {data.explanation && (
+          <div
+            className="mb-6 pl-4 py-3 border-l-4 italic"
+            style={{
+              borderColor: brandColors.teal,
+              backgroundColor: isDarkMode
+                ? 'rgba(20, 184, 166, 0.1)'
+                : 'rgba(20, 184, 166, 0.05)',
+              color: colors.text.secondary,
+            }}
+          >
+            <p className="text-sm leading-relaxed">{data.explanation}</p>
+          </div>
+        )}
         {data.questions.map((question) => (
           <Question
             key={question.id}
