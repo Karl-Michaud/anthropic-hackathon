@@ -20,7 +20,7 @@ const notoSerif = Noto_Serif({
 })
 
 export const metadata: Metadata = {
-  title: 'Socratic AI',
+  title: 'Socratic.ai',
   description: 'Organize, draft, and refine your scholarship essays',
 }
 

@@ -230,10 +230,47 @@ Resolve any merge conflicts that arise.
 
 This project was built by a dedicated team passionate about making scholarships more accessible:
 
-+-----------------------------------------------------------------------------+-------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------+-----------------------------------------------------------------+
-| [![Karl Michaud](https://github.com/Karl-Michaud.png){alt="Karl Michaud"} \ | [![David Dimalanta](https://github.com/daviddimalanta.png){alt="David Dimalanta"} \ | [![Kevin Pogoryelovskyy](https://github.com/KelvinPogo.png){alt="Kevin Pogoryelovskyy"} \ | [![Chisom Onyekwere](https://github.com/ochisomonyekwere-ship-it.png){alt="Chisom Onyekwere"} \ | [![Leo Duan](https://github.com/leoduan0.png){alt="Leo Duan"} \ |
-| ~**Karl\ Michaud**~](https://github.com/Karl-Michaud)                       | ~**David\ Dimalanta**~](https://github.com/daviddimalanta)                          | ~**Kevin\ Pogoryelovskyy**~](https://github.com/KelvinPogo)                               | ~**Chisom\ Onyekwere**~](https://github.com/ochisomonyekwere-ship-it)                           | ~**Leo\ Duan**~](https://github.com/leoduan0)                   |
-+-----------------------------------------------------------------------------+-------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------+-----------------------------------------------------------------+
+<div align="center">
+  <table>
+    <tr>
+      <td align="center">
+        <a href="https://github.com/Karl-Michaud">
+          <img src="https://github.com/Karl-Michaud.png" width="100px;" alt="Karl Michaud"/>
+          <br />
+          <sub><b>Karl Michaud</b></sub>
+        </a>
+      </td>
+      <td align="center">
+        <a href="https://github.com/daviddimalanta">
+          <img src="https://github.com/daviddimalanta.png" width="100px;" alt="David Dimalanta"/>
+          <br />
+          <sub><b>David Dimalanta</b></sub>
+        </a>
+      </td>
+      <td align="center">
+        <a href="https://github.com/KelvinPogo">
+          <img src="https://github.com/KelvinPogo.png" width="100px;" alt="Kevin Pogoryelovskyy"/>
+          <br />
+          <sub><b>Kevin Pogoryelovskyy</b></sub>
+        </a>
+      </td>
+      <td align="center">
+        <a href="https://github.com/ochisomonyekwere-ship-it">
+          <img src="https://github.com/ochisomonyekwere-ship-it.png" width="100px;" alt="Chisom Onyekwere"/>
+          <br />
+          <sub><b>Chisom Onyekwere</b></sub>
+        </a>
+      </td>
+      <td align="center">
+        <a href="https://github.com/leoduan0">
+          <img src="https://github.com/leoduan0.png" width="100px;" alt="Leo Duan"/>
+          <br />
+          <sub><b>Leo Duan</b></sub>
+        </a>
+      </td>
+    </tr>
+  </table>
+</div>
 
 Want to contribute? See our [Contributing](#contributing) section!
 
