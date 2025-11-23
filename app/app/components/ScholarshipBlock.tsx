@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { MoreVertical, Pencil, Trash2, Plus, Loader2 } from 'lucide-react'
+import { MoreVertical, Pencil, Trash2, Plus, Loader2, Sparkles } from 'lucide-react'
 import { useEditing } from '../context/EditingContext'
 import { useDarkMode } from '../context/DarkModeContext'
 import { ScholarshipData } from '../context/WhiteboardContext'
@@ -669,9 +669,11 @@ function ScholarshipEditButtons({
 // ScholarshipActions component
 export function ScholarshipActions({
   onDraft,
+  onCustomDraft,
   isGenerating = false,
 }: {
   onDraft: () => void
+  onCustomDraft?: () => void
   isGenerating?: boolean
 }) {
   return (
@@ -691,11 +693,25 @@ export function ScholarshipActions({
           </>
         ) : (
           <>
-            <Plus size={18} />
-            Draft
+            <Sparkles size={18} />
+            Generate Draft
           </>
         )}
       </button>
+      {onCustomDraft && (
+        <button
+          onClick={onCustomDraft}
+          disabled={isGenerating}
+          className="flex items-center gap-2 px-4 py-2 text-white rounded-md font-medium border-none cursor-pointer transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed"
+          style={{
+            backgroundColor: brandColors.crail,
+            opacity: 0.8,
+          }}
+        >
+          <Plus size={18} />
+          Custom Draft
+        </button>
+      )}
     </div>
   )
 }
@@ -754,6 +770,7 @@ interface ScholarshipBlockProps {
   onUpdate: (data: ScholarshipData) => void
   onDelete: (scholarshipId: string) => void
   onDraft?: (scholarshipId: string) => void
+  onCustomDraft?: (scholarshipId: string) => void
   isGeneratingEssay?: boolean
 }
 
@@ -762,6 +779,7 @@ export function ScholarshipBlock({
   onUpdate,
   onDelete,
   onDraft,
+  onCustomDraft,
   isGeneratingEssay = false,
 }: ScholarshipBlockProps) {
   const [isEditing, setIsEditing] = useState(false)
@@ -1034,6 +1052,7 @@ export function ScholarshipBlock({
       {!isEditing && onDraft && (
         <ScholarshipActions
           onDraft={() => onDraft(data.id)}
+          onCustomDraft={onCustomDraft ? () => onCustomDraft(data.id) : undefined}
           isGenerating={isGeneratingEssay}
         />
       )}

@@ -397,6 +397,9 @@ export default function Whiteboard() {
       const scholarship = scholarships.find((s) => s.id === scholarshipId)
       if (!scholarship) return
 
+      console.log('🎯 Starting essay generation for scholarship:', scholarship.title)
+      console.log('User ID:', user?.id || 'NOT PROVIDED')
+
       setGeneratingEssayFor(scholarshipId)
 
       try {
@@ -433,6 +436,29 @@ export default function Whiteboard() {
       }
     },
     [scholarships, addEssay, getBlockPosition, updateBlockPosition, user?.id],
+  )
+
+  const handleCustomDraft = useCallback(
+    (scholarshipId: string) => {
+      const scholarship = scholarships.find((s) => s.id === scholarshipId)
+      if (!scholarship) return
+
+      // Create a blank essay
+      const essayId = addEssay({
+        scholarshipId,
+        content: '',
+        maxWordCount: undefined,
+        lastEditedAt: Date.now(),
+      })
+
+      // Position essay to the right of the scholarship
+      const scholarshipPos = getBlockPosition(scholarshipId)
+      const essayX = scholarshipPos.x + 600 // 550px width + 50px gap
+      const essayY = scholarshipPos.y
+
+      updateBlockPosition(essayId, essayX, essayY)
+    },
+    [scholarships, addEssay, getBlockPosition, updateBlockPosition],
   )
 
   const handleGenerateSocraticQuestions = useCallback(
@@ -1410,6 +1436,7 @@ export default function Whiteboard() {
                 onUpdate={updateScholarship}
                 onDelete={deleteScholarship}
                 onDraft={handleGenerateEssay}
+                onCustomDraft={handleCustomDraft}
                 isGeneratingEssay={generatingEssayFor === scholarship.id}
               />
             </DraggableBlock>
