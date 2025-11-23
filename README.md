@@ -1,6 +1,6 @@
 # Socratic AI
 
-> Transform how you apply for scholarships. Stop using generic AI. Start winning.
+> Tailor Your Scholarship Essays with Critical Thinkers.
 
 ## Table of Contents
 

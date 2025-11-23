@@ -46,7 +46,7 @@ export function LandingPage() {
             fontFamily: typography.fonts.serif,
           }}
         >
-          Organize, draft, and refine your scholarship essays
+          Tailor Your Scholarship Essays with Critical Thinkers.
         </p>
       </div>
 
