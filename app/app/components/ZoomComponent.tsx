@@ -1,6 +1,11 @@
 'use client'
 
-import { transitions, brandColors, colorsLight, colorsDark } from '../styles/design-system'
+import {
+  transitions,
+  brandColors,
+  colorsLight,
+  colorsDark,
+} from '../styles/design-system'
 import { useDarkMode } from '../context/DarkModeContext'
 
 interface ZoomComponentProps {
@@ -43,15 +48,21 @@ export default function ZoomComponent({
         className="flex items-center justify-center transition-all active:scale-95 hover:scale-105 hover:cursor-pointer w-8 h-8 rounded-md text-lg font-bold"
         style={{
           backgroundColor: isDarkMode ? brandColors.teal : brandColors.pampas,
-          color: isDarkMode ? brandColors.foregroundDark : brandColors.foreground,
+          color: isDarkMode
+            ? brandColors.foregroundDark
+            : brandColors.foreground,
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.backgroundColor = brandColors.teal
           e.currentTarget.style.color = brandColors.foregroundDark
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = isDarkMode ? brandColors.teal : brandColors.pampas
-          e.currentTarget.style.color = isDarkMode ? brandColors.foregroundDark : brandColors.foreground
+          e.currentTarget.style.backgroundColor = isDarkMode
+            ? brandColors.teal
+            : brandColors.pampas
+          e.currentTarget.style.color = isDarkMode
+            ? brandColors.foregroundDark
+            : brandColors.foreground
         }}
         aria-label="Zoom out"
       >
@@ -74,15 +85,21 @@ export default function ZoomComponent({
         className="flex items-center justify-center transition-all active:scale-95 hover:scale-105 hover:cursor-pointer w-8 h-8 rounded-md text-lg font-bold"
         style={{
           backgroundColor: isDarkMode ? brandColors.teal : brandColors.pampas,
-          color: isDarkMode ? brandColors.foregroundDark : brandColors.foreground,
+          color: isDarkMode
+            ? brandColors.foregroundDark
+            : brandColors.foreground,
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.backgroundColor = brandColors.teal
           e.currentTarget.style.color = brandColors.foregroundDark
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = isDarkMode ? brandColors.teal : brandColors.pampas
-          e.currentTarget.style.color = isDarkMode ? brandColors.foregroundDark : brandColors.foreground
+          e.currentTarget.style.backgroundColor = isDarkMode
+            ? brandColors.teal
+            : brandColors.pampas
+          e.currentTarget.style.color = isDarkMode
+            ? brandColors.foregroundDark
+            : brandColors.foreground
         }}
         aria-label="Zoom in"
       >

@@ -8,76 +8,90 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-model drafts {
-  id             String       @id
-  essay          String
-  scholarship_id String       @unique
-  user_id        String?      @db.Uuid
-  scholarships   scholarships @relation(fields: [scholarship_id], references: [id])
+model Draft {
+  id            String      @id @unique @default(uuid())
+  essay         String
+  scholarshipId String      @unique @map("scholarship_id")
+  userId        String?     @map("user_id") @db.Uuid
+  scholarship   Scholarship @relation(fields: [scholarshipId], references: [id])
+
+  @@map("drafts")
 }
 
-model prompt_personalities {
-  id                      String       @id
-  spirit                  String
-  tone_style              String
-  values_emphasized       String[]
-  recommended_essay_focus String
-  scholarship_id          String       @unique
-  user_id                 String?      @db.Uuid
-  scholarships            scholarships @relation(fields: [scholarship_id], references: [id])
+model PromptPersonality {
+  id                    String      @id @unique @default(uuid())
+  spirit                String
+  toneStyle             String      @map("tone_style")
+  valuesEmphasized      String[]    @map("values_emphasized")
+  recommendedEssayFocus String      @map("recommended_essay_focus")
+  scholarshipId         String      @unique @map("scholarship_id")
+  userId                String?     @map("user_id") @db.Uuid
+  scholarship           Scholarship @relation(fields: [scholarshipId], references: [id])
+
+  @@map("prompt_personalities")
 }
 
-model prompt_priorities {
-  id               String       @id
-  primary_focus    PrimaryFocus
-  priority_weights Json
-  scholarship_id   String       @unique
-  user_id          String?      @db.Uuid
-  scholarships     scholarships @relation(fields: [scholarship_id], references: [id])
+model PromptPriority {
+  id              String       @id @unique @default(uuid())
+  primaryFocus    PrimaryFocus @map("primary_focus")
+  priorityWeights Json         @map("priority_weights")
+  scholarshipId   String       @unique @map("scholarship_id")
+  userId          String?      @map("user_id") @db.Uuid
+  scholarship     Scholarship  @relation(fields: [scholarshipId], references: [id])
+
+  @@map("prompt_priorities")
 }
 
-model prompt_values {
-  id                String       @id
-  values_emphasized String[]
-  value_definitions Json
-  evidence_phrases  String[]
-  scholarship_id    String       @unique
-  user_id           String?      @db.Uuid
-  scholarships      scholarships @relation(fields: [scholarship_id], references: [id])
+model PromptValue {
+  id               String      @id @unique @default(uuid())
+  valuesEmphasized String[]    @map("values_emphasized")
+  valueDefinitions Json        @map("value_definitions")
+  evidencePhrases  String[]    @map("evidence_phrases")
+  scholarshipId    String      @unique @map("scholarship_id")
+  userId           String?     @map("user_id") @db.Uuid
+  scholarship      Scholarship @relation(fields: [scholarshipId], references: [id])
+
+  @@map("prompt_values")
 }
 
-model prompt_weights {
-  id             String       @id
-  weights        Json
-  scholarship_id String       @unique
-  user_id        String?      @db.Uuid
-  scholarships   scholarships @relation(fields: [scholarship_id], references: [id])
+model PromptWeight {
+  id            String      @id @unique @default(uuid())
+  weights       Json
+  scholarshipId String      @unique @map("scholarship_id")
+  userId        String?     @map("user_id") @db.Uuid
+  scholarship   Scholarship @relation(fields: [scholarshipId], references: [id])
+
+  @@map("prompt_weights")
 }
 
-model scholarships {
-  id                   String                @id @unique
-  title                String
-  description          String
-  prompt               String
-  user_id              String?               @db.Uuid
-  drafts               drafts?
-  prompt_personalities prompt_personalities?
-  prompt_priorities    prompt_priorities?
-  prompt_values        prompt_values?
-  prompt_weights       prompt_weights?
+model Scholarship {
+  id                String             @id @unique @default(uuid())
+  title             String
+  description       String
+  prompt            String
+  userId            String?            @map("user_id") @db.Uuid
+  drafts            Draft?
+  promptPersonality PromptPersonality?
+  promptPriority    PromptPriority?
+  promptValue       PromptValue?
+  promptWeight      PromptWeight?
+
+  @@map("scholarships")
 }
 
-model whiteboard_data {
-  id                 String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  user_id            String   @unique @db.Uuid
-  cells              Json     @default("[]")
-  scholarships       Json     @default("[]")
-  essays             Json     @default("[]")
-  json_outputs       Json     @default("[]")
-  block_positions    Json     @default("[]")
-  is_first_time_user Boolean  @default(true)
-  created_at         DateTime @default(now())
-  updated_at         DateTime
+model WhiteboardData {
+  id              String   @id @unique @default(uuid())
+  userId          String   @unique @map("user_id") @db.Uuid
+  cells           Json     @default("[]")
+  scholarships    Json     @default("[]")
+  essays          Json     @default("[]")
+  jsonOutputs     Json     @default("[]") @map("json_outputs")
+  blockPositions  Json     @default("[]") @map("block_positions")
+  isFirstTimeUser Boolean  @default(true) @map("is_first_time_user")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @map("updated_at")
+
+  @@map("whiteboard_data")
 }
 
 enum ImportanceLevel {

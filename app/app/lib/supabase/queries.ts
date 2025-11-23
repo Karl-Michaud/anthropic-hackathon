@@ -76,7 +76,11 @@ export async function saveWhiteboardData(
   }
 
   // Try to update first
-  const { data: updateData, error: updateError, count } = await supabase
+  const {
+    data: updateData,
+    error: updateError,
+    count,
+  } = await supabase
     .from('whiteboard_data')
     .update(dataToSave)
     .eq('user_id', userId)
@@ -98,7 +102,9 @@ export async function saveWhiteboardData(
       console.error('Error saving whiteboard data:', insertError)
       console.error('Full error object keys:', Object.keys(insertError))
       console.error('Error stringified:', JSON.stringify(insertError, null, 2))
-      throw new Error(`Failed to save whiteboard data: ${insertError.message || 'Unknown error'}`)
+      throw new Error(
+        `Failed to save whiteboard data: ${insertError.message || 'Unknown error'}`,
+      )
     }
   }
 }

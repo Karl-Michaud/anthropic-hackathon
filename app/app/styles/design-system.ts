@@ -118,7 +118,8 @@ export const typography = {
   // Font families
   fonts: {
     sans: '"Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-    serif: '"Noto Serif", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif',
+    serif:
+      '"Noto Serif", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif',
     mono: 'ui-monospace, "Cascadia Code", "Source Code Pro", "Courier New", monospace',
   },
 

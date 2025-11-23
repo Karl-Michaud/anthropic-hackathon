@@ -119,7 +119,9 @@ export default function Cell({
         left: `${cell.x}px`,
         transform: `rotate(${cell.rotation}deg)`,
         cursor: isDragging ? 'grabbing' : isEditingLocal ? 'text' : 'grab',
-        outline: isSelected ? `${outlineWidth}px solid ${colors.primary}` : 'none',
+        outline: isSelected
+          ? `${outlineWidth}px solid ${colors.primary}`
+          : 'none',
         outlineOffset: `${outlineOffset}px`,
         zIndex,
       }}

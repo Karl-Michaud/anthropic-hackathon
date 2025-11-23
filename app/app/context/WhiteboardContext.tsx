@@ -185,17 +185,7 @@ function saveToStorage(state: WhiteboardState, userId?: string) {
   }
 }
 
-function clearUserStorage(userId?: string) {
-  if (typeof window === 'undefined') return
-  try {
-    const key = getStorageKey(userId)
-    localStorage.removeItem(key)
-  } catch (error) {
-    console.error('Failed to clear whiteboard data:', error)
-  }
-}
-
-export function WhiteboardProvider({ children }: { children: ReactNode}) {
+export function WhiteboardProvider({ children }: { children: ReactNode }) {
   const [cells, setCells] = useState<CellData[]>([])
   const [scholarships, setScholarships] = useState<ScholarshipData[]>([])
   const [essays, setEssays] = useState<EssayData[]>([])
@@ -250,14 +240,16 @@ export function WhiteboardProvider({ children }: { children: ReactNode}) {
       const stored = loadFromStorage(user?.id)
 
       // If user-specific localStorage is empty and user is logged in, try to restore from database
-      const hasLocalData = stored.cells.length > 0 || stored.scholarships.length > 0 || stored.essays.length > 0
+      const hasLocalData =
+        stored.cells.length > 0 ||
+        stored.scholarships.length > 0 ||
+        stored.essays.length > 0
 
       if (!hasLocalData && user) {
         console.log('No local data found for user, loading from database...')
         const dbData = await syncManager.loadFromDatabase(user.id)
         if (dbData) {
           console.log('Loaded data from database')
-          // eslint-disable-next-line react-hooks/set-state-in-effect
           setCells(dbData.cells as CellData[])
           setScholarships(dbData.scholarships as ScholarshipData[])
           setEssays(dbData.essays as EssayData[])
@@ -269,8 +261,10 @@ export function WhiteboardProvider({ children }: { children: ReactNode}) {
       }
 
       // Use user-specific localStorage data
-      console.log('Loading from user-specific localStorage:', user?.id || 'anonymous')
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+      console.log(
+        'Loading from user-specific localStorage:',
+        user?.id || 'anonymous',
+      )
       setCells(stored.cells)
       setScholarships(stored.scholarships)
       setEssays(stored.essays)

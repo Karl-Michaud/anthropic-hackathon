@@ -79,7 +79,7 @@ class SyncManager {
       console.error('Error details:', {
         message: error instanceof Error ? error.message : 'Unknown error',
         stack: error instanceof Error ? error.stack : undefined,
-        raw: JSON.stringify(error, null, 2)
+        raw: JSON.stringify(error, null, 2),
       })
       this.setStatus('error')
     }
@@ -88,9 +88,7 @@ class SyncManager {
   /**
    * Load whiteboard data from database
    */
-  async loadFromDatabase(
-    userId: string,
-  ): Promise<WhiteboardData | null> {
+  async loadFromDatabase(userId: string): Promise<WhiteboardData | null> {
     try {
       const data = await getWhiteboardData(userId)
       if (!data) return null

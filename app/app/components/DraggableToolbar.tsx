@@ -59,9 +59,7 @@ function ToolButton({
       className="p-2 rounded-lg transition-colors"
       style={{
         backgroundColor: isActive ? brandColors.teal : 'transparent',
-        color: isActive
-          ? brandColors.foregroundDark
-          : colors.text.primary,
+        color: isActive ? brandColors.foregroundDark : colors.text.primary,
       }}
       onMouseEnter={(e) => {
         if (!isActive) {
@@ -182,7 +180,10 @@ function ContextMenu({
         <Clipboard size={16} />
         Paste
       </button>
-      <div className="border-t my-1" style={{ borderColor: brandColors.cloudy }} />
+      <div
+        className="border-t my-1"
+        style={{ borderColor: brandColors.cloudy }}
+      />
       <button
         onMouseDown={(e) => {
           e.preventDefault()

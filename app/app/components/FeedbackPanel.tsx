@@ -62,7 +62,10 @@ function Question({
           {question}
         </label>
         {isSaving && (
-          <div className="flex items-center gap-1 text-xs" style={{ color: brandColors.teal }}>
+          <div
+            className="flex items-center gap-1 text-xs"
+            style={{ color: brandColors.teal }}
+          >
             <Save size={12} />
             Saving...
           </div>
@@ -87,10 +90,7 @@ function Question({
         }}
         rows={3}
       />
-      <div
-        className="mt-1 text-xs"
-        style={{ color: colors.text.secondary }}
-      >
+      <div className="mt-1 text-xs" style={{ color: colors.text.secondary }}>
         {value.length} characters
         {value.length > 0 && value.length < 20 && (
           <span className="ml-2" style={{ color: colors.text.secondary }}>
@@ -151,7 +151,10 @@ function FeedbackSection({
           )}
         </div>
         {isComplete && (
-          <div className="flex items-center gap-2 ml-4" style={{ color: brandColors.teal }}>
+          <div
+            className="flex items-center gap-2 ml-4"
+            style={{ color: brandColors.teal }}
+          >
             <Check size={20} />
             <span className="text-sm font-medium">Completed</span>
           </div>
@@ -177,7 +180,9 @@ function FeedbackSection({
           disabled={!allQuestionsAnswered}
           className="mt-4 w-full px-4 py-2 rounded-lg font-medium disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
           style={{
-            backgroundColor: allQuestionsAnswered ? brandColors.crail : brandColors.cloudy,
+            backgroundColor: allQuestionsAnswered
+              ? brandColors.crail
+              : brandColors.cloudy,
             color: brandColors.foregroundDark,
           }}
         >
@@ -320,7 +325,9 @@ export default function FeedbackPanel({
           className="w-full px-6 py-3 rounded-lg font-medium disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
           style={{
             backgroundColor:
-              allSectionsComplete && !isSubmitting ? brandColors.crail : brandColors.cloudy,
+              allSectionsComplete && !isSubmitting
+                ? brandColors.crail
+                : brandColors.cloudy,
             color: brandColors.foregroundDark,
           }}
         >
@@ -339,7 +346,10 @@ export default function FeedbackPanel({
           )}
         </button>
         {!allSectionsComplete && (
-          <p className="text-xs text-center" style={{ color: colors.text.secondary }}>
+          <p
+            className="text-xs text-center"
+            style={{ color: colors.text.secondary }}
+          >
             Complete all sections to submit
           </p>
         )}

@@ -3,7 +3,12 @@
 import { useState } from 'react'
 import { useAuth } from './AuthProvider'
 import { useDarkMode } from '@/app/context/DarkModeContext'
-import { colorsLight, colorsDark, borderRadius, shadows } from '@/app/styles/design-system'
+import {
+  colorsLight,
+  colorsDark,
+  borderRadius,
+  shadows,
+} from '@/app/styles/design-system'
 
 export function AuthForm() {
   const [mode, setMode] = useState<'login' | 'signup'>('login')
@@ -12,7 +17,12 @@ export function AuthForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const { signInWithGoogle, signInWithGitHub, signInWithEmail, signUpWithEmail } = useAuth()
+  const {
+    signInWithGoogle,
+    signInWithGitHub,
+    signInWithEmail,
+    signUpWithEmail,
+  } = useAuth()
 
   let isDarkMode = false
   try {
@@ -62,7 +72,9 @@ export function AuthForm() {
     <div
       className="w-full max-w-md p-8 backdrop-blur-lg"
       style={{
-        backgroundColor: isDarkMode ? colorsDark.background.paper : colorsLight.background.paper,
+        backgroundColor: isDarkMode
+          ? colorsDark.background.paper
+          : colorsLight.background.paper,
         border: `1px solid ${colors.border.default}`,
         borderRadius: borderRadius['2xl'],
         boxShadow: shadows.xl,
@@ -74,8 +86,10 @@ export function AuthForm() {
           onClick={() => setMode('login')}
           className="flex-1 py-2 px-4 font-medium transition-all"
           style={{
-            backgroundColor: mode === 'login' ? colors.primary : colors.background.elevated,
-            color: mode === 'login' ? colors.text.inverse : colors.text.secondary,
+            backgroundColor:
+              mode === 'login' ? colors.primary : colors.background.elevated,
+            color:
+              mode === 'login' ? colors.text.inverse : colors.text.secondary,
             borderRadius: borderRadius.md,
           }}
         >
@@ -85,8 +99,10 @@ export function AuthForm() {
           onClick={() => setMode('signup')}
           className="flex-1 py-2 px-4 font-medium transition-all"
           style={{
-            backgroundColor: mode === 'signup' ? colors.primary : colors.background.elevated,
-            color: mode === 'signup' ? colors.text.inverse : colors.text.secondary,
+            backgroundColor:
+              mode === 'signup' ? colors.primary : colors.background.elevated,
+            color:
+              mode === 'signup' ? colors.text.inverse : colors.text.secondary,
             borderRadius: borderRadius.md,
           }}
         >
@@ -195,7 +211,9 @@ export function AuthForm() {
           <div
             className="p-3 text-sm"
             style={{
-              backgroundColor: isDarkMode ? 'rgba(128, 0, 0, 0.2)' : 'rgba(128, 0, 0, 0.1)',
+              backgroundColor: isDarkMode
+                ? 'rgba(128, 0, 0, 0.2)'
+                : 'rgba(128, 0, 0, 0.1)',
               border: `1px solid ${colors.danger}`,
               borderRadius: borderRadius.md,
               color: colors.danger,

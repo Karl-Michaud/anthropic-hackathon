@@ -4,13 +4,12 @@ import { prisma } from './prisma'
 import { generateAllPromptAnalysis } from './request'
 import type {
   IPromptPersonality,
-  IPromptPriorities,
+  IPromptPriority,
   IPromptValues,
   IPromptWeights,
 } from '../types/interfaces'
 
 export interface ScholarshipRecord {
-  id: string
   title: string
   description: string
   prompt: string
@@ -19,21 +18,21 @@ export interface ScholarshipRecord {
 export async function saveScholarshipToDB(
   title: string,
   description: string,
-  prompts: string[],
+  prompt: string,
 ) {
   try {
     const scholarship = await prisma.scholarship.create({
       data: {
         title,
         description,
-        prompt: prompts[0] || '',
+        prompt,
       },
       include: {
         promptPersonality: true,
-        promptPriorities: true,
-        promptValues: true,
-        promptWeights: true,
-        generateDraft: true,
+        promptPriority: true,
+        promptValue: true,
+        promptWeight: true,
+        drafts: true,
       },
     })
 
@@ -48,10 +47,10 @@ export async function getScholarshipsFromDB() {
     const scholarships = await prisma.scholarship.findMany({
       include: {
         promptPersonality: true,
-        promptPriorities: true,
-        promptValues: true,
-        promptWeights: true,
-        generateDraft: true,
+        promptPriority: true,
+        promptValue: true,
+        promptWeight: true,
+        drafts: true,
       },
     })
 
@@ -68,10 +67,10 @@ export async function getScholarshipFromDB(id: string) {
       where: { id },
       include: {
         promptPersonality: true,
-        promptPriorities: true,
-        promptValues: true,
-        promptWeights: true,
-        generateDraft: true,
+        promptPriority: true,
+        promptValue: true,
+        promptWeight: true,
+        drafts: true,
       },
     })
 
@@ -103,10 +102,10 @@ export async function updateScholarshipInSupabase(
       data: updates,
       include: {
         promptPersonality: true,
-        promptPriorities: true,
-        promptValues: true,
-        promptWeights: true,
-        generateDraft: true,
+        promptPriority: true,
+        promptValue: true,
+        promptWeight: true,
+        drafts: true,
       },
     })
 
@@ -135,7 +134,7 @@ export async function saveEssayDraftToDB(
     }
 
     // Check if draft exists for this scholarship
-    const existingDraft = await prisma.generateDraft.findUnique({
+    const existingDraft = await prisma.draft.findUnique({
       where: {
         scholarshipId,
       },
@@ -143,13 +142,13 @@ export async function saveEssayDraftToDB(
 
     if (existingDraft) {
       // Update existing draft
-      await prisma.generateDraft.update({
+      await prisma.draft.update({
         where: { scholarshipId },
         data: { essay: content },
       })
     } else {
       // Create new draft
-      await prisma.generateDraft.create({
+      await prisma.draft.create({
         data: {
           essay: content,
           scholarshipId,
@@ -166,7 +165,7 @@ export async function getEssayDraftFromDB(
   scholarshipId: string,
 ): Promise<string | null> {
   try {
-    const draft = await prisma.generateDraft.findUnique({
+    const draft = await prisma.draft.findUnique({
       where: {
         scholarshipId,
       },
@@ -217,9 +216,9 @@ export async function savePromptPersonalityToDB(
   }
 }
 
-export async function savePromptPrioritiesToDB(
+export async function savepromptPriorityToDB(
   scholarshipId: string,
-  data: IPromptPriorities,
+  data: IPromptPriority,
 ): Promise<void> {
   try {
     // Map string primary_focus to enum
@@ -250,12 +249,12 @@ export async function savePromptPrioritiesToDB(
       | 'EQUITY'
       | 'OTHER'
 
-    const existingPriorities = await prisma.promptPriorities.findUnique({
+    const existingPriorities = await prisma.promptPriority.findUnique({
       where: { scholarshipId },
     })
 
     if (existingPriorities) {
-      await prisma.promptPriorities.update({
+      await prisma.promptPriority.update({
         where: { scholarshipId },
         data: {
           primaryFocus: primaryFocusValue,
@@ -263,7 +262,7 @@ export async function savePromptPrioritiesToDB(
         },
       })
     } else {
-      await prisma.promptPriorities.create({
+      await prisma.promptPriority.create({
         data: {
           scholarshipId,
           primaryFocus: primaryFocusValue,
@@ -282,12 +281,12 @@ export async function savePromptValuesToDB(
   data: IPromptValues,
 ): Promise<void> {
   try {
-    const existingValues = await prisma.promptValues.findUnique({
+    const existingValues = await prisma.promptValue.findUnique({
       where: { scholarshipId },
     })
 
     if (existingValues) {
-      await prisma.promptValues.update({
+      await prisma.promptValue.update({
         where: { scholarshipId },
         data: {
           valuesEmphasized: data.values_emphasized,
@@ -296,7 +295,7 @@ export async function savePromptValuesToDB(
         },
       })
     } else {
-      await prisma.promptValues.create({
+      await prisma.promptValue.create({
         data: {
           scholarshipId,
           valuesEmphasized: data.values_emphasized,
@@ -316,19 +315,19 @@ export async function savePromptWeightsToDB(
   data: IPromptWeights,
 ): Promise<void> {
   try {
-    const existingWeights = await prisma.promptWeights.findUnique({
+    const existingWeights = await prisma.promptWeight.findUnique({
       where: { scholarshipId },
     })
 
     if (existingWeights) {
-      await prisma.promptWeights.update({
+      await prisma.promptWeight.update({
         where: { scholarshipId },
         data: {
           weights: data, // store the whole weight structure
         },
       })
     } else {
-      await prisma.promptWeights.create({
+      await prisma.promptWeight.create({
         data: {
           scholarshipId,
           weights: data,
@@ -345,21 +344,19 @@ export async function generateAndSavePromptAnalysis(
   scholarshipId: string,
   scholarshipTitle: string,
   scholarshipDescription: string,
-  prompts: string[],
+  prompt: string,
 ): Promise<void> {
   try {
-    const promptText = prompts[0] || ''
-
     const analysis = await generateAllPromptAnalysis(
       scholarshipTitle,
       scholarshipDescription,
-      promptText,
+      prompt,
     )
 
     // Save all analysis data
     await Promise.all([
       savePromptPersonalityToDB(scholarshipId, analysis.personality),
-      savePromptPrioritiesToDB(scholarshipId, analysis.priorities),
+      savepromptPriorityToDB(scholarshipId, analysis.priorities),
       savePromptValuesToDB(scholarshipId, analysis.values),
       savePromptWeightsToDB(scholarshipId, analysis.weights),
     ])

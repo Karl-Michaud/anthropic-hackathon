@@ -1,5 +1,5 @@
 {
-  "name": "app",
+  "name": "socratic-ai",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -8,14 +8,11 @@
     "start": "next start",
     "lint": "eslint",
     "format": "prettier -w app",
-    "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build",
-    "sbd": "/Users/daviddimalanta/.nvm/versions/node/v22.21.1/bin/node ./node_modules/.bin/storybook dev -p 6006",
     "postinstall": "prisma generate"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.70.0",
-    "@prisma/client": "^5.22.0",
+    "@prisma/client": "6.19",
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.84.0",
     "docx": "^9.5.1",
@@ -29,8 +26,6 @@
     "react-dom": "19.2.0"
   },
   "devDependencies": {
-    "@storybook/addon-styling-webpack": "^3.0.0",
-    "@storybook/nextjs": "^10.0.8",
     "@tailwindcss/postcss": "^4",
     "@types/file-saver": "^2.0.7",
     "@types/node": "^20",
@@ -40,10 +35,8 @@
     "autoprefixer": "^10.4.22",
     "eslint": "^9",
     "eslint-config-next": "16.0.3",
-    "eslint-plugin-storybook": "^10.0.8",
     "prettier": "^3.6.2",
-    "prisma": "^5.22.0",
-    "storybook": "^10.0.8",
+    "prisma": "6.19",
     "tailwindcss": "^4",
     "tsx": "^4.20.6",
     "typescript": "^5"

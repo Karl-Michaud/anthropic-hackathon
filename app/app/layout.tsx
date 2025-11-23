@@ -31,9 +31,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${inter.variable} ${notoSerif.variable} antialiased`}
-      >
+      <body className={`${inter.variable} ${notoSerif.variable} antialiased`}>
         <AuthProvider>
           <DarkModeProvider>
             <EditingProvider>

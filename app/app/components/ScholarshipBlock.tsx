@@ -122,7 +122,9 @@ function PersonalityDisplay({
               <p className={`font-semibold mb-1 ${classes.heading}`}>
                 Recommended Essay Focus:
               </p>
-              <p className={`${classes.text} font-serif`}>{recommendedEssayFocus}</p>
+              <p className={`${classes.text} font-serif`}>
+                {recommendedEssayFocus}
+              </p>
             </div>
           )}
         </div>
@@ -792,7 +794,9 @@ export function ScholarshipBlock({
             : `shadow-md border`
       }`}
       style={{
-        backgroundColor: isDarkMode ? brandColors.componentBackgroundDark : brandColors.componentBackground,
+        backgroundColor: isDarkMode
+          ? brandColors.componentBackgroundDark
+          : brandColors.componentBackground,
         borderColor: isEditing ? brandColors.crail : brandColors.cloudy,
       }}
     >

@@ -15,7 +15,6 @@ import NextLink from 'next/link'
 import { useState, useRef, ChangeEvent, DragEvent } from 'react'
 import { useWhiteboard } from '../context/WhiteboardContext'
 import { useDarkMode } from '../context/DarkModeContext'
-import { useAuth } from './auth/AuthProvider'
 import {
   saveScholarshipToDB,
   generateAndSavePromptAnalysis,
@@ -325,7 +324,7 @@ function ManualEntryForm({
   isSubmitting,
   isDarkMode = false,
 }: {
-  onSubmit: (title: string, description: string, prompts: string[]) => void
+  onSubmit: (title: string, description: string, prompt: string) => void
   isSubmitting: boolean
   isDarkMode?: boolean
 }) {
@@ -343,7 +342,7 @@ function ManualEntryForm({
       alert('Please fill in title, description, and prompt')
       return
     }
-    onSubmit(scholarshipTitle, scholarshipDescription, [scholarshipPrompt])
+    onSubmit(scholarshipTitle, scholarshipDescription, scholarshipPrompt)
   }
 
   return (
@@ -487,7 +486,7 @@ function UploadModeToggle({
     >
       <button
         onClick={() => onModeChange('file')}
-        className="px-4 py-2 text-sm font-medium transition-all cursor-pointer"
+        className="px-4 py-2 text-sm font-medium transition-all cursor-pointer rounded-md"
         style={{
           backgroundColor: mode === 'file' ? brandColors.teal : 'transparent',
           color:
@@ -510,7 +509,7 @@ function UploadModeToggle({
       </button>
       <button
         onClick={() => onModeChange('text')}
-        className="px-4 py-2 text-sm font-medium transition-all cursor-pointer"
+        className="px-4 py-2 text-sm font-medium transition-all cursor-pointer rounded-md"
         style={{
           backgroundColor: mode === 'text' ? brandColors.teal : 'transparent',
           color:
@@ -540,7 +539,7 @@ export interface ScholarshipUploadResult {
   id: string
   title: string
   description: string
-  prompts: string[]
+  prompt: string
   weights?: Record<string, unknown>
   personality?: Record<string, unknown>
   priorities?: Record<string, unknown>
@@ -601,16 +600,18 @@ function ScholarshipUploadPopup({
         const prompt = getValue(result.EssayPrompt, '')
 
         // Save scholarship to database
-        const scholarship = await saveScholarshipToDB(title, description, [
+        const scholarship = await saveScholarshipToDB(
+          title,
+          description,
           prompt,
-        ])
+        )
 
         // Generate analysis data for all prompts
         await generateAndSavePromptAnalysis(
           scholarship.id,
           title,
           description,
-          [prompt],
+          prompt,
         )
 
         // Fetch the analysis data from the database
@@ -629,7 +630,7 @@ function ScholarshipUploadPopup({
           id: scholarship.id,
           title,
           description,
-          prompts: [prompt],
+          prompt: prompt,
           weights: weights as Record<string, unknown>,
           personality: dbScholarship?.promptPersonality || undefined,
           priorities: dbScholarship?.promptPriorities || undefined,
@@ -650,26 +651,25 @@ function ScholarshipUploadPopup({
   const handleManualSubmit = async (
     title: string,
     description: string,
-    prompts: string[],
+    prompt: string,
   ) => {
     setIsProcessing(true)
     setError(null)
 
     try {
-      const scholarship = await saveScholarshipToDB(title, description, prompts)
+      const scholarship = await saveScholarshipToDB(title, description, prompt)
 
       // Generate analysis data for all prompts
       await generateAndSavePromptAnalysis(
         scholarship.id,
         title,
         description,
-        prompts,
+        prompt,
       )
 
       // Fetch the analysis data from the database
       const dbScholarship = (await getScholarshipFromDB(scholarship.id)) as any
 
-      const prompt = prompts[0] || ''
       const weights = await requestClaude<IPromptWeights>(
         'promptWeights',
         title,
@@ -681,7 +681,7 @@ function ScholarshipUploadPopup({
         id: scholarship.id,
         title,
         description,
-        prompts,
+        prompt,
         weights: weights as Record<string, unknown>,
         personality: dbScholarship?.promptPersonality || undefined,
         priorities: dbScholarship?.promptPriorities || undefined,
@@ -833,7 +833,7 @@ export default function Navigation() {
       id: scholarshipId,
       title: data.title,
       description: data.description,
-      prompt: data.prompts?.[0] || '',
+      prompt: data.prompt,
       weights: data.weights,
       personality: data.personality,
       priorities: data.priorities,
@@ -844,7 +844,7 @@ export default function Navigation() {
     addJsonOutput(scholarshipId, {
       ScholarshipName: data.title,
       ScholarshipDescription: data.description,
-      EssayPrompt: data.prompts?.[0] || '',
+      EssayPrompt: data.prompt,
       Personality: data.personality,
       Priorities: data.priorities,
       Values: data.values,

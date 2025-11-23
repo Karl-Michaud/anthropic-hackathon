@@ -3,7 +3,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import {
   IPromptPersonality,
-  IPromptPriorities,
+  IPromptPriority,
   IPromptValues,
   IPromptWeights,
   IGenerateDraft,
@@ -41,7 +41,7 @@ const anthropic = new Anthropic({
 })
 
 export type ClaudeRequestType =
-  | 'promptPersonality'
+  | 'promptPersonalities'
   | 'promptPriorities'
   | 'promptValues'
   | 'promptWeights'
@@ -49,7 +49,7 @@ export type ClaudeRequestType =
 
 export type ClaudeResponse =
   | IPromptPersonality
-  | IPromptPriorities
+  | IPromptPriority
   | IPromptValues
   | IPromptWeights
   | IGenerateDraft
@@ -507,7 +507,7 @@ function getPromptForType(
   prompt: string,
 ): string {
   switch (type) {
-    case 'promptPersonality':
+    case 'promptPersonalities':
       return generatePersonalityPrompt(
         scholarshipTitle,
         scholarshipDescription,
@@ -551,12 +551,12 @@ export async function generateAllPromptAnalysis(
   try {
     const [personality, priorities, values, weights] = await Promise.all([
       requestClaude<IPromptPersonality>(
-        'promptPersonality',
+        'promptPersonalities',
         scholarshipTitle,
         scholarshipDescription,
         prompt,
       ),
-      requestClaude<IPromptPriorities>(
+      requestClaude<IPromptPriority>(
         'promptPriorities',
         scholarshipTitle,
         scholarshipDescription,
@@ -598,9 +598,9 @@ export async function generateDraftWithAnalysis(
       where: { id: scholarshipId },
       include: {
         promptPersonality: true,
-        promptPriorities: true,
-        promptValues: true,
-        promptWeights: true,
+        promptPriority: true,
+        promptValue: true,
+        promptWeight: true,
       },
     })
 
@@ -621,29 +621,29 @@ export async function generateDraftWithAnalysis(
       }
     }
 
-    if (scholarship.promptPriorities) {
+    if (scholarship.promptPriority) {
       analysisData.priorities = {
-        primaryFocus: scholarship.promptPriorities.primaryFocus,
-        priorityWeights: scholarship.promptPriorities.priorityWeights as Record<
+        primaryFocus: scholarship.promptPriority.primaryFocus,
+        priorityWeights: scholarship.promptPriority.priorityWeights as Record<
           string,
           number
         >,
       }
     }
 
-    if (scholarship.promptValues) {
+    if (scholarship.promptValue) {
       analysisData.values = {
-        valuesEmphasized: scholarship.promptValues.valuesEmphasized,
-        valueDefinitions: scholarship.promptValues.valueDefinitions as Record<
+        valuesEmphasized: scholarship.promptValue.valuesEmphasized,
+        valueDefinitions: scholarship.promptValue.valueDefinitions as Record<
           string,
           string
         >,
-        evidencePhrases: scholarship.promptValues.evidencePhrases,
+        evidencePhrases: scholarship.promptValue.evidencePhrases,
       }
     }
 
-    if (scholarship.promptWeights) {
-      analysisData.weights = scholarship.promptWeights.weights as Record<
+    if (scholarship.promptWeight) {
+      analysisData.weights = scholarship.promptWeight.weights as Record<
         string,
         {
           weight: number

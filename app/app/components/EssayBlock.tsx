@@ -79,7 +79,8 @@ function renderHighlightedText(
     }
 
     // Add highlighted text
-    const colorConfig = HIGHLIGHT_COLORS[section.colorName] || HIGHLIGHT_COLORS.mustard
+    const colorConfig =
+      HIGHLIGHT_COLORS[section.colorName] || HIGHLIGHT_COLORS.mustard
     elements.push(
       <mark
         key={`highlight-${section.id}`}

@@ -73,10 +73,7 @@ function Question({
         }}
         rows={3}
       />
-      <div
-        className="mt-1 text-xs"
-        style={{ color: colors.text.secondary }}
-      >
+      <div className="mt-1 text-xs" style={{ color: colors.text.secondary }}>
         {value.length} characters
       </div>
     </div>
