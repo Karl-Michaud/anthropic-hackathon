@@ -61,7 +61,7 @@ export function LandingPage() {
 
       {/* Footer */}
       <div className="mt-8 text-sm" style={{ color: colors.text.secondary }}>
-        Built for organizing scholarship applications
+        Made for the UofT x Anthropic Hackathon
       </div>
     </div>
   )
