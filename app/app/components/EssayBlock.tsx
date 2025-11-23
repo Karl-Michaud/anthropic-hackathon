@@ -774,6 +774,74 @@ export default function EssayBlock({
     })
   }
 
+  const handleSubmitAllSocraticAnswers = async () => {
+    if (!data.socraticData) return
+
+    setIsSubmitting(true)
+    setSubmitError(null)
+
+    try {
+      console.log('📤 [EssayBlock] Submitting ALL Socratic answers')
+
+      // Collect all answered questions across ALL sections
+      const allAnswers: Record<string, string> = {}
+      let answeredCount = 0
+      let totalCount = 0
+
+      Object.values(data.socraticData).forEach((questions) => {
+        questions.forEach((q) => {
+          totalCount++
+          if (q.answer && q.answer.trim().length > 0) {
+            allAnswers[q.id] = q.answer
+            answeredCount++
+          }
+        })
+      })
+
+      if (answeredCount === 0) {
+        setSubmitError('Please answer at least one question before submitting')
+        setIsSubmitting(false)
+        return
+      }
+
+      console.log(`Submitting ${answeredCount}/${totalCount} answered questions`)
+
+      // Submit all answers and get updated essay
+      const updatedContent = await submitSocraticAnswers(
+        data.content,
+        '', // sectionId not needed when submitting all
+        allAnswers,
+        userId,
+      )
+
+      console.log('✅ Essay content updated')
+
+      // Update the essay with new content and clear highlights to regenerate
+      onUpdate({
+        ...data,
+        content: updatedContent,
+        highlightedSections: undefined,
+        socraticData: undefined,
+        lastEditedAt: Date.now(),
+      })
+
+      // Close the Socratic panel
+      setSelectedSection(null)
+
+      // Trigger regeneration of highlights
+      if (onGenerateSocraticQuestions) {
+        await onGenerateSocraticQuestions(data.id)
+      }
+    } catch (error) {
+      console.error('❌ [EssayBlock] Error submitting Socratic answers:', error)
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to submit answers'
+      setSubmitError(errorMessage)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
 
   const handleSubmitForReview = async () => {
     if (!onSubmitForReview) return
@@ -917,6 +985,84 @@ export default function EssayBlock({
               )}
             </div>
           )}
+
+          {/* Submit Socratic Answers Button - For AI-generated drafts with highlights */}
+          {!data.isCustomDraft &&
+            data.socraticData &&
+            Object.keys(data.socraticData).length > 0 &&
+            !isGenerating && (
+              <div
+                className={`mt-4 pt-4 border-t ${
+                  isDarkMode ? 'border-gray-700' : 'border-gray-200'
+                }`}
+              >
+                {(() => {
+                  // Calculate answered questions
+                  let answeredCount = 0
+                  let totalCount = 0
+                  Object.values(data.socraticData).forEach((questions) => {
+                    questions.forEach((q) => {
+                      totalCount++
+                      if (q.answer && q.answer.trim().length > 0) {
+                        answeredCount++
+                      }
+                    })
+                  })
+
+                  return (
+                    <>
+                      <button
+                        onClick={handleSubmitAllSocraticAnswers}
+                        disabled={isSubmitting || answeredCount === 0}
+                        className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all ${
+                          isSubmitting || answeredCount === 0
+                            ? 'opacity-50 cursor-not-allowed'
+                            : 'hover:shadow-md cursor-pointer'
+                        }`}
+                        style={{
+                          backgroundColor: brandColors.teal,
+                          color: '#ffffff',
+                        }}
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <Loader2 size={18} className="animate-spin" />
+                            Updating Essay...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles size={18} />
+                            Submit All Answers & Update Essay ({answeredCount}/
+                            {totalCount})
+                          </>
+                        )}
+                      </button>
+                      {submitError && (
+                        <p className="mt-2 text-xs text-red-600">{submitError}</p>
+                      )}
+                      {answeredCount === 0 && !submitError && (
+                        <p
+                          className={`mt-2 text-xs text-center ${
+                            isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                          }`}
+                        >
+                          Click highlighted sections to answer questions
+                        </p>
+                      )}
+                      {answeredCount > 0 && answeredCount < totalCount && !submitError && (
+                        <p
+                          className={`mt-2 text-xs text-center ${
+                            isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                          }`}
+                        >
+                          You can submit now or answer more questions first
+                        </p>
+                      )}
+                    </>
+                  )
+                })()}
+              </div>
+            )}
 
           {/* Submit for Review Button - Always visible for custom drafts */}
           {data.isCustomDraft && !isGenerating && onSubmitForReview && (
