@@ -168,12 +168,13 @@ function ScholarshipUploadButton({
   )
 }
 
-// AccountButton component
+// AccountButton component - links to profile page
 function AccountButton({ isDarkMode = false }: { isDarkMode?: boolean }) {
   const colors = isDarkMode ? colorsDark : colorsLight
 
   return (
-    <button
+    <NextLink
+      href="/profile"
       className="cursor-pointer group relative p-2 rounded-xl transition-all duration-200 hover:scale-105"
       style={{
         color: colors.text.secondary,
@@ -199,9 +200,9 @@ function AccountButton({ isDarkMode = false }: { isDarkMode?: boolean }) {
           color: brandColors.foregroundDark,
         }}
       >
-        Account
+        Profile
       </span>
-    </button>
+    </NextLink>
   )
 }
 
