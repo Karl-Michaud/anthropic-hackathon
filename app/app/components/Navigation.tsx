@@ -4,7 +4,7 @@ import {
   Home,
   X,
   Plus,
-  LogOut,
+  User,
   Upload,
   FileText,
   Moon,
@@ -63,7 +63,9 @@ function DarkModeToggle() {
       <span
         className="absolute left-12 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 text-xs rounded-md px-2 py-1 transition-all duration-200"
         style={{
-          backgroundColor: isDarkMode ? colorsDark.background.elevated : brandColors.backgroundDark,
+          backgroundColor: isDarkMode
+            ? colorsDark.background.elevated
+            : brandColors.backgroundDark,
           color: isDarkMode ? brandColors.mustard : brandColors.foregroundDark,
         }}
         suppressHydrationWarning
@@ -111,7 +113,9 @@ function NavigationItem({
       <span
         className="absolute left-12 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 text-xs rounded-md px-2 py-1 transition-all duration-200 whitespace-nowrap"
         style={{
-          backgroundColor: isDarkMode ? colorsDark.background.elevated : brandColors.backgroundDark,
+          backgroundColor: isDarkMode
+            ? colorsDark.background.elevated
+            : brandColors.backgroundDark,
           color: brandColors.foregroundDark,
         }}
       >
@@ -153,7 +157,9 @@ function ScholarshipUploadButton({
       <span
         className="absolute left-12 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 text-xs rounded-md px-2 py-1 transition-all duration-200 whitespace-nowrap"
         style={{
-          backgroundColor: isDarkMode ? colorsDark.background.elevated : brandColors.backgroundDark,
+          backgroundColor: isDarkMode
+            ? colorsDark.background.elevated
+            : brandColors.backgroundDark,
           color: brandColors.foregroundDark,
         }}
       >
@@ -188,7 +194,9 @@ function AccountButton({ isDarkMode = false }: { isDarkMode?: boolean }) {
       <span
         className="absolute left-12 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 text-xs rounded-md px-2 py-1 transition-all duration-200 whitespace-nowrap"
         style={{
-          backgroundColor: isDarkMode ? colorsDark.background.elevated : brandColors.backgroundDark,
+          backgroundColor: isDarkMode
+            ? colorsDark.background.elevated
+            : brandColors.backgroundDark,
           color: brandColors.foregroundDark,
         }}
       >
@@ -277,12 +285,19 @@ function FileUploadArea({
       >
         <div className="flex flex-col items-center gap-3">
           {isUploading ? (
-            <Upload size={48} className="animate-pulse" style={{ color: brandColors.teal }} />
+            <Upload
+              size={48}
+              className="animate-pulse"
+              style={{ color: brandColors.teal }}
+            />
           ) : (
             <FileText size={48} style={{ color: brandColors.teal }} />
           )}
           <div>
-            <p className="text-base font-medium mb-2" style={{ color: colors.text.primary }}>
+            <p
+              className="text-base font-medium mb-2"
+              style={{ color: colors.text.primary }}
+            >
               {isUploading
                 ? 'Uploading...'
                 : 'Drop your file here or click to browse'}
@@ -334,7 +349,10 @@ function ManualEntryForm({
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <label className="block text-sm font-medium mb-2" style={{ color: colors.text.primary }}>
+        <label
+          className="block text-sm font-medium mb-2"
+          style={{ color: colors.text.primary }}
+        >
           Scholarship Title
         </label>
         <input
@@ -362,7 +380,10 @@ function ManualEntryForm({
         />
       </div>
       <div>
-        <label className="block text-sm font-medium mb-2" style={{ color: colors.text.primary }}>
+        <label
+          className="block text-sm font-medium mb-2"
+          style={{ color: colors.text.primary }}
+        >
           Scholarship Description
         </label>
         <textarea
@@ -390,7 +411,10 @@ function ManualEntryForm({
         />
       </div>
       <div>
-        <label className="block text-sm font-medium mb-2" style={{ color: colors.text.primary }}>
+        <label
+          className="block text-sm font-medium mb-2"
+          style={{ color: colors.text.primary }}
+        >
           Essay Prompt
         </label>
         <textarea
@@ -466,7 +490,8 @@ function UploadModeToggle({
         className="px-4 py-2 text-sm font-medium transition-all cursor-pointer"
         style={{
           backgroundColor: mode === 'file' ? brandColors.teal : 'transparent',
-          color: mode === 'file' ? brandColors.foregroundDark : colors.text.primary,
+          color:
+            mode === 'file' ? brandColors.foregroundDark : colors.text.primary,
         }}
         onMouseEnter={(e) => {
           if (mode !== 'file') {
@@ -488,7 +513,8 @@ function UploadModeToggle({
         className="px-4 py-2 text-sm font-medium transition-all cursor-pointer"
         style={{
           backgroundColor: mode === 'text' ? brandColors.teal : 'transparent',
-          color: mode === 'text' ? brandColors.foregroundDark : colors.text.primary,
+          color:
+            mode === 'text' ? brandColors.foregroundDark : colors.text.primary,
         }}
         onMouseEnter={(e) => {
           if (mode !== 'text') {
@@ -726,7 +752,10 @@ function ScholarshipUploadPopup({
             className="flex items-center justify-between p-4 border-b"
             style={{ borderColor: brandColors.cloudy }}
           >
-            <h3 className="text-lg font-semibold" style={{ color: colors.text.primary }}>
+            <h3
+              className="text-lg font-semibold"
+              style={{ color: colors.text.primary }}
+            >
               Upload Scholarship
             </h3>
             <button
